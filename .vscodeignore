@@ -1,0 +1,6 @@
+.github
+.vscode
+src
+*.vsix
+dist/**/*.js.map
+node_modules
