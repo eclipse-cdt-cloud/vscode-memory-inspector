@@ -33,6 +33,7 @@
   },
   "dependencies": {
     "@vscode/webview-ui-toolkit": "^1.2.0",
+    "long": "^5.2.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
@@ -63,21 +64,21 @@
   "contributes": {
     "commands": [
       {
-        "command": "memory-inspector.show",
-        "title": "Show Memory Inspector",
+        "command": "memory-inspector.show-variable",
+        "title": "Show variable in memory inspector",
         "category": "Memory"
       }
     ],
     "menus": {
       "commandPalette": [
         {
-          "command": "memory-inspector.show",
+          "command": "memory-inspector.show-variable",
           "when": "true"
         }
       ],
       "debug/variables/context": [
         {
-          "command": "memory-inspector.show",
+          "command": "memory-inspector.show-variable",
           "when": "memory-inspector.validDebugger"
         }
       ]
@@ -101,7 +102,7 @@
     }
   },
   "activationEvents": [
-    "onCommand:memory-inspector.show",
+    "onCommand:memory-inspector.show-variable",
     "onDebug",
     "onStartupFinished"
   ],

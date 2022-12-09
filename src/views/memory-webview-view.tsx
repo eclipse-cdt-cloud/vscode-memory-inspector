@@ -18,7 +18,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { VSCodeButton } from '@vscode/webview-ui-toolkit/react';
 import { RPCProtocolImpl } from '../rpc-protocol';
-import { MainService, ViewService, WEBVIEW_RPC_CONTEXT } from './memory-webview-rpc';
+import { MainService, MemoryOptions, ViewService, WEBVIEW_RPC_CONTEXT } from './memory-webview-rpc';
 
 class App extends React.Component implements ViewService {
     private _proxy: MainService | undefined;
@@ -51,8 +51,8 @@ class App extends React.Component implements ViewService {
         );
     }
 
-    public $setState(state: string): void {
-        this.proxy.$logMessage(state);
+    public $setOptions(options: MemoryOptions): void {
+        this.proxy.$logMessage(JSON.stringify(options));
     }
 }
 

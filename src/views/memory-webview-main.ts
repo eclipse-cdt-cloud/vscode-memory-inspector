@@ -16,17 +16,24 @@
 
 import * as vscode from 'vscode';
 import * as manifest from '../manifest';
-import { MainService, ViewService, WEBVIEW_RPC_CONTEXT } from './memory-webview-rpc';
+import Long from 'long';
+import { MainService, MemoryOptions, MemoryReadRequest, MemoryReadResponse, MemoryWriteRequest, ViewService, WEBVIEW_RPC_CONTEXT } from './memory-webview-rpc';
 import { RPCProtocolImpl } from '../rpc-protocol';
+import { MemoryProvider } from '../memory-provider';
 import { logger } from '../logger';
 
 export class MemoryWebview implements MainService {
     public static ViewType = `${manifest.PACKAGE_NAME}.memory`;
-    public static CommandType = `${manifest.PACKAGE_NAME}.show`;
+    public static CommandType = `${manifest.PACKAGE_NAME}.show-variable`;
 
     protected proxy: ViewService | undefined;
+    protected memoryOptions: MemoryOptions = {
+        startAddress: 0,
+        locationOffset: 0,
+        readLength: 256
+    };
 
-    public constructor(protected extensionUri: vscode.Uri) {
+    public constructor(protected extensionUri: vscode.Uri, protected memoryProvider: MemoryProvider) {
     }
 
     public async activate(context: vscode.ExtensionContext): Promise<void> {
@@ -35,7 +42,7 @@ export class MemoryWebview implements MainService {
         );
     };
 
-    public async show(): Promise<void> {
+    public async show(startAddress = 0): Promise<void> {
         const baseExtensionUriString = this.extensionUri.toString();
         const distPathUri = vscode.Uri.parse(`${baseExtensionUriString}/dist/views`, true /* strict */);
         const mediaPathUri = vscode.Uri.parse(`${baseExtensionUriString}/media`, true /* strict */);
@@ -46,7 +53,7 @@ export class MemoryWebview implements MainService {
             localResourceRoots: [distPathUri, mediaPathUri] // restrict extension's local file access
         };
 
-        const panel = vscode.window.createWebviewPanel(MemoryWebview.ViewType, 'Memory Inspector', vscode.ViewColumn.One, options);
+        const panel = vscode.window.createWebviewPanel(MemoryWebview.ViewType, 'Memory Inspector', vscode.ViewColumn.Three, options);
 
         // Set HTML content
         panel.webview.html = await this._getWebviewContent(panel.webview, this.extensionUri);
@@ -54,6 +61,9 @@ export class MemoryWebview implements MainService {
         // Sets up an event listener to listen for messages passed from the webview view context
         // and executes code based on the message that is recieved
         this._setWebviewMessageListener(panel.webview);
+
+        this.memoryOptions.startAddress = startAddress;
+        this.refresh();
     }
 
     private async _getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri): Promise<string> {
@@ -85,14 +95,6 @@ export class MemoryWebview implements MainService {
         `;
     }
 
-    protected async refresh(): Promise<void> {
-        if (!this.proxy) {
-            return;
-        }
-
-        this.proxy.$setState('hello');
-    }
-
     protected _setWebviewMessageListener(webview: vscode.Webview): void {
         const rpc = new RPCProtocolImpl(message => webview.postMessage(message));
         webview.onDidReceiveMessage(message => rpc.onMessage(message));
@@ -100,11 +102,44 @@ export class MemoryWebview implements MainService {
         rpc.set(WEBVIEW_RPC_CONTEXT.MAIN, this);
     }
 
+    protected async refresh(): Promise<void> {
+        if (!this.proxy) {
+            return;
+        }
+
+        this.proxy.$setOptions(this.memoryOptions);
+    }
+
     public $logMessage(message: string): void {
         logger.info(message);
     }
 
-    public async $getMemory(_address: string): Promise<string> {
-        return 'mem';
+    public async $readMemory(request: MemoryReadRequest): Promise<MemoryReadResponse> {
+        const result = await this.memoryProvider.readMemory(request);
+
+        if (result.body?.data) {
+            const data = result.body.data;
+            const address = result.body.address;
+            if (address.startsWith('0x')) {
+                // Assume hex
+                return {
+                    bytes: Buffer.from(data, 'hex'),
+                    address: Long.fromString(address, true, 16)
+                };
+            } else {
+                // Assume base64
+                return {
+                    bytes: Buffer.from(data, 'base64'),
+                    address: Long.fromString(address, true, 10)
+                };
+            }
+        }
+
+        throw new Error('Received no data from debug adapter.');
+    }
+
+    public async $writeMemory(request: MemoryWriteRequest): Promise<number | undefined> {
+        const result = await this.memoryProvider.writeMemory(request);
+        return result.body?.bytesWritten;
     }
 }

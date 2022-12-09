@@ -14,15 +14,40 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
+import Long from 'long';
 import { createProxyIdentifier, ProxyIdentifier } from '../rpc-protocol';
+
+export interface MemoryOptions {
+    startAddress: number;
+    locationOffset: number;
+    readLength: number;
+}
+
+export interface MemoryReadRequest {
+    memoryReference: string;
+    count: number;
+    offset?: number;
+}
+
+export interface MemoryReadResponse {
+    address: Long;
+    bytes: Uint8Array;
+}
+
+export interface MemoryWriteRequest {
+    memoryReference: string;
+    data: string;
+    offset: number;
+}
 
 export interface MainService {
     $logMessage(message: string): void;
-    $getMemory(address: string): Promise<string>;
+    $readMemory(request: MemoryReadRequest): Promise<MemoryReadResponse>;
+    $writeMemory(request: MemoryWriteRequest): Promise<number | undefined>;
 }
 
 export interface ViewService {
-    $setState(state: string): void;
+    $setOptions(options: MemoryOptions): void;
 }
 
 export const WEBVIEW_RPC_CONTEXT = {

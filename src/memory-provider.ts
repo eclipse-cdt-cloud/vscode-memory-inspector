@@ -25,7 +25,7 @@ export interface LabeledUint8Array extends Uint8Array {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const isInitializeMessage = (message: any): message is DebugProtocol.InitializeResponse => message.command === 'initialize' && message.type === 'response';
 
-export class DebugTracker {
+export class MemoryProvider {
     public static ContextKey = `${manifest.PACKAGE_NAME}.validDebugger`;
 
     public async activate(context: vscode.ExtensionContext): Promise<void> {
@@ -56,7 +56,7 @@ export class DebugTracker {
     }
 
     protected setContext(valid: boolean): void {
-        vscode.commands.executeCommand('setContext', DebugTracker.ContextKey, valid);
+        vscode.commands.executeCommand('setContext', MemoryProvider.ContextKey, valid);
     }
 
     public async readMemory(readMemoryArguments: DebugProtocol.ReadMemoryArguments): Promise<DebugProtocol.ReadMemoryResponse> {
