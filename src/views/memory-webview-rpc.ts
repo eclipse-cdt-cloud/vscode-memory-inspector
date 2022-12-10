@@ -41,6 +41,7 @@ export interface MemoryWriteRequest {
 }
 
 export interface MainService {
+    $ready(): void;
     $logMessage(message: string): void;
     $readMemory(request: MemoryReadRequest): Promise<MemoryReadResponse>;
     $writeMemory(request: MemoryWriteRequest): Promise<number | undefined>;

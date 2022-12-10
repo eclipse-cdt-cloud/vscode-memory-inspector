@@ -63,7 +63,6 @@ export class MemoryWebview implements MainService {
         this._setWebviewMessageListener(panel.webview);
 
         this.memoryOptions.startAddress = startAddress;
-        this.refresh();
     }
 
     private async _getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri): Promise<string> {
@@ -108,6 +107,10 @@ export class MemoryWebview implements MainService {
         }
 
         this.proxy.$setOptions(this.memoryOptions);
+    }
+
+    public $ready(): void {
+        this.refresh();
     }
 
     public $logMessage(message: string): void {

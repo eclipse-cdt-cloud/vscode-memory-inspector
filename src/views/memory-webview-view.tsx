@@ -21,20 +21,26 @@ import { RPCProtocolImpl } from '../rpc-protocol';
 import { MainService, MemoryOptions, ViewService, WEBVIEW_RPC_CONTEXT } from './memory-webview-rpc';
 
 class App extends React.Component implements ViewService {
-    private _proxy: MainService | undefined;
-    protected get proxy(): MainService {
-        if (!this._proxy) {
+    private _rpc: RPCProtocolImpl | undefined;
+    protected get rpc(): RPCProtocolImpl {
+        if (!this._rpc) {
             const vscodeApi = acquireVsCodeApi();
             const rpc = new RPCProtocolImpl(message => vscodeApi.postMessage(message));
-
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             window.addEventListener('message', (message: any) => rpc.onMessage(message.data));
-            this._proxy = rpc.getProxy(WEBVIEW_RPC_CONTEXT.MAIN);
-
-            rpc.set(WEBVIEW_RPC_CONTEXT.VIEW, this);
+            this._rpc = rpc;
         }
 
-        return this._proxy;
+        return this._rpc;
+    }
+
+    protected get proxy(): MainService {
+        return this.rpc.getProxy(WEBVIEW_RPC_CONTEXT.MAIN);
+    }
+
+    public componentDidMount(): void {
+        window.addEventListener('load', () => this.rpc.set(WEBVIEW_RPC_CONTEXT.VIEW, this));
+        this.proxy.$ready();
     }
 
     public render(): React.ReactNode {
