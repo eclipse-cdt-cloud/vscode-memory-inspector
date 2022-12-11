@@ -64,16 +64,25 @@
   "contributes": {
     "commands": [
       {
+        "command": "memory-inspector.show",
+        "title": "Show Memory Inspector",
+        "category": "Memory"
+      },
+      {
         "command": "memory-inspector.show-variable",
-        "title": "Show variable in memory inspector",
+        "title": "Show variable in Memory Inspector",
         "category": "Memory"
       }
     ],
     "menus": {
       "commandPalette": [
         {
+          "command": "memory-inspector.show",
+          "when": "memory-inspector.validDebugger"
+        },
+        {
           "command": "memory-inspector.show-variable",
-          "when": "true"
+          "when": "false"
         }
       ],
       "debug/variables/context": [
@@ -102,6 +111,7 @@
     }
   },
   "activationEvents": [
+    "onCommand:memory-inspector.show",
     "onCommand:memory-inspector.show-variable",
     "onDebug",
     "onStartupFinished"

@@ -18,6 +18,11 @@ import * as vscode from 'vscode';
 import * as manifest from './manifest';
 import { DebugProtocol } from 'vscode-debugprotocol';
 
+export interface ReadResponse {
+    address: string;
+    data?: string;
+};
+
 export interface LabeledUint8Array extends Uint8Array {
     label?: string;
 }
@@ -59,7 +64,7 @@ export class MemoryProvider {
         vscode.commands.executeCommand('setContext', MemoryProvider.ContextKey, valid);
     }
 
-    public async readMemory(readMemoryArguments: DebugProtocol.ReadMemoryArguments): Promise<DebugProtocol.ReadMemoryResponse> {
+    public async readMemory(readMemoryArguments: DebugProtocol.ReadMemoryArguments): Promise<ReadResponse> {
         const session = vscode.debug.activeDebugSession;
 
         if (!session) {

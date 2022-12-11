@@ -22,9 +22,19 @@ import { RPCProtocolImpl } from '../rpc-protocol';
 import { MemoryProvider } from '../memory-provider';
 import { logger } from '../logger';
 
+interface Variable {
+    name: string;
+    value: string;
+    variablesReference: number;
+    memoryReference: number;
+}
+
+const isMemoryVariable = (variable: any): variable is Variable => variable && !!(variable as Variable).memoryReference;
+
 export class MemoryWebview implements MainService {
     public static ViewType = `${manifest.PACKAGE_NAME}.memory`;
-    public static CommandType = `${manifest.PACKAGE_NAME}.show-variable`;
+    public static ShowCommandType = `${manifest.PACKAGE_NAME}.show`;
+    public static VariableCommandType = `${manifest.PACKAGE_NAME}.show-variable`;
 
     protected proxy: ViewService | undefined;
     protected memoryOptions: MemoryOptions = {
@@ -38,7 +48,13 @@ export class MemoryWebview implements MainService {
 
     public async activate(context: vscode.ExtensionContext): Promise<void> {
         context.subscriptions.push(
-            vscode.commands.registerCommand(MemoryWebview.CommandType, () => this.show())
+            vscode.commands.registerCommand(MemoryWebview.ShowCommandType, () => this.show()),
+            vscode.commands.registerCommand(MemoryWebview.VariableCommandType, node => {
+                const variable = node.variable;
+                if (isMemoryVariable(variable)) {
+                    this.show(variable.memoryReference);
+                }
+            })
         );
     };
 
@@ -120,21 +136,17 @@ export class MemoryWebview implements MainService {
     public async $readMemory(request: MemoryReadRequest): Promise<MemoryReadResponse> {
         const result = await this.memoryProvider.readMemory(request);
 
-        if (result.body?.data) {
-            const data = result.body.data;
-            const address = result.body.address;
-            if (address.startsWith('0x')) {
+        if (result?.data) {
+            if (result.address.startsWith('0x')) {
                 // Assume hex
-                return {
-                    bytes: Buffer.from(data, 'hex'),
-                    address: Long.fromString(address, true, 16)
-                };
+                const bytes = Buffer.from(result.data, 'hex');
+                const address = Long.fromString(result.address, true, 16);
+                return { bytes, address };
             } else {
                 // Assume base64
-                return {
-                    bytes: Buffer.from(data, 'base64'),
-                    address: Long.fromString(address, true, 10)
-                };
+                const bytes = Buffer.from(result.data, 'base64');
+                const address = Long.fromString(result.address, true, 10);
+                return { bytes, address };
             }
         }
 
