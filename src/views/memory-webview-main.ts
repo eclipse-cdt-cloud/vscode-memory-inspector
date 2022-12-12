@@ -16,7 +16,6 @@
 
 import * as vscode from 'vscode';
 import * as manifest from '../manifest';
-import Long from 'long';
 import { MainService, MemoryOptions, MemoryReadRequest, MemoryReadResponse, MemoryWriteRequest, ViewService, WEBVIEW_RPC_CONTEXT } from './memory-webview-rpc';
 import { RPCProtocolImpl } from '../rpc-protocol';
 import { MemoryProvider } from '../memory-provider';
@@ -76,7 +75,7 @@ export class MemoryWebview implements MainService {
 
         // Sets up an event listener to listen for messages passed from the webview view context
         // and executes code based on the message that is recieved
-        this._setWebviewMessageListener(panel.webview);
+        this.setWebviewMessageListener(panel);
 
         this.memoryOptions.startAddress = startAddress;
     }
@@ -110,9 +109,9 @@ export class MemoryWebview implements MainService {
         `;
     }
 
-    protected _setWebviewMessageListener(webview: vscode.Webview): void {
-        const rpc = new RPCProtocolImpl(message => webview.postMessage(message));
-        webview.onDidReceiveMessage(message => rpc.onMessage(message));
+    protected setWebviewMessageListener(panel: vscode.WebviewPanel): void {
+        const rpc = new RPCProtocolImpl(message => panel.webview.postMessage(message));
+        panel.webview.onDidReceiveMessage(message => rpc.onMessage(message));
         this.proxy = rpc.getProxy(WEBVIEW_RPC_CONTEXT.VIEW);
         rpc.set(WEBVIEW_RPC_CONTEXT.MAIN, this);
     }
@@ -136,21 +135,11 @@ export class MemoryWebview implements MainService {
     public async $readMemory(request: MemoryReadRequest): Promise<MemoryReadResponse> {
         const result = await this.memoryProvider.readMemory(request);
 
-        if (result?.data) {
-            if (result.address.startsWith('0x')) {
-                // Assume hex
-                const bytes = Uint8Array.from(Buffer.from(result.data, 'hex'));
-                const address = Long.fromString(result.address, true, 16);
-                return { bytes, address };
-            } else {
-                // Assume base64
-                const bytes = Uint8Array.from(Buffer.from(result.data, 'base64'));
-                const address = Long.fromString(result.address, true, 10);
-                return { bytes, address };
-            }
+        if (!result?.data) {
+            throw new Error('Received no data from debug adapter.');
         }
 
-        throw new Error('Received no data from debug adapter.');
+        return result as MemoryReadResponse;
     }
 
     public async $writeMemory(request: MemoryWriteRequest): Promise<number | undefined> {

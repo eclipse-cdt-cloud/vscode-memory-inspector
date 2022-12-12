@@ -14,7 +14,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-import Long from 'long';
 import { createProxyIdentifier, ProxyIdentifier } from '../rpc-protocol';
 
 export interface MemoryOptions {
@@ -30,8 +29,8 @@ export interface MemoryReadRequest {
 }
 
 export interface MemoryReadResponse {
-    address: Long;
-    bytes: Uint8Array;
+    address: string;
+    data: string;
 }
 
 export interface MemoryWriteRequest {

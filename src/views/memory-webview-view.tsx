@@ -14,6 +14,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
+import Long from 'long';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { MemoryTable } from './components/memory-table';
@@ -26,8 +27,13 @@ import {
     WEBVIEW_RPC_CONTEXT
 } from './memory-webview-rpc';
 
+export interface Memory {
+    address: Long;
+    bytes: Uint8Array;
+}
+
 interface MemoryState {
-    memory?: MemoryReadResponse
+    memory?: Memory
 }
 
 class App extends React.Component<{}, MemoryState> implements ViewService {
@@ -61,7 +67,6 @@ class App extends React.Component<{}, MemoryState> implements ViewService {
     }
 
     public render(): React.ReactNode {
-        debugger;
         const { memory } = this.state;
         return (
             <div>
@@ -80,10 +85,23 @@ class App extends React.Component<{}, MemoryState> implements ViewService {
             offset: options.locationOffset
         });
 
-        debugger;
         this.setState({
-            memory: response
+            memory: this.convert(response)
         });
+    }
+
+    protected convert(result: MemoryReadResponse): Memory {
+        if (result.address.startsWith('0x')) {
+            // Assume hex
+            const bytes = Uint8Array.from(Buffer.from(result.data, 'hex'));
+            const address = Long.fromString(result.address, true, 16);
+            return { bytes, address };
+        } else {
+            // Assume base64
+            const bytes = Uint8Array.from(Buffer.from(result.data, 'base64'));
+            const address = Long.fromString(result.address, true, 10);
+            return { bytes, address };
+        }
     }
 }
 

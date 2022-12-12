@@ -21,7 +21,7 @@ import {
     VSCodeDataGridRow,
     VSCodeDataGridCell
 } from '@vscode/webview-ui-toolkit/react';
-import { MemoryReadResponse } from '../memory-webview-rpc';
+import { Memory } from '../memory-webview-view';
 
 interface VariableDecoration {
     name: string;
@@ -85,13 +85,12 @@ const groupsPerRow = 4;
 const endianness: Endianness = Endianness.Little;
 
 interface MemoryTableProps {
-    memory?: MemoryReadResponse;
+    memory?: Memory;
     children: React.ReactNode;
 }
 
 export class MemoryTable extends React.Component<MemoryTableProps> {
     public render(): React.ReactNode {
-        debugger;
         const rows = this.getTableRows();
         return (
             <div>

@@ -58,16 +58,8 @@ module.exports = [
             libraryTarget: 'commonjs'
         },
         resolve: {
-            extensions: ['.ts', '.js'],
-            fallback: {
-                buffer: require.resolve('buffer')
-            }
-        },
-        plugins: [
-            new webpack.ProvidePlugin({
-                Buffer: ['buffer', 'Buffer']
-            })
-        ]
+            extensions: ['.ts', '.js']
+        }
     },
     {
         ...common,
@@ -80,7 +72,15 @@ module.exports = [
             path: path.resolve(__dirname, 'dist', 'views')
         },
         resolve: {
-            extensions: ['.tsx', '.ts', '.js']
-        }
+            extensions: ['.tsx', '.ts', '.js'],
+            fallback: {
+                buffer: require.resolve('buffer')
+            }
+        },
+        plugins: [
+            new webpack.ProvidePlugin({
+                Buffer: ['buffer', 'Buffer']
+            })
+        ]
     }
 ];
