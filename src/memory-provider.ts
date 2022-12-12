@@ -18,6 +18,17 @@ import * as vscode from 'vscode';
 import * as manifest from './manifest';
 import { DebugProtocol } from 'vscode-debugprotocol';
 
+export interface ReadResponse {
+    address: string;
+    unreadableBytes?: number;
+    data?: string;
+};
+
+export interface WriteResponse {
+    offset?: number;
+    bytesWritten?: number;
+};
+
 export interface LabeledUint8Array extends Uint8Array {
     label?: string;
 }
@@ -25,7 +36,7 @@ export interface LabeledUint8Array extends Uint8Array {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const isInitializeMessage = (message: any): message is DebugProtocol.InitializeResponse => message.command === 'initialize' && message.type === 'response';
 
-export class DebugTracker {
+export class MemoryProvider {
     public static ContextKey = `${manifest.PACKAGE_NAME}.validDebugger`;
 
     public async activate(context: vscode.ExtensionContext): Promise<void> {
@@ -56,10 +67,10 @@ export class DebugTracker {
     }
 
     protected setContext(valid: boolean): void {
-        vscode.commands.executeCommand('setContext', DebugTracker.ContextKey, valid);
+        vscode.commands.executeCommand('setContext', MemoryProvider.ContextKey, valid);
     }
 
-    public async readMemory(readMemoryArguments: DebugProtocol.ReadMemoryArguments): Promise<DebugProtocol.ReadMemoryResponse> {
+    public async readMemory(readMemoryArguments: DebugProtocol.ReadMemoryArguments): Promise<ReadResponse | undefined> {
         const session = vscode.debug.activeDebugSession;
 
         if (!session) {
@@ -69,7 +80,7 @@ export class DebugTracker {
         return session.customRequest('readMemory', readMemoryArguments);
     }
 
-    public async writeMemory(writeMemoryArguments: DebugProtocol.WriteMemoryArguments): Promise<DebugProtocol.WriteMemoryResponse> {
+    public async writeMemory(writeMemoryArguments: DebugProtocol.WriteMemoryArguments): Promise<WriteResponse | undefined> {
         const session = vscode.debug.activeDebugSession;
 
         if (!session) {

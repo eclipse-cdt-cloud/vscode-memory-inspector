@@ -15,15 +15,15 @@
  ********************************************************************************/
 
 import * as vscode from 'vscode';
-import { DebugTracker } from '../debug-tracker';
+import { MemoryProvider } from '../memory-provider';
 import { MemoryWebview } from '../views/memory-webview-main';
 
 export const activate = async (context: vscode.ExtensionContext): Promise<void> => {
-    const memoryView = new MemoryWebview(context.extensionUri);
-    const debugTracker = new DebugTracker();
+    const memoryProvider = new MemoryProvider();
+    const memoryView = new MemoryWebview(context.extensionUri, memoryProvider);
 
+    await memoryProvider.activate(context);
     await memoryView.activate(context);
-    await debugTracker.activate(context);
 };
 
 export const deactivate = async (): Promise<void> => {

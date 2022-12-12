@@ -16,26 +16,58 @@
 
 import * as vscode from 'vscode';
 import * as manifest from '../manifest';
-import { MainService, ViewService, WEBVIEW_RPC_CONTEXT } from './memory-webview-rpc';
+import {
+    MainService,
+    MemoryOptions,
+    MemoryReadRequest,
+    MemoryReadResponse,
+    MemoryWriteRequest,
+    ViewService,
+    WEBVIEW_RPC_CONTEXT
+} from './memory-webview-rpc';
 import { RPCProtocolImpl } from '../rpc-protocol';
+import { MemoryProvider } from '../memory-provider';
 import { logger } from '../logger';
+
+interface Variable {
+    name: string;
+    value: string;
+    variablesReference: number;
+    memoryReference: number;
+}
+
+const isMemoryVariable = (variable: Variable): variable is Variable => variable && !!(variable as Variable).memoryReference;
 
 export class MemoryWebview implements MainService {
     public static ViewType = `${manifest.PACKAGE_NAME}.memory`;
-    public static CommandType = `${manifest.PACKAGE_NAME}.show`;
+    public static ShowCommandType = `${manifest.PACKAGE_NAME}.show`;
+    public static VariableCommandType = `${manifest.PACKAGE_NAME}.show-variable`;
 
     protected proxy: ViewService | undefined;
+    protected memoryOptions: MemoryOptions = {
+        startAddress: 0,
+        locationOffset: 0,
+        readLength: 256
+    };
 
-    public constructor(protected extensionUri: vscode.Uri) {
+    public constructor(protected extensionUri: vscode.Uri, protected memoryProvider: MemoryProvider) {
     }
 
     public async activate(context: vscode.ExtensionContext): Promise<void> {
         context.subscriptions.push(
-            vscode.commands.registerCommand(MemoryWebview.CommandType, () => this.show())
+            vscode.commands.registerCommand(MemoryWebview.ShowCommandType, () => this.show()),
+            vscode.commands.registerCommand(MemoryWebview.VariableCommandType, node => {
+                const variable = node.variable;
+                if (isMemoryVariable(variable)) {
+                    this.show(variable.memoryReference);
+                }
+            })
         );
     };
 
-    public async show(): Promise<void> {
+    public async show(startAddress = 0): Promise<void> {
+        this.memoryOptions.startAddress = startAddress;
+
         const baseExtensionUriString = this.extensionUri.toString();
         const distPathUri = vscode.Uri.parse(`${baseExtensionUriString}/dist/views`, true /* strict */);
         const mediaPathUri = vscode.Uri.parse(`${baseExtensionUriString}/media`, true /* strict */);
@@ -46,30 +78,30 @@ export class MemoryWebview implements MainService {
             localResourceRoots: [distPathUri, mediaPathUri] // restrict extension's local file access
         };
 
-        const panel = vscode.window.createWebviewPanel(MemoryWebview.ViewType, 'Memory Inspector', vscode.ViewColumn.One, options);
+        const panel = vscode.window.createWebviewPanel(MemoryWebview.ViewType, 'Memory Inspector', vscode.ViewColumn.Two, options);
 
         // Set HTML content
-        panel.webview.html = await this._getWebviewContent(panel.webview, this.extensionUri);
+        await this.getWebviewContent(panel);
 
         // Sets up an event listener to listen for messages passed from the webview view context
         // and executes code based on the message that is recieved
-        this._setWebviewMessageListener(panel.webview);
+        this.setWebviewMessageListener(panel);
     }
 
-    private async _getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri): Promise<string> {
-        const mainUri = webview.asWebviewUri(vscode.Uri.joinPath(
-            extensionUri,
+    protected async getWebviewContent(panel: vscode.WebviewPanel): Promise<void> {
+        const mainUri = panel.webview.asWebviewUri(vscode.Uri.joinPath(
+            this.extensionUri,
             'dist',
             'views',
             'memory.js'
         ));
 
         // webview.cspSource does not include all CSP sources for VS Code Web
-        const webviewUri = webview.asWebviewUri(extensionUri);
+        const webviewUri = panel.webview.asWebviewUri(this.extensionUri);
         const baseSource = `${webviewUri.scheme}://${webviewUri.authority}`;
-        const cspSrc = `${webview.cspSource} ${baseSource}`;
+        const cspSrc = `${panel.webview.cspSource} ${baseSource}`;
 
-        return `
+        panel.webview.html = `
             <!DOCTYPE html>
             <html lang='en'>
                 <head>
@@ -85,26 +117,41 @@ export class MemoryWebview implements MainService {
         `;
     }
 
+    protected setWebviewMessageListener(panel: vscode.WebviewPanel): void {
+        const rpc = new RPCProtocolImpl(message => panel.webview.postMessage(message));
+        panel.webview.onDidReceiveMessage(message => rpc.onMessage(message));
+        this.proxy = rpc.getProxy(WEBVIEW_RPC_CONTEXT.VIEW);
+        rpc.set(WEBVIEW_RPC_CONTEXT.MAIN, this);
+    }
+
     protected async refresh(): Promise<void> {
         if (!this.proxy) {
             return;
         }
 
-        this.proxy.$setState('hello');
+        this.proxy.$setOptions(this.memoryOptions);
     }
 
-    protected _setWebviewMessageListener(webview: vscode.Webview): void {
-        const rpc = new RPCProtocolImpl(message => webview.postMessage(message));
-        webview.onDidReceiveMessage(message => rpc.onMessage(message));
-        this.proxy = rpc.getProxy(WEBVIEW_RPC_CONTEXT.VIEW);
-        rpc.set(WEBVIEW_RPC_CONTEXT.MAIN, this);
+    public $ready(): void {
+        this.refresh();
     }
 
     public $logMessage(message: string): void {
         logger.info(message);
     }
 
-    public async $getMemory(_address: string): Promise<string> {
-        return 'mem';
+    public async $readMemory(request: MemoryReadRequest): Promise<MemoryReadResponse> {
+        const result = await this.memoryProvider.readMemory(request);
+
+        if (!result?.data) {
+            throw new Error('Received no data from debug adapter.');
+        }
+
+        return result as MemoryReadResponse;
+    }
+
+    public async $writeMemory(request: MemoryWriteRequest): Promise<number | undefined> {
+        const result = await this.memoryProvider.writeMemory(request);
+        return result?.bytesWritten;
     }
 }

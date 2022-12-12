@@ -2,6 +2,7 @@
 'use strict';
 
 const path = require('path');
+const webpack = require('webpack');
 
 /** @typedef {import('webpack').Configuration} WebpackConfig **/
 /** @type WebpackConfig */
@@ -23,9 +24,6 @@ const common = {
             }
         ]
     },
-    resolve: {
-        extensions: ['.tsx', '.ts', '.js']
-    },
     externals: {
         vscode: 'commonjs vscode'
     }
@@ -43,6 +41,9 @@ module.exports = [
             filename: '[name].js',
             path: path.resolve(__dirname, 'dist', 'desktop'),
             libraryTarget: 'commonjs'
+        },
+        resolve: {
+            extensions: ['.ts', '.js']
         }
     },
     {
@@ -55,6 +56,9 @@ module.exports = [
             filename: '[name].js',
             path: path.resolve(__dirname, 'dist', 'browser'),
             libraryTarget: 'commonjs'
+        },
+        resolve: {
+            extensions: ['.ts', '.js']
         }
     },
     {
@@ -66,6 +70,17 @@ module.exports = [
         output: {
             filename: '[name].js',
             path: path.resolve(__dirname, 'dist', 'views')
-        }
+        },
+        resolve: {
+            extensions: ['.tsx', '.ts', '.js'],
+            fallback: {
+                buffer: require.resolve('buffer')
+            }
+        },
+        plugins: [
+            new webpack.ProvidePlugin({
+                Buffer: ['buffer', 'Buffer']
+            })
+        ]
     }
 ];

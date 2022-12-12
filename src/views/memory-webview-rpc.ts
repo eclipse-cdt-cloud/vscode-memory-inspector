@@ -16,13 +16,38 @@
 
 import { createProxyIdentifier, ProxyIdentifier } from '../rpc-protocol';
 
+export interface MemoryOptions {
+    startAddress: number;
+    locationOffset: number;
+    readLength: number;
+}
+
+export interface MemoryReadRequest {
+    memoryReference: string;
+    count: number;
+    offset?: number;
+}
+
+export interface MemoryReadResponse {
+    address: string;
+    data: string;
+}
+
+export interface MemoryWriteRequest {
+    memoryReference: string;
+    data: string;
+    offset: number;
+}
+
 export interface MainService {
+    $ready(): void;
     $logMessage(message: string): void;
-    $getMemory(address: string): Promise<string>;
+    $readMemory(request: MemoryReadRequest): Promise<MemoryReadResponse>;
+    $writeMemory(request: MemoryWriteRequest): Promise<number | undefined>;
 }
 
 export interface ViewService {
-    $setState(state: string): void;
+    $setOptions(options: MemoryOptions): void;
 }
 
 export const WEBVIEW_RPC_CONTEXT = {

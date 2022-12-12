@@ -2,7 +2,7 @@
 Thank you for your Pull Request. Please provide a description and review
 the requirements below.
 
-Contributors guide: https://github.com/theia-ide/theia/blob/master/CONTRIBUTING.md
+Contributors guide: https://github.com/eclipse-cdt-cloud/vscode-memory-inspector/blob/main/CONTRIBUTING.md
 -->
 
 #### What it does
