@@ -113,8 +113,8 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
         if (!this.props.memory) {
             return (
                 <VSCodeDataGridRow>
-                    <VSCodeDataGridCell>No Data</VSCodeDataGridCell>
-                    <VSCodeDataGridCell>No Data</VSCodeDataGridCell>
+                    <VSCodeDataGridCell gridColumn='1'>No Data</VSCodeDataGridCell>
+                    <VSCodeDataGridCell gridColumn='2'>No Data</VSCodeDataGridCell>
                 </VSCodeDataGridRow>
             );
         }

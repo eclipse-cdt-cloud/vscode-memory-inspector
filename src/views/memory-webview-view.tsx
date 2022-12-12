@@ -16,7 +16,7 @@
 
 import Long from 'long';
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import { MemoryTable } from './components/memory-table';
 import { RPCProtocolImpl } from '../rpc-protocol';
 import {
@@ -60,10 +60,8 @@ class App extends React.Component<{}, MemoryState> implements ViewService {
     }
 
     public componentDidMount(): void {
-        window.addEventListener('load', () => {
-            this.rpc.set(WEBVIEW_RPC_CONTEXT.VIEW, this);
-            this.proxy.$ready();
-        });
+        this.rpc.set(WEBVIEW_RPC_CONTEXT.VIEW, this);
+        this.proxy.$ready();
     }
 
     public render(): React.ReactNode {
@@ -105,4 +103,5 @@ class App extends React.Component<{}, MemoryState> implements ViewService {
     }
 }
 
-ReactDOM.render(<App />, document.getElementById('root'));
+const container = document.getElementById('root') as Element;
+createRoot(container).render(<App />);
