@@ -35,7 +35,10 @@
     "@vscode/webview-ui-toolkit": "^1.2.0",
     "long": "^5.2.1",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "vscode-messenger": "^0.4.3",
+    "vscode-messenger-common": "^0.4.3",
+    "vscode-messenger-webview": "^0.4.3"
   },
   "devDependencies": {
     "@types/node": "^12.20.0",

@@ -17,15 +17,17 @@
 import Long from 'long';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
+import { Messenger } from 'vscode-messenger-webview';
+import { HOST_EXTENSION } from 'vscode-messenger-common';
 import { MemoryTable } from './components/memory-table';
-import { RPCProtocolImpl } from '../rpc-protocol';
 import {
-    MainService,
     MemoryOptions,
     MemoryReadResponse,
-    ViewService,
-    WEBVIEW_RPC_CONTEXT
-} from './memory-webview-rpc';
+    readyType,
+    logMessageType,
+    setOptionsType,
+    readMemoryType
+} from './memory-webview-common';
 
 export interface Memory {
     address: Long;
@@ -36,22 +38,17 @@ interface MemoryState {
     memory?: Memory
 }
 
-class App extends React.Component<{}, MemoryState> implements ViewService {
-    private _rpc: RPCProtocolImpl | undefined;
-    protected get rpc(): RPCProtocolImpl {
-        if (!this._rpc) {
-            const vscodeApi = acquireVsCodeApi();
-            const rpc = new RPCProtocolImpl(message => vscodeApi.postMessage(message));
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            window.addEventListener('message', (message: any) => rpc.onMessage(message.data));
-            this._rpc = rpc;
+class App extends React.Component<{}, MemoryState> {
+
+    private _messenger: Messenger | undefined;
+    protected get messenger(): Messenger {
+        if (!this._messenger) {
+            const vscode = acquireVsCodeApi();
+            this._messenger = new Messenger(vscode);
+            this._messenger.start();
         }
 
-        return this._rpc;
-    }
-
-    protected get proxy(): MainService {
-        return this.rpc.getProxy(WEBVIEW_RPC_CONTEXT.MAIN);
+        return this._messenger;
     }
 
     public constructor(props: {}) {
@@ -60,8 +57,8 @@ class App extends React.Component<{}, MemoryState> implements ViewService {
     }
 
     public componentDidMount(): void {
-        this.rpc.set(WEBVIEW_RPC_CONTEXT.VIEW, this);
-        this.proxy.$ready();
+        this.messenger.onRequest(setOptionsType, options => this.setOptions(options));
+        this.messenger.sendNotification(readyType, HOST_EXTENSION, undefined);
     }
 
     public render(): React.ReactNode {
@@ -74,10 +71,10 @@ class App extends React.Component<{}, MemoryState> implements ViewService {
         );
     }
 
-    public async $setOptions(options: MemoryOptions): Promise<void> {
-        this.proxy.$logMessage(JSON.stringify(options));
+    protected async setOptions(options: MemoryOptions): Promise<void> {
+        this.messenger.sendRequest(logMessageType, HOST_EXTENSION, JSON.stringify(options));
 
-        const response = await this.proxy.$readMemory({
+        const response = await this.messenger.sendRequest(readMemoryType, HOST_EXTENSION, {
             memoryReference: `${options.startAddress}`,
             count: options.readLength,
             offset: options.locationOffset
