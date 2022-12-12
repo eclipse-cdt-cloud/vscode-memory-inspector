@@ -139,12 +139,12 @@ export class MemoryWebview implements MainService {
         if (result?.data) {
             if (result.address.startsWith('0x')) {
                 // Assume hex
-                const bytes = Buffer.from(result.data, 'hex');
+                const bytes = Uint8Array.from(Buffer.from(result.data, 'hex'));
                 const address = Long.fromString(result.address, true, 16);
                 return { bytes, address };
             } else {
                 // Assume base64
-                const bytes = Buffer.from(result.data, 'base64');
+                const bytes = Uint8Array.from(Buffer.from(result.data, 'base64'));
                 const address = Long.fromString(result.address, true, 10);
                 return { bytes, address };
             }
