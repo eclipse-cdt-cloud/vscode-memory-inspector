@@ -16,7 +16,15 @@
 
 import * as vscode from 'vscode';
 import * as manifest from '../manifest';
-import { MainService, MemoryOptions, MemoryReadRequest, MemoryReadResponse, MemoryWriteRequest, ViewService, WEBVIEW_RPC_CONTEXT } from './memory-webview-rpc';
+import {
+    MainService,
+    MemoryOptions,
+    MemoryReadRequest,
+    MemoryReadResponse,
+    MemoryWriteRequest,
+    ViewService,
+    WEBVIEW_RPC_CONTEXT
+} from './memory-webview-rpc';
 import { RPCProtocolImpl } from '../rpc-protocol';
 import { MemoryProvider } from '../memory-provider';
 import { logger } from '../logger';
@@ -28,7 +36,7 @@ interface Variable {
     memoryReference: number;
 }
 
-const isMemoryVariable = (variable: any): variable is Variable => variable && !!(variable as Variable).memoryReference;
+const isMemoryVariable = (variable: Variable): variable is Variable => variable && !!(variable as Variable).memoryReference;
 
 export class MemoryWebview implements MainService {
     public static ViewType = `${manifest.PACKAGE_NAME}.memory`;
@@ -58,6 +66,8 @@ export class MemoryWebview implements MainService {
     };
 
     public async show(startAddress = 0): Promise<void> {
+        this.memoryOptions.startAddress = startAddress;
+
         const baseExtensionUriString = this.extensionUri.toString();
         const distPathUri = vscode.Uri.parse(`${baseExtensionUriString}/dist/views`, true /* strict */);
         const mediaPathUri = vscode.Uri.parse(`${baseExtensionUriString}/media`, true /* strict */);
@@ -71,29 +81,27 @@ export class MemoryWebview implements MainService {
         const panel = vscode.window.createWebviewPanel(MemoryWebview.ViewType, 'Memory Inspector', vscode.ViewColumn.Three, options);
 
         // Set HTML content
-        panel.webview.html = await this._getWebviewContent(panel.webview, this.extensionUri);
+        await this.getWebviewContent(panel);
 
         // Sets up an event listener to listen for messages passed from the webview view context
         // and executes code based on the message that is recieved
         this.setWebviewMessageListener(panel);
-
-        this.memoryOptions.startAddress = startAddress;
     }
 
-    private async _getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri): Promise<string> {
-        const mainUri = webview.asWebviewUri(vscode.Uri.joinPath(
-            extensionUri,
+    protected async getWebviewContent(panel: vscode.WebviewPanel): Promise<void> {
+        const mainUri = panel.webview.asWebviewUri(vscode.Uri.joinPath(
+            this.extensionUri,
             'dist',
             'views',
             'memory.js'
         ));
 
         // webview.cspSource does not include all CSP sources for VS Code Web
-        const webviewUri = webview.asWebviewUri(extensionUri);
+        const webviewUri = panel.webview.asWebviewUri(this.extensionUri);
         const baseSource = `${webviewUri.scheme}://${webviewUri.authority}`;
-        const cspSrc = `${webview.cspSource} ${baseSource}`;
+        const cspSrc = `${panel.webview.cspSource} ${baseSource}`;
 
-        return `
+        panel.webview.html = `
             <!DOCTYPE html>
             <html lang='en'>
                 <head>
@@ -144,6 +152,6 @@ export class MemoryWebview implements MainService {
 
     public async $writeMemory(request: MemoryWriteRequest): Promise<number | undefined> {
         const result = await this.memoryProvider.writeMemory(request);
-        return result.body?.bytesWritten;
+        return result?.bytesWritten;
     }
 }

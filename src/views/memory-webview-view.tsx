@@ -84,11 +84,11 @@ class App extends React.Component<{}, MemoryState> implements ViewService {
         });
 
         this.setState({
-            memory: this.convert(response)
+            memory: this.convertMemory(response)
         });
     }
 
-    protected convert(result: MemoryReadResponse): Memory {
+    protected convertMemory(result: MemoryReadResponse): Memory {
         if (result.address.startsWith('0x')) {
             // Assume hex
             const bytes = Uint8Array.from(Buffer.from(result.data, 'hex'));

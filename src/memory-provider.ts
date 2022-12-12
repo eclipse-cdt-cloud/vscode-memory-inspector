@@ -20,7 +20,13 @@ import { DebugProtocol } from 'vscode-debugprotocol';
 
 export interface ReadResponse {
     address: string;
+    unreadableBytes?: number;
     data?: string;
+};
+
+export interface WriteResponse {
+    offset?: number;
+    bytesWritten?: number;
 };
 
 export interface LabeledUint8Array extends Uint8Array {
@@ -64,7 +70,7 @@ export class MemoryProvider {
         vscode.commands.executeCommand('setContext', MemoryProvider.ContextKey, valid);
     }
 
-    public async readMemory(readMemoryArguments: DebugProtocol.ReadMemoryArguments): Promise<ReadResponse> {
+    public async readMemory(readMemoryArguments: DebugProtocol.ReadMemoryArguments): Promise<ReadResponse | undefined> {
         const session = vscode.debug.activeDebugSession;
 
         if (!session) {
@@ -74,7 +80,7 @@ export class MemoryProvider {
         return session.customRequest('readMemory', readMemoryArguments);
     }
 
-    public async writeMemory(writeMemoryArguments: DebugProtocol.WriteMemoryArguments): Promise<DebugProtocol.WriteMemoryResponse> {
+    public async writeMemory(writeMemoryArguments: DebugProtocol.WriteMemoryArguments): Promise<WriteResponse | undefined> {
         const session = vscode.debug.activeDebugSession;
 
         if (!session) {

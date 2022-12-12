@@ -251,7 +251,7 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
     }
 
     protected getASCIIForSingleByte(byte: number | undefined): string {
-        const isPrintableAsAscii = (byte: number): boolean => byte >= 32 && byte < (128 - 1);
+        const isPrintableAsAscii = (input: number): boolean => input >= 32 && input < (128 - 1);
 
         return typeof byte === 'undefined'
             ? ' ' : isPrintableAsAscii(byte) ? String.fromCharCode(byte) : '.';
@@ -285,7 +285,7 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
     protected getRowAttributes(options: Partial<RowOptions>): Partial<StylableNodeAttributes> {
         let className = 'row';
         if (options.doShowDivider) {
-            className += ` divider`;
+            className += ' divider';
         }
         return { className };
     }
