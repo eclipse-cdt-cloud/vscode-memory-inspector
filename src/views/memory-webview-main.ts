@@ -78,7 +78,7 @@ export class MemoryWebview implements MainService {
             localResourceRoots: [distPathUri, mediaPathUri] // restrict extension's local file access
         };
 
-        const panel = vscode.window.createWebviewPanel(MemoryWebview.ViewType, 'Memory Inspector', vscode.ViewColumn.Three, options);
+        const panel = vscode.window.createWebviewPanel(MemoryWebview.ViewType, 'Memory Inspector', vscode.ViewColumn.Two, options);
 
         // Set HTML content
         await this.getWebviewContent(panel);
