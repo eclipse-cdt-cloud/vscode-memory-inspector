@@ -14,7 +14,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-import { createProxyIdentifier, ProxyIdentifier } from '../rpc-protocol';
+import { NotificationType, RequestType } from 'vscode-messenger-common';
 
 export interface MemoryOptions {
     startAddress: number;
@@ -39,18 +39,8 @@ export interface MemoryWriteRequest {
     offset: number;
 }
 
-export interface MainService {
-    $ready(): void;
-    $logMessage(message: string): void;
-    $readMemory(request: MemoryReadRequest): Promise<MemoryReadResponse>;
-    $writeMemory(request: MemoryWriteRequest): Promise<number | undefined>;
-}
-
-export interface ViewService {
-    $setOptions(options: MemoryOptions): void;
-}
-
-export const WEBVIEW_RPC_CONTEXT = {
-    MAIN: createProxyIdentifier<MainService>('MainService') as ProxyIdentifier<MainService>,
-    VIEW: createProxyIdentifier<ViewService>('ViewService') as ProxyIdentifier<ViewService>,
-};
+export const readyType: NotificationType<void> = { method: 'ready' };
+export const logMessageType: RequestType<string, void> = { method: 'logMessage' };
+export const setOptionsType: RequestType<MemoryOptions, void> = { method: 'setOptions' };
+export const readMemoryType: RequestType<MemoryReadRequest, MemoryReadResponse> = { method: 'readMemory' };
+export const writeMemoryType: RequestType<MemoryWriteRequest, number> = { method: 'writeMemory' };

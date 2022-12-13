@@ -16,16 +16,19 @@
 
 import * as vscode from 'vscode';
 import * as manifest from '../manifest';
+import { Messenger } from 'vscode-messenger';
+import { WebviewIdMessageParticipant } from 'vscode-messenger-common';
 import {
-    MainService,
     MemoryOptions,
     MemoryReadRequest,
     MemoryReadResponse,
     MemoryWriteRequest,
-    ViewService,
-    WEBVIEW_RPC_CONTEXT
-} from './memory-webview-rpc';
-import { RPCProtocolImpl } from '../rpc-protocol';
+    readyType,
+    logMessageType,
+    setOptionsType,
+    readMemoryType,
+    writeMemoryType
+} from './memory-webview-common';
 import { MemoryProvider } from '../memory-provider';
 import { logger } from '../logger';
 
@@ -38,12 +41,13 @@ interface Variable {
 
 const isMemoryVariable = (variable: Variable): variable is Variable => variable && !!(variable as Variable).memoryReference;
 
-export class MemoryWebview implements MainService {
+export class MemoryWebview {
     public static ViewType = `${manifest.PACKAGE_NAME}.memory`;
     public static ShowCommandType = `${manifest.PACKAGE_NAME}.show`;
     public static VariableCommandType = `${manifest.PACKAGE_NAME}.show-variable`;
 
-    protected proxy: ViewService | undefined;
+    protected messenger: Messenger;
+
     protected memoryOptions: MemoryOptions = {
         startAddress: 0,
         locationOffset: 0,
@@ -51,6 +55,7 @@ export class MemoryWebview implements MainService {
     };
 
     public constructor(protected extensionUri: vscode.Uri, protected memoryProvider: MemoryProvider) {
+        this.messenger = new Messenger();
     }
 
     public async activate(context: vscode.ExtensionContext): Promise<void> {
@@ -118,29 +123,23 @@ export class MemoryWebview implements MainService {
     }
 
     protected setWebviewMessageListener(panel: vscode.WebviewPanel): void {
-        const rpc = new RPCProtocolImpl(message => panel.webview.postMessage(message));
-        panel.webview.onDidReceiveMessage(message => rpc.onMessage(message));
-        this.proxy = rpc.getProxy(WEBVIEW_RPC_CONTEXT.VIEW);
-        rpc.set(WEBVIEW_RPC_CONTEXT.MAIN, this);
+        const participant = this.messenger.registerWebviewPanel(panel);
+
+        const disposibles = [
+            this.messenger.onNotification(readyType, () => this.refresh(participant), {sender: participant}),
+            this.messenger.onRequest(logMessageType, message => logger.info(message), {sender: participant}),
+            this.messenger.onRequest(readMemoryType, request => this.readMemory(request), {sender: participant}),
+            this.messenger.onRequest(writeMemoryType, request => this.writeMemory(request), {sender: participant}),
+        ];
+
+        panel.onDidDispose(() => disposibles.forEach(disposible => disposible.dispose()));
     }
 
-    protected async refresh(): Promise<void> {
-        if (!this.proxy) {
-            return;
-        }
-
-        this.proxy.$setOptions(this.memoryOptions);
+    protected async refresh(participant: WebviewIdMessageParticipant): Promise<void> {
+        this.messenger.sendRequest(setOptionsType, participant, this.memoryOptions);
     }
 
-    public $ready(): void {
-        this.refresh();
-    }
-
-    public $logMessage(message: string): void {
-        logger.info(message);
-    }
-
-    public async $readMemory(request: MemoryReadRequest): Promise<MemoryReadResponse> {
+    protected async readMemory(request: MemoryReadRequest): Promise<MemoryReadResponse> {
         const result = await this.memoryProvider.readMemory(request);
 
         if (!result?.data) {
@@ -150,7 +149,7 @@ export class MemoryWebview implements MainService {
         return result as MemoryReadResponse;
     }
 
-    public async $writeMemory(request: MemoryWriteRequest): Promise<number | undefined> {
+    protected async writeMemory(request: MemoryWriteRequest): Promise<number | undefined> {
         const result = await this.memoryProvider.writeMemory(request);
         return result?.bytesWritten;
     }
