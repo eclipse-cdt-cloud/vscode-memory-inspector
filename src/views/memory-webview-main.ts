@@ -123,15 +123,15 @@ export class MemoryWebview {
 
     protected setWebviewMessageListener(panel: vscode.WebviewPanel): void {
         const participant = this.messenger.registerWebviewPanel(panel);
+
         const disposibles = [
             this.messenger.onNotification(readyType, () => this.refresh(participant), {sender: participant}),
             this.messenger.onRequest(logMessageType, message => logger.info(message), {sender: participant}),
             this.messenger.onRequest(readMemoryType, request => this.readMemory(request), {sender: participant}),
             this.messenger.onRequest(writeMemoryType, request => this.writeMemory(request), {sender: participant}),
         ];
-        panel.onDidDispose(() => {
-            disposibles.forEach(disposible => disposible.dispose());
-        });
+
+        panel.onDidDispose(() => disposibles.forEach(disposible => disposible.dispose()));
     }
 
     protected async refresh(participant: WebviewIdMessageParticipant): Promise<void> {
