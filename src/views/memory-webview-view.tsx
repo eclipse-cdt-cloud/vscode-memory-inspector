@@ -44,7 +44,7 @@ class App extends React.Component<{}, MemoryState> {
     protected get messenger(): Messenger {
         if (!this._messenger) {
             const vscode = acquireVsCodeApi();
-            this._messenger = new Messenger(vscode, {debugLog: true});
+            this._messenger = new Messenger(vscode);
             this._messenger.start();
         }
 
