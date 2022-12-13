@@ -46,8 +46,7 @@ export class MemoryWebview {
     public static ShowCommandType = `${manifest.PACKAGE_NAME}.show`;
     public static VariableCommandType = `${manifest.PACKAGE_NAME}.show-variable`;
 
-    protected messenger = new Messenger();
-    protected participant: WebviewIdMessageParticipant | undefined;
+    protected messenger = new Messenger({debugLog: true});
 
     protected memoryOptions: MemoryOptions = {
         startAddress: 0,
@@ -123,17 +122,20 @@ export class MemoryWebview {
     }
 
     protected setWebviewMessageListener(panel: vscode.WebviewPanel): void {
-        this.participant = this.messenger.registerWebviewPanel(panel);
-        this.messenger.onNotification(readyType, () => this.refresh());
-        this.messenger.onRequest(logMessageType, message => logger.info(message));
-        this.messenger.onRequest(readMemoryType, request => this.readMemory(request));
-        this.messenger.onRequest(writeMemoryType, request => this.writeMemory(request));
+        const participant = this.messenger.registerWebviewPanel(panel);
+        const disposibles = [
+            this.messenger.onNotification(readyType, () => this.refresh(participant), {sender: participant}),
+            this.messenger.onRequest(logMessageType, message => logger.info(message), {sender: participant}),
+            this.messenger.onRequest(readMemoryType, request => this.readMemory(request), {sender: participant}),
+            this.messenger.onRequest(writeMemoryType, request => this.writeMemory(request), {sender: participant}),
+        ];
+        panel.onDidDispose(() => {
+            disposibles.forEach(disposible => disposible.dispose());
+        });
     }
 
-    protected async refresh(): Promise<void> {
-        if (this.participant) {
-            this.messenger.sendRequest(setOptionsType, this.participant, this.memoryOptions);
-        }
+    protected async refresh(participant: WebviewIdMessageParticipant): Promise<void> {
+        this.messenger.sendRequest(setOptionsType, participant, this.memoryOptions);
     }
 
     protected async readMemory(request: MemoryReadRequest): Promise<MemoryReadResponse> {
