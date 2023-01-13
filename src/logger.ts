@@ -45,7 +45,8 @@ export class Logger {
         return Verbosity[config as keyof typeof Verbosity];
     }
 
-    public log(verbosity: Verbosity, message: string | Record<string, unknown>): void {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    public log(verbosity: Verbosity, message: string | any): void {
         if (this.logVerbosity === Verbosity.off) {
             return;
         }
@@ -59,10 +60,14 @@ export class Logger {
         }
     }
 
-    public error = (message: string | Record<string, unknown>): void => this.log(Verbosity.error, message);
-    public warn = (message: string | Record<string, unknown>): void => this.log(Verbosity.warn, message);
-    public info = (message: string | Record<string, unknown>): void => this.log(Verbosity.info, message);
-    public debug = (message: string | Record<string, unknown>): void => this.log(Verbosity.debug, message);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    public error = (message: string | any): void => this.log(Verbosity.error, message);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    public warn = (message: string | any): void => this.log(Verbosity.warn, message);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    public info = (message: string | any): void => this.log(Verbosity.info, message);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    public debug = (message: string | any): void => this.log(Verbosity.debug, message);
 }
 
 export const logger = Logger.instance;
