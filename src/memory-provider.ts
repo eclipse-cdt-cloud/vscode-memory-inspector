@@ -36,8 +36,11 @@ export interface LabeledUint8Array extends Uint8Array {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const isInitializeMessage = (message: any): message is DebugProtocol.InitializeResponse => message.command === 'initialize' && message.type === 'response';
 
-export class MemoryProvider { // TODO: A lot
-    public static ContextKey = `${manifest.PACKAGE_NAME}.validDebugger`;
+export class MemoryProvider {
+    public static ReadKey = `${manifest.PACKAGE_NAME}.canRead`;
+    public static WriteKey = `${manifest.PACKAGE_NAME}.canWrite`;
+
+    protected readonly sessions = new Map<string, DebugProtocol.Capabilities | undefined>();
 
     public async activate(context: vscode.ExtensionContext): Promise<void> {
         const createDebugAdapterTracker = (session: vscode.DebugSession): vscode.DebugAdapterTracker => ({
@@ -46,15 +49,20 @@ export class MemoryProvider { // TODO: A lot
             onDidSendMessage: message => {
                 if (isInitializeMessage(message)) {
                     // Check for right capabilities in the adapter
-                    if (message.body?.supportsReadMemoryRequest && message.body?.supportsWriteMemoryRequest) {
-                        this.setContext(true);
+                    this.sessions.set(session.id, message.body);
+                    if (vscode.debug.activeDebugSession?.id === session.id) {
+                        this.setContext(message.body);
                     }
                 }
             }
         });
 
         context.subscriptions.push(
-            vscode.debug.registerDebugAdapterTrackerFactory('*', { createDebugAdapterTracker })
+            vscode.debug.registerDebugAdapterTrackerFactory('*', { createDebugAdapterTracker }),
+            vscode.debug.onDidChangeActiveDebugSession(session => {
+                const capabilities = session && this.sessions.get(session.id);
+                this.setContext(capabilities);
+            })
         );
     }
 
@@ -62,31 +70,36 @@ export class MemoryProvider { // TODO: A lot
         // Do nothing for now
     }
 
-    protected debugSessionTerminated(_session: vscode.DebugSession): void {
-        this.setContext(false);
+    protected debugSessionTerminated(session: vscode.DebugSession): void {
+        this.sessions.delete(session.id);
     }
 
-    protected setContext(valid: boolean): void {
-        vscode.commands.executeCommand('setContext', MemoryProvider.ContextKey, valid);
+    protected setContext(capabilities?: DebugProtocol.Capabilities): void {
+        vscode.commands.executeCommand('setContext', MemoryProvider.ReadKey, !!capabilities?.supportsReadMemoryRequest);
+        vscode.commands.executeCommand('setContext', MemoryProvider.WriteKey, !!capabilities?.supportsWriteMemoryRequest);
+    }
+
+    /** Returns the session if the capability is present, otherwise throws. */
+    protected assertCapability(capability: keyof DebugProtocol.Capabilities, action: string): vscode.DebugSession {
+        const session = this.getActiveSessionOrThrow(action);
+        if (!this.sessions.get(session.id)?.[capability]) {
+            throw new Error(`Cannot ${action}. Session does not have capability ${capability}.`);
+        }
+        return session;
+    }
+
+    private getActiveSessionOrThrow(action: string): vscode.DebugSession {
+        if (!vscode.debug.activeDebugSession) {
+            throw new Error(`Cannot ${action}. No active debug session.`);
+        }
+        return vscode.debug.activeDebugSession;
     }
 
     public async readMemory(readMemoryArguments: DebugProtocol.ReadMemoryArguments): Promise<ReadResponse | undefined> {
-        const session = vscode.debug.activeDebugSession;
-
-        if (!session) {
-            throw new Error('Cannot read memory. No active debug session.');
-        }
-
-        return session.customRequest('readMemory', readMemoryArguments);
+        return this.assertCapability('supportsReadMemoryRequest', 'read memory').customRequest('readMemory', readMemoryArguments);
     }
 
     public async writeMemory(writeMemoryArguments: DebugProtocol.WriteMemoryArguments): Promise<WriteResponse | undefined> {
-        const session = vscode.debug.activeDebugSession;
-
-        if (!session) {
-            throw new Error('Cannot write memory. No active debug session.');
-        }
-
-        return session.customRequest('writeMemory', writeMemoryArguments);
+        return this.assertCapability('supportsWriteMemoryRequest', 'write memory').customRequest('writeMemory', writeMemoryArguments);
     }
 }
