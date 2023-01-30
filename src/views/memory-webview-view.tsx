@@ -22,12 +22,12 @@ import { HOST_EXTENSION } from 'vscode-messenger-common';
 import { MemoryTable } from './components/memory-table';
 import {
     MemoryOptions,
-    MemoryReadResponse,
     readyType,
     logMessageType,
     setOptionsType,
     readMemoryType
 } from './memory-webview-common';
+import type { DebugProtocol } from '@vscode/debugprotocol';
 
 export interface Memory {
     address: Long;
@@ -81,22 +81,17 @@ class App extends React.Component<{}, MemoryState> {
         });
 
         this.setState({
-            memory: this.convertMemory(response)
+            memory: this.convertMemory(response.body)
         });
     }
 
-    protected convertMemory(result: MemoryReadResponse): Memory {
-        if (result.address.startsWith('0x')) {
-            // Assume hex
-            const bytes = Uint8Array.from(Buffer.from(result.data, 'hex'));
-            const address = Long.fromString(result.address, true, 16);
-            return { bytes, address };
-        } else {
-            // Assume base64
-            const bytes = Uint8Array.from(Buffer.from(result.data, 'base64'));
-            const address = Long.fromString(result.address, true, 10);
-            return { bytes, address };
-        }
+    protected convertMemory(result: DebugProtocol.ReadMemoryResponse['body']): Memory {
+        if (!result?.data) { throw new Error('No memory provided!'); }
+        const address = result.address.startsWith('0x')
+            ? Long.fromString(result.address, true, 16)
+            : Long.fromString(result.address, true, 10);
+        const bytes = Uint8Array.from(Buffer.from(result.data, 'base64'));
+        return { bytes, address };
     }
 }
 

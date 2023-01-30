@@ -16,18 +16,7 @@
 
 import * as vscode from 'vscode';
 import * as manifest from './manifest';
-import { DebugProtocol } from 'vscode-debugprotocol';
-
-export interface ReadResponse {
-    address: string;
-    unreadableBytes?: number;
-    data?: string;
-};
-
-export interface WriteResponse {
-    offset?: number;
-    bytesWritten?: number;
-};
+import { DebugProtocol } from '@vscode/debugprotocol';
 
 export interface LabeledUint8Array extends Uint8Array {
     label?: string;
@@ -81,25 +70,25 @@ export class MemoryProvider {
 
     /** Returns the session if the capability is present, otherwise throws. */
     protected assertCapability(capability: keyof DebugProtocol.Capabilities, action: string): vscode.DebugSession {
-        const session = this.getActiveSessionOrThrow(action);
+        const session = this.assertActiveSession(action);
         if (!this.sessions.get(session.id)?.[capability]) {
             throw new Error(`Cannot ${action}. Session does not have capability ${capability}.`);
         }
         return session;
     }
 
-    private getActiveSessionOrThrow(action: string): vscode.DebugSession {
+    private assertActiveSession(action: string): vscode.DebugSession {
         if (!vscode.debug.activeDebugSession) {
             throw new Error(`Cannot ${action}. No active debug session.`);
         }
         return vscode.debug.activeDebugSession;
     }
 
-    public async readMemory(readMemoryArguments: DebugProtocol.ReadMemoryArguments): Promise<ReadResponse | undefined> {
+    public async readMemory(readMemoryArguments: DebugProtocol.ReadMemoryArguments): Promise<DebugProtocol.ReadMemoryResponse> {
         return this.assertCapability('supportsReadMemoryRequest', 'read memory').customRequest('readMemory', readMemoryArguments);
     }
 
-    public async writeMemory(writeMemoryArguments: DebugProtocol.WriteMemoryArguments): Promise<WriteResponse | undefined> {
+    public async writeMemory(writeMemoryArguments: DebugProtocol.WriteMemoryArguments): Promise<DebugProtocol.WriteMemoryResponse> {
         return this.assertCapability('supportsWriteMemoryRequest', 'write memory').customRequest('writeMemory', writeMemoryArguments);
     }
 }

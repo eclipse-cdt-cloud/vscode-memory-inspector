@@ -14,6 +14,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
+import type { DebugProtocol } from '@vscode/debugprotocol';
 import { NotificationType, RequestType } from 'vscode-messenger-common';
 
 export interface MemoryOptions {
@@ -22,25 +23,8 @@ export interface MemoryOptions {
     readLength: number;
 }
 
-export interface MemoryReadRequest {
-    memoryReference: string;
-    count: number;
-    offset?: number;
-}
-
-export interface MemoryReadResponse {
-    address: string;
-    data: string;
-}
-
-export interface MemoryWriteRequest {
-    memoryReference: string;
-    data: string;
-    offset: number;
-}
-
 export const readyType: NotificationType<void> = { method: 'ready' };
 export const logMessageType: RequestType<string, void> = { method: 'logMessage' };
 export const setOptionsType: RequestType<MemoryOptions, void> = { method: 'setOptions' };
-export const readMemoryType: RequestType<MemoryReadRequest, MemoryReadResponse> = { method: 'readMemory' };
-export const writeMemoryType: RequestType<MemoryWriteRequest, number> = { method: 'writeMemory' };
+export const readMemoryType: RequestType<DebugProtocol.ReadMemoryArguments, DebugProtocol.ReadMemoryResponse> = { method: 'readMemory' };
+export const writeMemoryType: RequestType<DebugProtocol.WriteMemoryArguments, DebugProtocol.WriteMemoryResponse> = { method: 'writeMemory' };

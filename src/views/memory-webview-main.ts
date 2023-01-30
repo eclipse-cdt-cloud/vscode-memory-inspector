@@ -15,14 +15,12 @@
  ********************************************************************************/
 
 import * as vscode from 'vscode';
+import type { DebugProtocol } from '@vscode/debugprotocol';
 import * as manifest from '../manifest';
 import { Messenger } from 'vscode-messenger';
 import { WebviewIdMessageParticipant } from 'vscode-messenger-common';
 import {
     MemoryOptions,
-    MemoryReadRequest,
-    MemoryReadResponse,
-    MemoryWriteRequest,
     readyType,
     logMessageType,
     setOptionsType,
@@ -126,10 +124,10 @@ export class MemoryWebview {
         const participant = this.messenger.registerWebviewPanel(panel);
 
         const disposibles = [
-            this.messenger.onNotification(readyType, () => this.refresh(participant), {sender: participant}),
-            this.messenger.onRequest(logMessageType, message => logger.info(message), {sender: participant}),
-            this.messenger.onRequest(readMemoryType, request => this.readMemory(request), {sender: participant}),
-            this.messenger.onRequest(writeMemoryType, request => this.writeMemory(request), {sender: participant}),
+            this.messenger.onNotification(readyType, () => this.refresh(participant), { sender: participant }),
+            this.messenger.onRequest(logMessageType, message => logger.info(message), { sender: participant }),
+            this.messenger.onRequest(readMemoryType, request => this.readMemory(request), { sender: participant }),
+            this.messenger.onRequest(writeMemoryType, request => this.writeMemory(request), { sender: participant }),
         ];
 
         panel.onDidDispose(() => disposibles.forEach(disposible => disposible.dispose()));
@@ -139,18 +137,11 @@ export class MemoryWebview {
         this.messenger.sendRequest(setOptionsType, participant, this.memoryOptions);
     }
 
-    protected async readMemory(request: MemoryReadRequest): Promise<MemoryReadResponse> {
-        const result = await this.memoryProvider.readMemory(request);
-
-        if (!result?.data) {
-            throw new Error('Received no data from debug adapter.');
-        }
-
-        return result as MemoryReadResponse;
+    protected async readMemory(request: DebugProtocol.ReadMemoryArguments): Promise<DebugProtocol.ReadMemoryResponse> {
+        return this.memoryProvider.readMemory(request);
     }
 
-    protected async writeMemory(request: MemoryWriteRequest): Promise<number | undefined> {
-        const result = await this.memoryProvider.writeMemory(request);
-        return result?.bytesWritten;
+    protected async writeMemory(request: DebugProtocol.WriteMemoryArguments): Promise<DebugProtocol.WriteMemoryResponse> {
+        return this.memoryProvider.writeMemory(request);
     }
 }
