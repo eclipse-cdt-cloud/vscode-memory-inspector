@@ -86,7 +86,6 @@ const endianness: Endianness = Endianness.Little;
 
 interface MemoryTableProps {
     memory?: Memory;
-    children: React.ReactNode;
 }
 
 export class MemoryTable extends React.Component<MemoryTableProps> {
@@ -161,12 +160,15 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
         let variables = [];
         let isGroupHighlighted = false;
         for (const { node, index, ascii: byteAscii, variables: byteVariables, isHighlighted = false } of this.renderBytes(iteratee, address)) {
-            this.buildGroupByEndianness(bytesInGroup, node);
+            bytesInGroup.push(node);
             ascii += byteAscii;
             variables.push(...byteVariables);
             isGroupHighlighted = isGroupHighlighted || isHighlighted;
             if (bytesInGroup.length === bytesPerGroup || index === iteratee.length - 1) {
                 const itemID = address.add(index);
+                if (endianness === Endianness.Little) {
+                    bytesInGroup.reverse();
+                }
                 yield {
                     node: <span className='byte-group' key={itemID.toString(16)}>{bytesInGroup}</span>,
                     ascii,
@@ -257,14 +259,6 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
             ? ' ' : isPrintableAsAscii(byte) ? String.fromCharCode(byte) : '.';
     }
 
-    protected buildGroupByEndianness(oldBytes: React.ReactNode[], newByte: React.ReactNode): void {
-        if (endianness === Endianness.Big) {
-            oldBytes.push(newByte);
-        } else {
-            oldBytes.unshift(newByte);
-        }
-    }
-
     protected renderRow(options: RowOptions, getRowAttributes = this.getRowAttributes.bind(this)): React.ReactNode {
         const { address, groups } = options;
         const { className, style, title } = getRowAttributes(options);
@@ -276,8 +270,8 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
                 title={title}
                 key={address}
             >
-                <VSCodeDataGridCell gridColumn='1'>{address}</VSCodeDataGridCell>
-                <VSCodeDataGridCell gridColumn='2'>{groups}</VSCodeDataGridCell>
+                <VSCodeDataGridCell style={{ fontFamily: 'var(--vscode-editor-font-family)' }} gridColumn='1'>{address}</VSCodeDataGridCell>
+                <VSCodeDataGridCell style={{ fontFamily: 'var(--vscode-editor-font-family)' }} gridColumn='2'>{groups}</VSCodeDataGridCell>
             </VSCodeDataGridRow>
         );
     }

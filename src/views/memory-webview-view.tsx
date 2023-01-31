@@ -65,8 +65,7 @@ class App extends React.Component<{}, MemoryState> {
         const { memory } = this.state;
         return (
             <div>
-                <MemoryTable memory={memory}>
-                </MemoryTable>
+                <MemoryTable memory={memory} />
             </div>
         );
     }
@@ -81,7 +80,7 @@ class App extends React.Component<{}, MemoryState> {
         });
 
         this.setState({
-            memory: this.convertMemory(response.body)
+            memory: this.convertMemory(response)
         });
     }
 

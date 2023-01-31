@@ -25,7 +25,9 @@ import {
     logMessageType,
     setOptionsType,
     readMemoryType,
-    writeMemoryType
+    writeMemoryType,
+    MemoryReadResult,
+    MemoryWriteResult
 } from './memory-webview-common';
 import { MemoryProvider } from '../memory-provider';
 import { logger } from '../logger';
@@ -81,7 +83,7 @@ export class MemoryWebview {
             localResourceRoots: [distPathUri, mediaPathUri] // restrict extension's local file access
         };
 
-        const panel = vscode.window.createWebviewPanel(MemoryWebview.ViewType, 'Memory Inspector', vscode.ViewColumn.Two, options);
+        const panel = vscode.window.createWebviewPanel(MemoryWebview.ViewType, 'Memory Inspector', vscode.ViewColumn.Active, options);
 
         // Set HTML content
         await this.getWebviewContent(panel);
@@ -123,25 +125,25 @@ export class MemoryWebview {
     protected setWebviewMessageListener(panel: vscode.WebviewPanel): void {
         const participant = this.messenger.registerWebviewPanel(panel);
 
-        const disposibles = [
+        const disposables = [
             this.messenger.onNotification(readyType, () => this.refresh(participant), { sender: participant }),
             this.messenger.onRequest(logMessageType, message => logger.info(message), { sender: participant }),
             this.messenger.onRequest(readMemoryType, request => this.readMemory(request), { sender: participant }),
             this.messenger.onRequest(writeMemoryType, request => this.writeMemory(request), { sender: participant }),
         ];
 
-        panel.onDidDispose(() => disposibles.forEach(disposible => disposible.dispose()));
+        panel.onDidDispose(() => disposables.forEach(disposible => disposible.dispose()));
     }
 
     protected async refresh(participant: WebviewIdMessageParticipant): Promise<void> {
         this.messenger.sendRequest(setOptionsType, participant, this.memoryOptions);
     }
 
-    protected async readMemory(request: DebugProtocol.ReadMemoryArguments): Promise<DebugProtocol.ReadMemoryResponse> {
+    protected async readMemory(request: DebugProtocol.ReadMemoryArguments): Promise<MemoryReadResult> {
         return this.memoryProvider.readMemory(request);
     }
 
-    protected async writeMemory(request: DebugProtocol.WriteMemoryArguments): Promise<DebugProtocol.WriteMemoryResponse> {
+    protected async writeMemory(request: DebugProtocol.WriteMemoryArguments): Promise<MemoryWriteResult> {
         return this.memoryProvider.writeMemory(request);
     }
 }

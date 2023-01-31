@@ -23,8 +23,11 @@ export interface MemoryOptions {
     readLength: number;
 }
 
+export type MemoryReadResult = DebugProtocol.ReadMemoryResponse['body'];
+export type MemoryWriteResult = DebugProtocol.WriteMemoryResponse['body'];
+
 export const readyType: NotificationType<void> = { method: 'ready' };
 export const logMessageType: RequestType<string, void> = { method: 'logMessage' };
 export const setOptionsType: RequestType<MemoryOptions, void> = { method: 'setOptions' };
-export const readMemoryType: RequestType<DebugProtocol.ReadMemoryArguments, DebugProtocol.ReadMemoryResponse> = { method: 'readMemory' };
-export const writeMemoryType: RequestType<DebugProtocol.WriteMemoryArguments, DebugProtocol.WriteMemoryResponse> = { method: 'writeMemory' };
+export const readMemoryType: RequestType<DebugProtocol.ReadMemoryArguments, MemoryReadResult> = { method: 'readMemory' };
+export const writeMemoryType: RequestType<DebugProtocol.WriteMemoryArguments, MemoryWriteResult> = { method: 'writeMemory' };

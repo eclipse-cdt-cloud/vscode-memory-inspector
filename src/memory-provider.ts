@@ -17,6 +17,7 @@
 import * as vscode from 'vscode';
 import * as manifest from './manifest';
 import { DebugProtocol } from '@vscode/debugprotocol';
+import { MemoryReadResult, MemoryWriteResult } from './views/memory-webview-common';
 
 export interface LabeledUint8Array extends Uint8Array {
     label?: string;
@@ -84,11 +85,11 @@ export class MemoryProvider {
         return vscode.debug.activeDebugSession;
     }
 
-    public async readMemory(readMemoryArguments: DebugProtocol.ReadMemoryArguments): Promise<DebugProtocol.ReadMemoryResponse> {
+    public async readMemory(readMemoryArguments: DebugProtocol.ReadMemoryArguments): Promise<MemoryReadResult> {
         return this.assertCapability('supportsReadMemoryRequest', 'read memory').customRequest('readMemory', readMemoryArguments);
     }
 
-    public async writeMemory(writeMemoryArguments: DebugProtocol.WriteMemoryArguments): Promise<DebugProtocol.WriteMemoryResponse> {
+    public async writeMemory(writeMemoryArguments: DebugProtocol.WriteMemoryArguments): Promise<MemoryWriteResult> {
         return this.assertCapability('supportsWriteMemoryRequest', 'write memory').customRequest('writeMemory', writeMemoryArguments);
     }
 }
