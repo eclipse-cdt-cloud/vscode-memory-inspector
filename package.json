@@ -81,7 +81,7 @@
       "commandPalette": [
         {
           "command": "memory-inspector.show",
-          "when": "memory-inspector.validDebugger"
+          "when": "memory-inspector.canRead"
         },
         {
           "command": "memory-inspector.show-variable",
@@ -91,7 +91,7 @@
       "debug/variables/context": [
         {
           "command": "memory-inspector.show-variable",
-          "when": "memory-inspector.validDebugger"
+          "when": "memory-inspector.canRead"
         }
       ]
     },
