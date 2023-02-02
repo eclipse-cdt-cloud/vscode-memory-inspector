@@ -20,7 +20,6 @@ import * as manifest from '../manifest';
 import { Messenger } from 'vscode-messenger';
 import { WebviewIdMessageParticipant } from 'vscode-messenger-common';
 import {
-    MemoryOptions,
     readyType,
     logMessageType,
     setOptionsType,
@@ -48,12 +47,6 @@ export class MemoryWebview {
 
     protected messenger: Messenger;
 
-    protected memoryOptions: MemoryOptions = {
-        startAddress: 0,
-        locationOffset: 0,
-        readLength: 256
-    };
-
     public constructor(protected extensionUri: vscode.Uri, protected memoryProvider: MemoryProvider) {
         this.messenger = new Messenger();
     }
@@ -64,15 +57,13 @@ export class MemoryWebview {
             vscode.commands.registerCommand(MemoryWebview.VariableCommandType, node => {
                 const variable = node.variable;
                 if (isMemoryVariable(variable)) {
-                    this.show(variable.memoryReference);
+                    this.show({ memoryReference: variable.memoryReference.toString() });
                 }
             })
         );
     };
 
-    public async show(startAddress = 0): Promise<void> {
-        this.memoryOptions.startAddress = startAddress;
-
+    public async show(initialMemory?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void> {
         const baseExtensionUriString = this.extensionUri.toString();
         const distPathUri = vscode.Uri.parse(`${baseExtensionUriString}/dist/views`, true /* strict */);
         const mediaPathUri = vscode.Uri.parse(`${baseExtensionUriString}/media`, true /* strict */);
@@ -90,7 +81,7 @@ export class MemoryWebview {
 
         // Sets up an event listener to listen for messages passed from the webview view context
         // and executes code based on the message that is recieved
-        this.setWebviewMessageListener(panel);
+        this.setWebviewMessageListener(panel, initialMemory);
     }
 
     protected async getWebviewContent(panel: vscode.WebviewPanel): Promise<void> {
@@ -122,11 +113,11 @@ export class MemoryWebview {
         `;
     }
 
-    protected setWebviewMessageListener(panel: vscode.WebviewPanel): void {
+    protected setWebviewMessageListener(panel: vscode.WebviewPanel, options?: Partial<DebugProtocol.ReadMemoryArguments>): void {
         const participant = this.messenger.registerWebviewPanel(panel);
 
         const disposables = [
-            this.messenger.onNotification(readyType, () => this.refresh(participant), { sender: participant }),
+            this.messenger.onNotification(readyType, () => this.refresh(participant, options), { sender: participant }),
             this.messenger.onRequest(logMessageType, message => logger.info(message), { sender: participant }),
             this.messenger.onRequest(readMemoryType, request => this.readMemory(request), { sender: participant }),
             this.messenger.onRequest(writeMemoryType, request => this.writeMemory(request), { sender: participant }),
@@ -135,8 +126,8 @@ export class MemoryWebview {
         panel.onDidDispose(() => disposables.forEach(disposible => disposible.dispose()));
     }
 
-    protected async refresh(participant: WebviewIdMessageParticipant): Promise<void> {
-        this.messenger.sendRequest(setOptionsType, participant, this.memoryOptions);
+    protected async refresh(participant: WebviewIdMessageParticipant, options?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void> {
+        this.messenger.sendRequest(setOptionsType, participant, options);
     }
 
     protected async readMemory(request: DebugProtocol.ReadMemoryArguments): Promise<MemoryReadResult> {

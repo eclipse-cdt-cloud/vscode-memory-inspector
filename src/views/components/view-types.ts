@@ -14,9 +14,16 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
+import Long from 'long';
+
 export enum Endianness {
     Little = 'Little Endian',
     Big = 'Big Endian'
+}
+
+export interface Memory {
+    address: Long;
+    bytes: Uint8Array;
 }
 
 export interface TableRenderOptions {

@@ -17,17 +17,11 @@
 import type { DebugProtocol } from '@vscode/debugprotocol';
 import { NotificationType, RequestType } from 'vscode-messenger-common';
 
-export interface MemoryOptions {
-    startAddress: number;
-    locationOffset: number;
-    readLength: number;
-}
-
 export type MemoryReadResult = DebugProtocol.ReadMemoryResponse['body'];
 export type MemoryWriteResult = DebugProtocol.WriteMemoryResponse['body'];
 
 export const readyType: NotificationType<void> = { method: 'ready' };
 export const logMessageType: RequestType<string, void> = { method: 'logMessage' };
-export const setOptionsType: RequestType<MemoryOptions, void> = { method: 'setOptions' };
+export const setOptionsType: RequestType<Partial<DebugProtocol.ReadMemoryArguments | undefined>, void> = { method: 'setOptions' };
 export const readMemoryType: RequestType<DebugProtocol.ReadMemoryArguments, MemoryReadResult> = { method: 'readMemory' };
 export const writeMemoryType: RequestType<DebugProtocol.WriteMemoryArguments, MemoryWriteResult> = { method: 'writeMemory' };

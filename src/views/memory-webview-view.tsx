@@ -19,24 +19,21 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { Messenger } from 'vscode-messenger-webview';
 import { HOST_EXTENSION } from 'vscode-messenger-common';
-import { MemoryTable } from './components/memory-table';
 import {
-    MemoryOptions,
     readyType,
     logMessageType,
     setOptionsType,
     readMemoryType
 } from './memory-webview-common';
 import type { DebugProtocol } from '@vscode/debugprotocol';
-import { OptionsWidget } from './components/options-widget';
-
-export interface Memory {
-    address: Long;
-    bytes: Uint8Array;
-}
+import { Memory } from './components/view-types';
+import { MemoryWidget } from './components/memory-widget';
 
 interface MemoryState {
-    memory?: Memory
+    memory?: Memory;
+    memoryReference: string;
+    offset: number;
+    count: number;
 }
 
 class App extends React.Component<{}, MemoryState> {
@@ -54,7 +51,12 @@ class App extends React.Component<{}, MemoryState> {
 
     public constructor(props: {}) {
         super(props);
-        this.state = { memory: undefined };
+        this.state = {
+            memory: undefined,
+            memoryReference: '',
+            offset: 0,
+            count: 256,
+        };
     }
 
     public componentDidMount(): void {
@@ -63,23 +65,34 @@ class App extends React.Component<{}, MemoryState> {
     }
 
     public render(): React.ReactNode {
-        const { memory } = this.state;
-        return (
-            <div>
-                <OptionsWidget updateMemoryArguments={() => { }} updateRenderOptions={() => { }} />
-                <MemoryTable memory={memory} />
-            </div>
-        );
+        return <MemoryWidget
+            memory={this.state.memory}
+            memoryReference={this.state.memoryReference}
+            offset={this.state.offset}
+            count={this.state.count}
+            updateMemoryArguments={this.justSetState}
+            refreshMemory={this.refreshMemory}
+        />;
     }
 
-    protected async setOptions(options: MemoryOptions): Promise<void> {
-        this.messenger.sendRequest(logMessageType, HOST_EXTENSION, JSON.stringify(options));
+    protected justSetState = (newState: Partial<MemoryState>) => this.setState(prevState => ({ ...prevState, ...newState }));
 
-        const response = await this.messenger.sendRequest(readMemoryType, HOST_EXTENSION, {
-            memoryReference: `${options.startAddress}`,
-            count: options.readLength,
-            offset: options.locationOffset
-        });
+    protected async setOptions(options?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void> {
+        this.messenger.sendRequest(logMessageType, HOST_EXTENSION, JSON.stringify(options));
+        this.setState(prevState => ({ ...prevState, ...options }));
+        return this.fetchMemory(options);
+    }
+
+    protected refreshMemory = () => { this.fetchMemory(); };
+
+    protected async fetchMemory(partialOptions?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void> {
+        const completeOptions = {
+            memoryReference: partialOptions?.memoryReference || this.state.memoryReference,
+            offset: partialOptions?.offset ?? this.state.offset,
+            count: partialOptions?.count ?? this.state.count
+        };
+
+        const response = await this.messenger.sendRequest(readMemoryType, HOST_EXTENSION, completeOptions);
 
         this.setState({
             memory: this.convertMemory(response)

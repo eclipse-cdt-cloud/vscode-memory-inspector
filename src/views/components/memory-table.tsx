@@ -21,8 +21,7 @@ import {
     VSCodeDataGridRow,
     VSCodeDataGridCell
 } from '@vscode/webview-ui-toolkit/react';
-import { Memory } from '../memory-webview-view';
-import { Endianness } from './view-types';
+import { Endianness, Memory } from './view-types';
 
 interface VariableDecoration {
     name: string;
@@ -74,14 +73,12 @@ interface RowOptions {
     isHighlighted?: boolean;
 }
 
-const byteSize = 8;
-const bytesPerGroup = 1;
-const groupsPerRow = 4;
-
-const endianness: Endianness = Endianness.Little;
-
 interface MemoryTableProps {
     memory?: Memory;
+    endianness: Endianness;
+    byteSize: number;
+    bytesPerGroup: number;
+    groupsPerRow: number;
 }
 
 export class MemoryTable extends React.Component<MemoryTableProps> {
@@ -118,7 +115,7 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
     }
 
     protected *renderRows(iteratee: Uint8Array, address: Long): IterableIterator<React.ReactNode> {
-        const bytesPerRow = bytesPerGroup * groupsPerRow;
+        const bytesPerRow = this.props.bytesPerGroup * this.props.groupsPerRow;
         let rowsYielded = 0;
         let groups = [];
         let ascii = '';
@@ -129,7 +126,7 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
             ascii += groupAscii;
             variables.push(...groupVariables);
             isRowHighlighted = isRowHighlighted || isHighlighted;
-            if (groups.length === groupsPerRow || index === iteratee.length - 1) {
+            if (groups.length === this.props.groupsPerRow || index === iteratee.length - 1) {
                 const rowAddress = address.add(bytesPerRow * rowsYielded);
                 const options = {
                     address: `0x${rowAddress.toString(16)}`,
@@ -160,9 +157,9 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
             ascii += byteAscii;
             variables.push(...byteVariables);
             isGroupHighlighted = isGroupHighlighted || isHighlighted;
-            if (bytesInGroup.length === bytesPerGroup || index === iteratee.length - 1) {
+            if (bytesInGroup.length === this.props.bytesPerGroup || index === iteratee.length - 1) {
                 const itemID = address.add(index);
-                if (endianness === Endianness.Little) {
+                if (this.props.endianness === Endianness.Little) {
                     bytesInGroup.reverse();
                 }
                 yield {
@@ -181,7 +178,7 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
     }
 
     protected *renderBytes(iteratee: Uint8Array, address: Long): IterableIterator<ByteData> {
-        const itemsPerByte = byteSize / 8;
+        const itemsPerByte = this.props.byteSize / 8;
         let currentByte = 0;
         let chunksInByte: React.ReactNode[] = [];
         let variables: VariableDecoration[] = [];
