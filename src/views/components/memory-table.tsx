@@ -22,6 +22,7 @@ import {
     VSCodeDataGridCell
 } from '@vscode/webview-ui-toolkit/react';
 import { Memory } from '../memory-webview-view';
+import { Endianness } from './view-types';
 
 interface VariableDecoration {
     name: string;
@@ -71,11 +72,6 @@ interface RowOptions {
     doShowDivider?: boolean;
     index: number;
     isHighlighted?: boolean;
-}
-
-enum Endianness {
-    Little = 'Little Endian',
-    Big = 'Big Endian'
 }
 
 const byteSize = 8;

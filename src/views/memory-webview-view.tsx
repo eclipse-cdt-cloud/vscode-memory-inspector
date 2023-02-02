@@ -28,6 +28,7 @@ import {
     readMemoryType
 } from './memory-webview-common';
 import type { DebugProtocol } from '@vscode/debugprotocol';
+import { OptionsWidget } from './components/options-widget';
 
 export interface Memory {
     address: Long;
@@ -65,6 +66,7 @@ class App extends React.Component<{}, MemoryState> {
         const { memory } = this.state;
         return (
             <div>
+                <OptionsWidget updateMemoryArguments={() => { }} updateRenderOptions={() => { }} />
                 <MemoryTable memory={memory} />
             </div>
         );
