@@ -70,12 +70,12 @@ class App extends React.Component<{}, MemoryState> {
             memoryReference={this.state.memoryReference}
             offset={this.state.offset}
             count={this.state.count}
-            updateMemoryArguments={this.justSetState}
+            updateMemoryArguments={this.updateMemoryState}
             refreshMemory={this.refreshMemory}
         />;
     }
 
-    protected justSetState = (newState: Partial<MemoryState>) => this.setState(prevState => ({ ...prevState, ...newState }));
+    protected updateMemoryState = (newState: Partial<MemoryState>) => this.setState(prevState => ({ ...prevState, ...newState }));
 
     protected async setOptions(options?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void> {
         this.messenger.sendRequest(logMessageType, HOST_EXTENSION, JSON.stringify(options));

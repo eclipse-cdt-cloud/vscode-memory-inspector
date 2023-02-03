@@ -37,10 +37,6 @@ interface MemoryWidgetState {
 }
 
 const defaultOptions: MemoryWidgetState = {
-    // columnOptions: [
-    //     { label: 'Variables', doRender: true },
-    //     { label: 'ASCII', doRender: false },
-    // ],
     endianness: Endianness.Little,
     byteSize: 8,
     bytesPerGroup: 1,
@@ -64,7 +60,7 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 bytesPerGroup={this.state.bytesPerGroup}
                 groupsPerRow={this.state.groupsPerRow}
                 updateMemoryArguments={this.props.updateMemoryArguments}
-                updateRenderOptions={this.justSetState}
+                updateRenderOptions={this.updateRenderOptions}
                 refreshMemory={this.props.refreshMemory}
             />
             <MemoryTable
@@ -77,5 +73,5 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
         </>;
     }
 
-    protected justSetState = (newState: Partial<MemoryWidgetState>) => this.setState(prevState => ({ ...prevState, ...newState }));
+    protected updateRenderOptions = (newState: Partial<MemoryWidgetState>) => this.setState(prevState => ({ ...prevState, ...newState }));
 }

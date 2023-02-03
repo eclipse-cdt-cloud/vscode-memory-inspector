@@ -38,17 +38,11 @@ const enum InputId {
     Length = 'length',
     BytesPerGroup = 'bytes-per-group',
     GroupsPerRow = 'groups-per-row',
-    Variables = 'variables',
-    Ascii = 'ascii',
 }
 
 export class OptionsWidget extends React.Component<OptionsWidgetProps, {}> {
     override render(): React.ReactNode {
-        return <div>
-            <div className="title-bar">
-                <div className="title"></div>
-                <div className="settings-toggle"></div>
-            </div>
+        return <div className='memory-options-widget'>
             <div className="core-options">
                 <VSCodeTextField id={InputId.Address} onChange={this.handleInputChange} value={this.props.memoryReference}>Address</VSCodeTextField>
                 <VSCodeTextField id={InputId.Offset} onChange={this.handleInputChange} value={this.props.offset.toString()}>Offset</VSCodeTextField>
@@ -73,15 +67,6 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, {}> {
                     <VSCodeOption>16</VSCodeOption>
                     <VSCodeOption>32</VSCodeOption>
                 </VSCodeDropdown>
-                <label>Columns</label>
-                <div className="multi-select-checkbox">
-                    <input type="checkbox" id={InputId.Variables} checked={false} />
-                    <label htmlFor={InputId.Variables}>Variables</label>
-                </div>
-                <div className="multi-select-checkbox">
-                    <input type="checkbox" id={InputId.Ascii} checked={false} />
-                    <label htmlFor={InputId.Ascii}>ASCII</label>
-                </div>
             </div>
         </div>;
     }
