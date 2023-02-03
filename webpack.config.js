@@ -77,7 +77,6 @@ module.exports = [
                 buffer: require.resolve('buffer')
             }
         },
-        optimization: { minimize: false },
         plugins: [
             new webpack.ProvidePlugin({
                 Buffer: ['buffer', 'Buffer']
