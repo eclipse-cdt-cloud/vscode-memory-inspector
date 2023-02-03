@@ -64,14 +64,14 @@ export class MemoryWebview {
     };
 
     public async show(initialMemory?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void> {
-        const baseExtensionUriString = this.extensionUri.toString();
-        const distPathUri = vscode.Uri.parse(`${baseExtensionUriString}/dist/views`, true /* strict */);
-        const mediaPathUri = vscode.Uri.parse(`${baseExtensionUriString}/media`, true /* strict */);
+        const distPathUri = vscode.Uri.joinPath(this.extensionUri, 'dist', 'views');
+        const mediaPathUri = vscode.Uri.joinPath(this.extensionUri, 'media');
+        const codiconPathUri = vscode.Uri.joinPath(this.extensionUri, 'node_modules', '@vscode', 'codicons', 'dist');
 
         const options = {
             retainContextWhenHidden: true,
             enableScripts: true,                            // enable scripts in the webview
-            localResourceRoots: [distPathUri, mediaPathUri] // restrict extension's local file access
+            localResourceRoots: [distPathUri, mediaPathUri, codiconPathUri] // restrict extension's local file access
         };
 
         const panel = vscode.window.createWebviewPanel(MemoryWebview.ViewType, 'Memory Inspector', vscode.ViewColumn.Active, options);
@@ -92,10 +92,8 @@ export class MemoryWebview {
             'memory.js'
         ));
 
-        // webview.cspSource does not include all CSP sources for VS Code Web
-        const webviewUri = panel.webview.asWebviewUri(this.extensionUri);
-        const baseSource = `${webviewUri.scheme}://${webviewUri.authority}`;
-        const cspSrc = `${panel.webview.cspSource} ${baseSource}`;
+        const cspSrc = panel.webview.cspSource;
+        const codiconsUri = panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'node_modules', '@vscode/codicons', 'dist', 'codicon.css'));
 
         panel.webview.html = `
             <!DOCTYPE html>
@@ -103,8 +101,9 @@ export class MemoryWebview {
                 <head>
                     <meta charset='UTF-8'>
                     <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-                    <meta http-equiv='Content-Security-Policy' content="default-src 'none'; script-src ${cspSrc}; style-src ${cspSrc} 'unsafe-inline'; font-src ${cspSrc};">
+                    <meta http-equiv='Content-Security-Policy' content="default-src 'none'; font-src ${cspSrc}; style-src ${cspSrc} 'unsafe-inline'; script-src ${cspSrc};">
                     <script type='module' src='${mainUri}'></script>
+                    <link href="${codiconsUri}" rel="stylesheet" />
                 </head>
                 <body>
                     <div id='root'></div>

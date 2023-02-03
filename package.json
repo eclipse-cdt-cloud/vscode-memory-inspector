@@ -32,6 +32,7 @@
     "serve": "serve --cors -p 3333"
   },
   "dependencies": {
+    "@vscode/codicons": "^0.0.32",
     "@vscode/webview-ui-toolkit": "^1.2.0",
     "long": "^5.2.1",
     "react": "^18.2.0",
