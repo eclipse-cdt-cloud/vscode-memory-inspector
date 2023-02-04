@@ -15,19 +15,18 @@
  ********************************************************************************/
 
 import * as vscode from 'vscode';
+import type { DebugProtocol } from '@vscode/debugprotocol';
 import * as manifest from '../manifest';
 import { Messenger } from 'vscode-messenger';
 import { WebviewIdMessageParticipant } from 'vscode-messenger-common';
 import {
-    MemoryOptions,
-    MemoryReadRequest,
-    MemoryReadResponse,
-    MemoryWriteRequest,
     readyType,
     logMessageType,
     setOptionsType,
     readMemoryType,
-    writeMemoryType
+    writeMemoryType,
+    MemoryReadResult,
+    MemoryWriteResult
 } from './memory-webview-common';
 import { MemoryProvider } from '../memory-provider';
 import { logger } from '../logger';
@@ -48,12 +47,6 @@ export class MemoryWebview {
 
     protected messenger: Messenger;
 
-    protected memoryOptions: MemoryOptions = {
-        startAddress: 0,
-        locationOffset: 0,
-        readLength: 256
-    };
-
     public constructor(protected extensionUri: vscode.Uri, protected memoryProvider: MemoryProvider) {
         this.messenger = new Messenger();
     }
@@ -64,33 +57,31 @@ export class MemoryWebview {
             vscode.commands.registerCommand(MemoryWebview.VariableCommandType, node => {
                 const variable = node.variable;
                 if (isMemoryVariable(variable)) {
-                    this.show(variable.memoryReference);
+                    this.show({ memoryReference: variable.memoryReference.toString() });
                 }
             })
         );
     };
 
-    public async show(startAddress = 0): Promise<void> {
-        this.memoryOptions.startAddress = startAddress;
-
-        const baseExtensionUriString = this.extensionUri.toString();
-        const distPathUri = vscode.Uri.parse(`${baseExtensionUriString}/dist/views`, true /* strict */);
-        const mediaPathUri = vscode.Uri.parse(`${baseExtensionUriString}/media`, true /* strict */);
+    public async show(initialMemory?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void> {
+        const distPathUri = vscode.Uri.joinPath(this.extensionUri, 'dist', 'views');
+        const mediaPathUri = vscode.Uri.joinPath(this.extensionUri, 'media');
+        const codiconPathUri = vscode.Uri.joinPath(this.extensionUri, 'node_modules', '@vscode', 'codicons', 'dist');
 
         const options = {
             retainContextWhenHidden: true,
             enableScripts: true,                            // enable scripts in the webview
-            localResourceRoots: [distPathUri, mediaPathUri] // restrict extension's local file access
+            localResourceRoots: [distPathUri, mediaPathUri, codiconPathUri] // restrict extension's local file access
         };
 
-        const panel = vscode.window.createWebviewPanel(MemoryWebview.ViewType, 'Memory Inspector', vscode.ViewColumn.Two, options);
+        const panel = vscode.window.createWebviewPanel(MemoryWebview.ViewType, 'Memory Inspector', vscode.ViewColumn.Active, options);
 
         // Set HTML content
         await this.getWebviewContent(panel);
 
         // Sets up an event listener to listen for messages passed from the webview view context
         // and executes code based on the message that is recieved
-        this.setWebviewMessageListener(panel);
+        this.setWebviewMessageListener(panel, initialMemory);
     }
 
     protected async getWebviewContent(panel: vscode.WebviewPanel): Promise<void> {
@@ -101,10 +92,8 @@ export class MemoryWebview {
             'memory.js'
         ));
 
-        // webview.cspSource does not include all CSP sources for VS Code Web
-        const webviewUri = panel.webview.asWebviewUri(this.extensionUri);
-        const baseSource = `${webviewUri.scheme}://${webviewUri.authority}`;
-        const cspSrc = `${panel.webview.cspSource} ${baseSource}`;
+        const cspSrc = panel.webview.cspSource;
+        const codiconsUri = panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'node_modules', '@vscode/codicons', 'dist', 'codicon.css'));
 
         panel.webview.html = `
             <!DOCTYPE html>
@@ -112,8 +101,9 @@ export class MemoryWebview {
                 <head>
                     <meta charset='UTF-8'>
                     <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-                    <meta http-equiv='Content-Security-Policy' content="default-src 'none'; script-src ${cspSrc}; style-src ${cspSrc} 'unsafe-inline'; font-src ${cspSrc};">
+                    <meta http-equiv='Content-Security-Policy' content="default-src 'none'; font-src ${cspSrc}; style-src ${cspSrc} 'unsafe-inline'; script-src ${cspSrc};">
                     <script type='module' src='${mainUri}'></script>
+                    <link href="${codiconsUri}" rel="stylesheet" />
                 </head>
                 <body>
                     <div id='root'></div>
@@ -122,35 +112,28 @@ export class MemoryWebview {
         `;
     }
 
-    protected setWebviewMessageListener(panel: vscode.WebviewPanel): void {
+    protected setWebviewMessageListener(panel: vscode.WebviewPanel, options?: Partial<DebugProtocol.ReadMemoryArguments>): void {
         const participant = this.messenger.registerWebviewPanel(panel);
 
-        const disposibles = [
-            this.messenger.onNotification(readyType, () => this.refresh(participant), {sender: participant}),
-            this.messenger.onRequest(logMessageType, message => logger.info(message), {sender: participant}),
-            this.messenger.onRequest(readMemoryType, request => this.readMemory(request), {sender: participant}),
-            this.messenger.onRequest(writeMemoryType, request => this.writeMemory(request), {sender: participant}),
+        const disposables = [
+            this.messenger.onNotification(readyType, () => this.refresh(participant, options), { sender: participant }),
+            this.messenger.onRequest(logMessageType, message => logger.info(message), { sender: participant }),
+            this.messenger.onRequest(readMemoryType, request => this.readMemory(request), { sender: participant }),
+            this.messenger.onRequest(writeMemoryType, request => this.writeMemory(request), { sender: participant }),
         ];
 
-        panel.onDidDispose(() => disposibles.forEach(disposible => disposible.dispose()));
+        panel.onDidDispose(() => disposables.forEach(disposible => disposible.dispose()));
     }
 
-    protected async refresh(participant: WebviewIdMessageParticipant): Promise<void> {
-        this.messenger.sendRequest(setOptionsType, participant, this.memoryOptions);
+    protected async refresh(participant: WebviewIdMessageParticipant, options?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void> {
+        this.messenger.sendRequest(setOptionsType, participant, options);
     }
 
-    protected async readMemory(request: MemoryReadRequest): Promise<MemoryReadResponse> {
-        const result = await this.memoryProvider.readMemory(request);
-
-        if (!result?.data) {
-            throw new Error('Received no data from debug adapter.');
-        }
-
-        return result as MemoryReadResponse;
+    protected async readMemory(request: DebugProtocol.ReadMemoryArguments): Promise<MemoryReadResult> {
+        return this.memoryProvider.readMemory(request);
     }
 
-    protected async writeMemory(request: MemoryWriteRequest): Promise<number | undefined> {
-        const result = await this.memoryProvider.writeMemory(request);
-        return result?.bytesWritten;
+    protected async writeMemory(request: DebugProtocol.WriteMemoryArguments): Promise<MemoryWriteResult> {
+        return this.memoryProvider.writeMemory(request);
     }
 }

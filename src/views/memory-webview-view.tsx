@@ -19,23 +19,21 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { Messenger } from 'vscode-messenger-webview';
 import { HOST_EXTENSION } from 'vscode-messenger-common';
-import { MemoryTable } from './components/memory-table';
 import {
-    MemoryOptions,
-    MemoryReadResponse,
     readyType,
     logMessageType,
     setOptionsType,
     readMemoryType
 } from './memory-webview-common';
-
-export interface Memory {
-    address: Long;
-    bytes: Uint8Array;
-}
+import type { DebugProtocol } from '@vscode/debugprotocol';
+import { Memory } from './components/view-types';
+import { MemoryWidget } from './components/memory-widget';
 
 interface MemoryState {
-    memory?: Memory
+    memory?: Memory;
+    memoryReference: string;
+    offset: number;
+    count: number;
 }
 
 class App extends React.Component<{}, MemoryState> {
@@ -53,7 +51,12 @@ class App extends React.Component<{}, MemoryState> {
 
     public constructor(props: {}) {
         super(props);
-        this.state = { memory: undefined };
+        this.state = {
+            memory: undefined,
+            memoryReference: '',
+            offset: 0,
+            count: 256,
+        };
     }
 
     public componentDidMount(): void {
@@ -62,41 +65,47 @@ class App extends React.Component<{}, MemoryState> {
     }
 
     public render(): React.ReactNode {
-        const { memory } = this.state;
-        return (
-            <div>
-                <MemoryTable memory={memory}>
-                </MemoryTable>
-            </div>
-        );
+        return <MemoryWidget
+            memory={this.state.memory}
+            memoryReference={this.state.memoryReference}
+            offset={this.state.offset}
+            count={this.state.count}
+            updateMemoryArguments={this.updateMemoryState}
+            refreshMemory={this.refreshMemory}
+        />;
     }
 
-    protected async setOptions(options: MemoryOptions): Promise<void> {
-        this.messenger.sendRequest(logMessageType, HOST_EXTENSION, JSON.stringify(options));
+    protected updateMemoryState = (newState: Partial<MemoryState>) => this.setState(prevState => ({ ...prevState, ...newState }));
 
-        const response = await this.messenger.sendRequest(readMemoryType, HOST_EXTENSION, {
-            memoryReference: `${options.startAddress}`,
-            count: options.readLength,
-            offset: options.locationOffset
-        });
+    protected async setOptions(options?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void> {
+        this.messenger.sendRequest(logMessageType, HOST_EXTENSION, JSON.stringify(options));
+        this.setState(prevState => ({ ...prevState, ...options }));
+        return this.fetchMemory(options);
+    }
+
+    protected refreshMemory = () => { this.fetchMemory(); };
+
+    protected async fetchMemory(partialOptions?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void> {
+        const completeOptions = {
+            memoryReference: partialOptions?.memoryReference || this.state.memoryReference,
+            offset: partialOptions?.offset ?? this.state.offset,
+            count: partialOptions?.count ?? this.state.count
+        };
+
+        const response = await this.messenger.sendRequest(readMemoryType, HOST_EXTENSION, completeOptions);
 
         this.setState({
             memory: this.convertMemory(response)
         });
     }
 
-    protected convertMemory(result: MemoryReadResponse): Memory {
-        if (result.address.startsWith('0x')) {
-            // Assume hex
-            const bytes = Uint8Array.from(Buffer.from(result.data, 'hex'));
-            const address = Long.fromString(result.address, true, 16);
-            return { bytes, address };
-        } else {
-            // Assume base64
-            const bytes = Uint8Array.from(Buffer.from(result.data, 'base64'));
-            const address = Long.fromString(result.address, true, 10);
-            return { bytes, address };
-        }
+    protected convertMemory(result: DebugProtocol.ReadMemoryResponse['body']): Memory {
+        if (!result?.data) { throw new Error('No memory provided!'); }
+        const address = result.address.startsWith('0x')
+            ? Long.fromString(result.address, true, 16)
+            : Long.fromString(result.address, true, 10);
+        const bytes = Uint8Array.from(Buffer.from(result.data, 'base64'));
+        return { bytes, address };
     }
 }
 

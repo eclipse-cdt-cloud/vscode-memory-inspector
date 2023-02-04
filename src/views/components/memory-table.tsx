@@ -21,7 +21,7 @@ import {
     VSCodeDataGridRow,
     VSCodeDataGridCell
 } from '@vscode/webview-ui-toolkit/react';
-import { Memory } from '../memory-webview-view';
+import { Endianness, Memory } from './view-types';
 
 interface VariableDecoration {
     name: string;
@@ -73,20 +73,12 @@ interface RowOptions {
     isHighlighted?: boolean;
 }
 
-enum Endianness {
-    Little = 'Little Endian',
-    Big = 'Big Endian'
-}
-
-const byteSize = 8;
-const bytesPerGroup = 1;
-const groupsPerRow = 4;
-
-const endianness: Endianness = Endianness.Little;
-
 interface MemoryTableProps {
     memory?: Memory;
-    children: React.ReactNode;
+    endianness: Endianness;
+    byteSize: number;
+    bytesPerGroup: number;
+    groupsPerRow: number;
 }
 
 export class MemoryTable extends React.Component<MemoryTableProps> {
@@ -123,7 +115,7 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
     }
 
     protected *renderRows(iteratee: Uint8Array, address: Long): IterableIterator<React.ReactNode> {
-        const bytesPerRow = bytesPerGroup * groupsPerRow;
+        const bytesPerRow = this.props.bytesPerGroup * this.props.groupsPerRow;
         let rowsYielded = 0;
         let groups = [];
         let ascii = '';
@@ -134,7 +126,7 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
             ascii += groupAscii;
             variables.push(...groupVariables);
             isRowHighlighted = isRowHighlighted || isHighlighted;
-            if (groups.length === groupsPerRow || index === iteratee.length - 1) {
+            if (groups.length === this.props.groupsPerRow || index === iteratee.length - 1) {
                 const rowAddress = address.add(bytesPerRow * rowsYielded);
                 const options = {
                     address: `0x${rowAddress.toString(16)}`,
@@ -161,12 +153,15 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
         let variables = [];
         let isGroupHighlighted = false;
         for (const { node, index, ascii: byteAscii, variables: byteVariables, isHighlighted = false } of this.renderBytes(iteratee, address)) {
-            this.buildGroupByEndianness(bytesInGroup, node);
+            bytesInGroup.push(node);
             ascii += byteAscii;
             variables.push(...byteVariables);
             isGroupHighlighted = isGroupHighlighted || isHighlighted;
-            if (bytesInGroup.length === bytesPerGroup || index === iteratee.length - 1) {
+            if (bytesInGroup.length === this.props.bytesPerGroup || index === iteratee.length - 1) {
                 const itemID = address.add(index);
+                if (this.props.endianness === Endianness.Little) {
+                    bytesInGroup.reverse();
+                }
                 yield {
                     node: <span className='byte-group' key={itemID.toString(16)}>{bytesInGroup}</span>,
                     ascii,
@@ -183,7 +178,7 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
     }
 
     protected *renderBytes(iteratee: Uint8Array, address: Long): IterableIterator<ByteData> {
-        const itemsPerByte = byteSize / 8;
+        const itemsPerByte = this.props.byteSize / 8;
         let currentByte = 0;
         let chunksInByte: React.ReactNode[] = [];
         let variables: VariableDecoration[] = [];
@@ -257,14 +252,6 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
             ? ' ' : isPrintableAsAscii(byte) ? String.fromCharCode(byte) : '.';
     }
 
-    protected buildGroupByEndianness(oldBytes: React.ReactNode[], newByte: React.ReactNode): void {
-        if (endianness === Endianness.Big) {
-            oldBytes.push(newByte);
-        } else {
-            oldBytes.unshift(newByte);
-        }
-    }
-
     protected renderRow(options: RowOptions, getRowAttributes = this.getRowAttributes.bind(this)): React.ReactNode {
         const { address, groups } = options;
         const { className, style, title } = getRowAttributes(options);
@@ -276,8 +263,8 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
                 title={title}
                 key={address}
             >
-                <VSCodeDataGridCell gridColumn='1'>{address}</VSCodeDataGridCell>
-                <VSCodeDataGridCell gridColumn='2'>{groups}</VSCodeDataGridCell>
+                <VSCodeDataGridCell style={{ fontFamily: 'var(--vscode-editor-font-family)' }} gridColumn='1'>{address}</VSCodeDataGridCell>
+                <VSCodeDataGridCell style={{ fontFamily: 'var(--vscode-editor-font-family)' }} gridColumn='2'>{groups}</VSCodeDataGridCell>
             </VSCodeDataGridRow>
         );
     }
