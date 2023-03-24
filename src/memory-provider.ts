@@ -18,6 +18,7 @@ import * as vscode from 'vscode';
 import * as manifest from './manifest';
 import { DebugProtocol } from '@vscode/debugprotocol';
 import { MemoryReadResult, MemoryWriteResult } from './views/memory-webview-common';
+import { AdapterRegistry } from './adapter-registry/adapter-registry';
 
 export interface LabeledUint8Array extends Uint8Array {
     label?: string;
@@ -32,20 +33,35 @@ export class MemoryProvider {
 
     protected readonly sessions = new Map<string, DebugProtocol.Capabilities | undefined>();
 
-    public async activate(context: vscode.ExtensionContext): Promise<void> {
-        const createDebugAdapterTracker = (session: vscode.DebugSession): vscode.DebugAdapterTracker => ({
-            onWillStartSession: () => this.debugSessionStarted(session),
-            onWillStopSession: () => this.debugSessionTerminated(session),
-            onDidSendMessage: message => {
-                if (isInitializeMessage(message)) {
-                    // Check for right capabilities in the adapter
-                    this.sessions.set(session.id, message.body);
-                    if (vscode.debug.activeDebugSession?.id === session.id) {
-                        this.setContext(message.body);
+    public async activate(context: vscode.ExtensionContext, registry: AdapterRegistry): Promise<void> {
+        const createDebugAdapterTracker = (session: vscode.DebugSession): Required<vscode.DebugAdapterTracker> => {
+            const handlerForSession = registry.getHandlerForSession(session);
+            const contributedTracker = handlerForSession?.initializeAdapterTracker?.(session);
+
+            return ({
+                onWillStartSession: () => {
+                    this.debugSessionStarted(session);
+                    contributedTracker?.onWillStartSession?.();
+                },
+                onWillStopSession: () => {
+                    this.debugSessionTerminated(session);
+                    contributedTracker?.onWillStopSession?.();
+                },
+                onDidSendMessage: message => {
+                    if (isInitializeMessage(message)) {
+                        // Check for right capabilities in the adapter
+                        this.sessions.set(session.id, message.body);
+                        if (vscode.debug.activeDebugSession?.id === session.id) {
+                            this.setContext(message.body);
+                        }
                     }
-                }
-            }
-        });
+                    contributedTracker?.onDidSendMessage?.(message);
+                },
+                onError: error => { contributedTracker?.onError?.(error); },
+                onExit: (code, signal) => { contributedTracker?.onExit?.(code, signal); },
+                onWillReceiveMessage: message => { contributedTracker?.onWillReceiveMessage?.(message); }
+            });
+        };
 
         context.subscriptions.push(
             vscode.debug.registerDebugAdapterTrackerFactory('*', { createDebugAdapterTracker }),
