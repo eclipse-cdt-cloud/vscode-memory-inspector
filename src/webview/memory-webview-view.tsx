@@ -14,7 +14,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-import Long from 'long';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { HOST_EXTENSION } from 'vscode-messenger-common';
@@ -83,9 +82,7 @@ class App extends React.Component<{}, MemoryState> {
 
     protected convertMemory(result: DebugProtocol.ReadMemoryResponse['body']): Memory {
         if (!result?.data) { throw new Error('No memory provided!'); }
-        const address = result.address.startsWith('0x')
-            ? Long.fromString(result.address, true, 16)
-            : Long.fromString(result.address, true, 10);
+        const address = BigInt(result.address);
         const bytes = Uint8Array.from(Buffer.from(result.data, 'base64'));
         return { bytes, address };
     }

@@ -15,7 +15,6 @@
  ********************************************************************************/
 
 import type { DebugProtocol } from '@vscode/debugprotocol';
-import type Long from 'long';
 import type * as React from 'react';
 import { areRangesEqual, LongMemoryRange } from '../../common/memory-range';
 import deepequal from 'fast-deep-equal';
@@ -26,7 +25,7 @@ export enum Endianness {
 }
 
 export interface Memory {
-    address: Long;
+    address: bigint;
     bytes: Uint8Array;
 }
 

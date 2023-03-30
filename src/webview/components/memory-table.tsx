@@ -15,7 +15,6 @@
  ********************************************************************************/
 
 import React from 'react';
-import Long from 'long';
 import {
     VSCodeDataGrid,
     VSCodeDataGridRow,
@@ -114,7 +113,7 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
         return [...this.renderRows(this.props.memory.bytes, this.props.memory.address)];
     }
 
-    protected *renderRows(iteratee: Uint8Array, address: Long): IterableIterator<React.ReactNode> {
+    protected *renderRows(iteratee: Uint8Array, address: bigint): IterableIterator<React.ReactNode> {
         const bytesPerRow = this.props.bytesPerGroup * this.props.groupsPerRow;
         let rowsYielded = 0;
         let groups = [];
@@ -127,7 +126,7 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
             variables.push(...groupVariables);
             isRowHighlighted = isRowHighlighted || isHighlighted;
             if (groups.length === this.props.groupsPerRow || index === iteratee.length - 1) {
-                const rowAddress = address.add(bytesPerRow * rowsYielded);
+                const rowAddress = address + BigInt(bytesPerRow * rowsYielded);
                 const options = {
                     address: `0x${rowAddress.toString(16)}`,
                     doShowDivider: (rowsYielded % 4) === 3,
@@ -147,7 +146,7 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
         }
     }
 
-    protected *renderGroups(iteratee: Uint8Array, address: Long): IterableIterator<GroupData> {
+    protected *renderGroups(iteratee: Uint8Array, address: bigint): IterableIterator<GroupData> {
         let bytesInGroup: React.ReactNode[] = [];
         let ascii = '';
         let variables = [];
@@ -158,7 +157,7 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
             variables.push(...byteVariables);
             isGroupHighlighted = isGroupHighlighted || isHighlighted;
             if (bytesInGroup.length === this.props.bytesPerGroup || index === iteratee.length - 1) {
-                const itemID = address.add(index);
+                const itemID = address + BigInt(index);
                 if (this.props.endianness === Endianness.Little) {
                     bytesInGroup.reverse();
                 }
@@ -177,7 +176,7 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
         }
     }
 
-    protected *renderBytes(iteratee: Uint8Array, address: Long): IterableIterator<ByteData> {
+    protected *renderBytes(iteratee: Uint8Array, address: bigint): IterableIterator<ByteData> {
         const itemsPerByte = this.props.byteSize / 8;
         let currentByte = 0;
         let chunksInByte: React.ReactNode[] = [];
@@ -192,7 +191,7 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
                 variables.push(variable);
             }
             if (chunksInByte.length === itemsPerByte || index === iteratee.length - 1) {
-                const itemID = address.add(index);
+                const itemID = address + BigInt(index);
                 const ascii = this.getASCIIForSingleByte(currentByte);
                 yield {
                     node: <span className='single-byte' key={itemID.toString(16)}>{chunksInByte}</span>,
@@ -209,10 +208,10 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
         }
     }
 
-    protected *renderArrayItems(iteratee: Uint8Array, address: Long): IterableIterator<ItemData> {
+    protected *renderArrayItems(iteratee: Uint8Array, address: bigint): IterableIterator<ItemData> {
         const getBitAttributes = this.getBitAttributes.bind(this);
         for (let i = 0; i < iteratee.length; i += 1) {
-            const itemID = address.add(i).toString(16);
+            const itemID = (address + BigInt(i)).toString(16);
             const { content = '', className, style, variable, title, isHighlighted } = getBitAttributes(i, iteratee, address);
             const node = (
                 <span
@@ -235,7 +234,7 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
         }
     }
 
-    protected getBitAttributes(arrayOffset: number, iteratee: Uint8Array, _address: Long): Partial<FullNodeAttributes> {
+    protected getBitAttributes(arrayOffset: number, iteratee: Uint8Array, _address: bigint): Partial<FullNodeAttributes> {
         const classNames = ['eight-bits'];
         return {
             className: classNames.join(' '),

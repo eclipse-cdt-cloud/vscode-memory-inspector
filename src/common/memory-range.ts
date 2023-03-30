@@ -14,8 +14,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-import type Long from 'long';
-
 /** Suitable for transmission as JSON */
 export interface MemoryRange {
     /** String representation of the address at which the range begins. May exceed maximum safe JS integer. */
@@ -31,13 +29,13 @@ export interface MemoryRange {
 
 /** Suitable for arithemetic */
 export interface LongMemoryRange {
-    startAddress: Long;
-    endAddress?: Long;
+    startAddress: bigint;
+    endAddress?: bigint;
 }
 
-export function isWithin(candidate: Long, container: LongMemoryRange): boolean {
-    if (container.endAddress === undefined) { return container.startAddress.equals(candidate); }
-    return container.startAddress.lessThanOrEqual(candidate) && container.endAddress.greaterThan(candidate);
+export function isWithin(candidate: bigint, container: LongMemoryRange): boolean {
+    if (container.endAddress === undefined) { return container.startAddress === candidate; }
+    return container.startAddress <= candidate && container.endAddress > candidate;
 }
 
 export function doOverlap(one: LongMemoryRange, other: LongMemoryRange): boolean {
@@ -46,11 +44,7 @@ export function doOverlap(one: LongMemoryRange, other: LongMemoryRange): boolean
 }
 
 export function areRangesEqual(one: LongMemoryRange, other: LongMemoryRange): boolean {
-    return one.startAddress.equals(other.startAddress) && compareUndefinedOrLong(one.endAddress, other.endAddress);
-}
-
-function compareUndefinedOrLong(one: Long | undefined, other: Long | undefined): boolean {
-    return one === other || (one !== undefined && other !== undefined && one?.equals(other));
+    return one.startAddress === other.startAddress && one.endAddress === other.endAddress;
 }
 
 export interface VariableMetadata {

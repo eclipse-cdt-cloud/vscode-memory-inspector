@@ -20,7 +20,6 @@ import { getVariables } from '../../common/messaging';
 import { messenger } from '../view-messenger';
 import { Decoration } from '../utils/view-types';
 import { EventEmitter, IEvent } from '../utils/events';
-import Long from 'long';
 import { ColumnContribution } from '../columns/column-contribution-service';
 import { Decorator } from '../decorations/decoration-service';
 import { ReactNode } from 'react';
@@ -47,10 +46,13 @@ export class VariableDecorator implements ColumnContribution, Decorator {
         const visibleVariables = (await messenger.sendRequest(getVariables, HOST_EXTENSION, currentViewParameters))
             .map<LongVariableRange>(transmissible => ({
                 ...transmissible,
-                startAddress: Long.fromString(transmissible.startAddress),
-                endAddress: transmissible.endAddress ? Long.fromString(transmissible.endAddress) : undefined
+                startAddress: BigInt(transmissible.startAddress),
+                endAddress: transmissible.endAddress ? BigInt(transmissible.endAddress) : undefined
             }));
-        visibleVariables.sort((left, right) => left.startAddress.compare(right.startAddress));
+        visibleVariables.sort((left, right) => {
+            const difference = left.startAddress - right.startAddress;
+            return difference === BigInt(0) ? 0 : difference > 0 ? 1 : -1;
+        });
         if (this.didVariableChange(visibleVariables)) {
             this.currentVariables = visibleVariables;
             this.onDidChangeEmitter.fire(this.toDecorations());

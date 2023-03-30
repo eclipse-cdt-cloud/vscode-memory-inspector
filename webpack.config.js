@@ -35,7 +35,7 @@ module.exports = [
         ...common,
         target: 'node',
         entry: {
-            extension: './src/desktop/extension.ts'
+            extension: './src/entry-poinst/desktop/extension.ts'
         },
         output: {
             filename: '[name].js',
@@ -50,7 +50,7 @@ module.exports = [
         ...common,
         target: 'webworker',
         entry: {
-            extension: './src/browser/extension.ts'
+            extension: './src/entry-points/browser/extension.ts'
         },
         output: {
             filename: '[name].js',
@@ -65,7 +65,7 @@ module.exports = [
         ...common,
         target: 'web',
         entry: {
-            memory: './src/views/memory-webview-view.tsx'
+            memory: './src/webview/memory-webview-view.tsx'
         },
         output: {
             filename: '[name].js',
