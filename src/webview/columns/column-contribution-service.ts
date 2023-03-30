@@ -22,7 +22,7 @@ import type { Disposable, MemoryState, UpdateExecutor } from '../utils/view-type
 export interface ColumnContribution {
     readonly label: string;
     readonly id: string;
-    render(memory: MemoryState, range: LongMemoryRange): React.ReactElement
+    render(range: LongMemoryRange, memory: MemoryState): React.ReactNode
     /** Called when fetching new memory or when activating the column. */
     fetchData?(currentViewParameters: DebugProtocol.ReadMemoryArguments): Promise<void>;
     /** Called when the user reveals the column */

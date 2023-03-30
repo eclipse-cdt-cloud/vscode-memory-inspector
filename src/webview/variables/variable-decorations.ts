@@ -16,7 +16,6 @@
 
 import type { DebugProtocol } from '@vscode/debugprotocol';
 import { HOST_EXTENSION } from 'vscode-messenger-common';
-import type { LongVariableRange } from '../../plugin/adapter-registry/adapter-capabilities';
 import { getVariables } from '../../common/messaging';
 import { messenger } from '../view-messenger';
 import { Decoration } from '../utils/view-types';
@@ -24,6 +23,8 @@ import { EventEmitter, IEvent } from '../utils/events';
 import Long from 'long';
 import { ColumnContribution } from '../columns/column-contribution-service';
 import { Decorator } from '../decorations/decoration-service';
+import { ReactNode } from 'react';
+import { areVariablesEqual, doOverlap, LongMemoryRange, LongVariableRange } from '../../common/memory-range';
 
 const NON_HC_COLORS = [
     'var(--vscode-terminal-ansiBlue)',
@@ -34,6 +35,8 @@ const NON_HC_COLORS = [
 ] as const;
 
 export class VariableDecorator implements ColumnContribution, Decorator {
+    readonly id = 'variables';
+    readonly label = 'Variables';
     private onDidChangeEmitter = new EventEmitter<Decoration[]>();
     /** We expect this to always be sorted from lowest to highest start address */
     private currentVariables?: LongVariableRange[];
@@ -54,21 +57,13 @@ export class VariableDecorator implements ColumnContribution, Decorator {
         }
     }
 
+    render(range: LongMemoryRange): ReactNode {
+        return this.currentVariables?.filter(candidate => doOverlap(candidate, range)).map(variables => variables.name).join(', ');
+    }
+
     private didVariableChange(visibleVariables: LongVariableRange[]): boolean {
         return visibleVariables.length !== this.currentVariables?.length
-            || visibleVariables.some((item, index) => !this.areEqual(item, this.currentVariables![index]));
-    }
-
-    private areEqual(one: LongVariableRange, other: LongVariableRange): boolean {
-        return one.startAddress.equals(other.startAddress)
-            && one.name === other.name
-            && one.type === other.type
-            && one.value === other.value
-            && this.compareUndefinedOrLong(one.endAddress, other.endAddress);
-    }
-
-    private compareUndefinedOrLong(one: Long | undefined, other: Long | undefined): boolean {
-        return one === other || (one !== undefined && other !== undefined && one?.equals(other));
+            || visibleVariables.some((item, index) => !areVariablesEqual(item, this.currentVariables![index]));
     }
 
     private toDecorations(): Decoration[] {

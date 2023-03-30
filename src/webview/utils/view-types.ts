@@ -17,7 +17,8 @@
 import type { DebugProtocol } from '@vscode/debugprotocol';
 import type Long from 'long';
 import type * as React from 'react';
-import type { LongMemoryRange } from '../../plugin/adapter-registry/adapter-capabilities';
+import { areRangesEqual, LongMemoryRange } from '../../common/memory-range';
+import deepequal from 'fast-deep-equal';
 
 export enum Endianness {
     Little = 'Little Endian',
@@ -49,6 +50,10 @@ export function dispose(disposable: { dispose(): unknown }): void {
 export interface Decoration {
     range: LongMemoryRange;
     style: React.StyleHTMLAttributes<HTMLElement>;
+}
+
+export function areDecorationsEqual(one: Decoration, other: Decoration): boolean {
+    return areRangesEqual(one.range, other.range) && deepequal(one.style, other.style);
 }
 
 export interface MemoryState extends DebugProtocol.ReadMemoryArguments {

@@ -40,6 +40,19 @@ export function isWithin(candidate: Long, container: LongMemoryRange): boolean {
     return container.startAddress.lessThanOrEqual(candidate) && container.endAddress.greaterThan(candidate);
 }
 
+export function doOverlap(one: LongMemoryRange, other: LongMemoryRange): boolean {
+    // If they overlap, they either start in the same place, or one starts in the other.
+    return isWithin(one.startAddress, other) || isWithin(other.startAddress, one);
+}
+
+export function areRangesEqual(one: LongMemoryRange, other: LongMemoryRange): boolean {
+    return one.startAddress.equals(other.startAddress) && compareUndefinedOrLong(one.endAddress, other.endAddress);
+}
+
+function compareUndefinedOrLong(one: Long | undefined, other: Long | undefined): boolean {
+    return one === other || (one !== undefined && other !== undefined && one?.equals(other));
+}
+
 export interface VariableMetadata {
     name: string;
     type?: string;
@@ -51,3 +64,10 @@ export interface VariableMetadata {
 export interface VariableRange extends MemoryRange, VariableMetadata { }
 /** Suitable for arithemetic */
 export interface LongVariableRange extends LongMemoryRange, VariableMetadata { }
+
+export function areVariablesEqual(one: LongVariableRange, other: LongVariableRange): boolean {
+    return areRangesEqual(one, other)
+        && one.name === other.name
+        && one.type === other.type
+        && one.value === other.value;
+}

@@ -15,7 +15,7 @@
  ********************************************************************************/
 
 import { EventEmitter, IEvent } from '../utils/events';
-import { Decoration, Disposable, UpdateExecutor } from '../utils/view-types';
+import { areDecorationsEqual, Decoration, Disposable, UpdateExecutor } from '../utils/view-types';
 
 export interface Decorator extends Partial<UpdateExecutor> {
     readonly id: string;
@@ -46,7 +46,7 @@ class DecorationService {
     }
 
     private reconcileDecorations(affectedDecorator: string, oldDecorations: Decoration[] | undefined, newDecorations: Decoration[]): void {
-
+        if (oldDecorations?.length === newDecorations.length && oldDecorations.every((old, index) => areDecorationsEqual(old, newDecorations[index]))) { return; }
     }
 
     getUpdateExecutors(): UpdateExecutor[] {
