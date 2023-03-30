@@ -17,7 +17,7 @@
 import * as vscode from 'vscode';
 import * as manifest from './manifest';
 import { DebugProtocol } from '@vscode/debugprotocol';
-import { MemoryReadResult, MemoryWriteResult } from './views/memory-webview-common';
+import { MemoryReadResult, MemoryWriteResult } from './common/memory-webview-common';
 import { AdapterRegistry } from './adapter-registry/adapter-registry';
 
 export interface LabeledUint8Array extends Uint8Array {

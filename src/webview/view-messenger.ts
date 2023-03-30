@@ -1,5 +1,5 @@
 /********************************************************************************
- * Copyright (C) 2023 Ericsson, Arm and others.
+ * Copyright (C) 2023 Ericsson and others.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -14,22 +14,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-import Long from 'long';
+import { Messenger } from 'vscode-messenger-webview';
 
-export enum Endianness {
-    Little = 'Little Endian',
-    Big = 'Big Endian'
-}
-
-export interface Memory {
-    address: Long;
-    bytes: Uint8Array;
-}
-
-export interface TableRenderOptions {
-    columnOptions: Array<{ label: string, doRender: boolean }>;
-    endianness: Endianness;
-    bytesPerGroup: number;
-    groupsPerRow: number;
-    byteSize: number;
-}
+export const vscode = acquireVsCodeApi();
+export const messenger = new Messenger(vscode);
+messenger.start();

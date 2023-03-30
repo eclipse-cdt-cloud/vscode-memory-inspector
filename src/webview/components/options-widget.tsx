@@ -16,7 +16,7 @@
 
 import React from 'react';
 import type { DebugProtocol } from '@vscode/debugprotocol';
-import { Endianness, TableRenderOptions } from './view-types';
+import { Endianness, TableRenderOptions } from '../utils/view-types';
 import { VSCodeButton, VSCodeDivider, VSCodeDropdown, VSCodeOption, VSCodeTextField } from '@vscode/webview-ui-toolkit/react';
 
 interface OptionsWidgetProps {

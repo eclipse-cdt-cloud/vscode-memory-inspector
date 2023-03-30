@@ -16,7 +16,7 @@
 
 import * as vscode from 'vscode';
 import type { DebugProtocol } from '@vscode/debugprotocol';
-import * as manifest from '../manifest';
+import * as manifest from './manifest';
 import { Messenger } from 'vscode-messenger';
 import { WebviewIdMessageParticipant } from 'vscode-messenger-common';
 import {
@@ -27,9 +27,9 @@ import {
     writeMemoryType,
     MemoryReadResult,
     MemoryWriteResult
-} from './memory-webview-common';
-import { MemoryProvider } from '../memory-provider';
-import { logger } from '../logger';
+} from '../common/messaging';
+import { MemoryProvider } from './memory-provider';
+import { logger } from './logger';
 
 interface Variable {
     name: string;

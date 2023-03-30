@@ -18,7 +18,7 @@ import { DebugProtocol } from '@vscode/debugprotocol';
 import React from 'react';
 import { MemoryTable } from './memory-table';
 import { OptionsWidget } from './options-widget';
-import { Endianness, Memory } from './view-types';
+import { Endianness, Memory } from '../utils/view-types';
 
 interface MemoryWidgetProps {
     memory?: Memory;

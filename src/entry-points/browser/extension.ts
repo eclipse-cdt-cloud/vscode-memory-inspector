@@ -15,10 +15,10 @@
  ********************************************************************************/
 
 import * as vscode from 'vscode';
-import { AdapterRegistry } from '../adapter-registry/adapter-registry';
-import { GdbCapabilities } from '../adapter-registry/gdb-capabilities';
-import { MemoryProvider } from '../memory-provider';
-import { MemoryWebview } from '../views/memory-webview-main';
+import { AdapterRegistry } from '../../plugin/adapter-registry/adapter-registry';
+import { GdbCapabilities } from '../../plugin/adapter-registry/gdb-capabilities';
+import { MemoryProvider } from '../../plugin/memory-provider';
+import { MemoryWebview } from '../../plugin/memory-webview-main';
 
 export const activate = async (context: vscode.ExtensionContext): Promise<AdapterRegistry> => {
     const memoryProvider = new MemoryProvider();

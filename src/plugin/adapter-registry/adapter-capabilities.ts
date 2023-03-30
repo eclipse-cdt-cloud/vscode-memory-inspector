@@ -15,25 +15,7 @@
  ********************************************************************************/
 
 import * as vscode from 'vscode';
-
-export interface MemoryRange {
-    /** String representation of the address at which the range begins. May exceed maximum safe JS integer. */
-    startAddress: string;
-    /**
-     * String representation of the address at which the range ends, exclusive. I.e. this should be the first address not included in the range.
-     * May exceed maximum safe JS integer.
-     *
-     * If absent, the UI will indicate the first address at which the variable can be found but not its extent.
-     */
-    endAddress?: string;
-}
-
-export interface VariableRange extends MemoryRange {
-    name: string;
-    type?: string;
-    /** If applicable, a string representation of the variable's value */
-    value?: string;
-}
+import { MemoryRange, VariableRange } from '../../common/memory-range';
 
 /** Represents capabilities that may be achieved with particular debug adapters but are not part of the DAP */
 export interface AdapterCapabilities {

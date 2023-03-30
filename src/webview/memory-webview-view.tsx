@@ -17,37 +17,19 @@
 import Long from 'long';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { Messenger } from 'vscode-messenger-webview';
 import { HOST_EXTENSION } from 'vscode-messenger-common';
 import {
     readyType,
     logMessageType,
     setOptionsType,
     readMemoryType
-} from './memory-webview-common';
+} from '../common/messaging';
 import type { DebugProtocol } from '@vscode/debugprotocol';
-import { Memory } from './components/view-types';
+import { Memory, MemoryState } from './utils/view-types';
 import { MemoryWidget } from './components/memory-widget';
-
-interface MemoryState {
-    memory?: Memory;
-    memoryReference: string;
-    offset: number;
-    count: number;
-}
+import { messenger } from './view-messenger';
 
 class App extends React.Component<{}, MemoryState> {
-
-    private _messenger: Messenger | undefined;
-    protected get messenger(): Messenger {
-        if (!this._messenger) {
-            const vscode = acquireVsCodeApi();
-            this._messenger = new Messenger(vscode);
-            this._messenger.start();
-        }
-
-        return this._messenger;
-    }
 
     public constructor(props: {}) {
         super(props);
@@ -60,15 +42,15 @@ class App extends React.Component<{}, MemoryState> {
     }
 
     public componentDidMount(): void {
-        this.messenger.onRequest(setOptionsType, options => this.setOptions(options));
-        this.messenger.sendNotification(readyType, HOST_EXTENSION, undefined);
+        messenger.onRequest(setOptionsType, options => this.setOptions(options));
+        messenger.sendNotification(readyType, HOST_EXTENSION, undefined);
     }
 
     public render(): React.ReactNode {
         return <MemoryWidget
             memory={this.state.memory}
             memoryReference={this.state.memoryReference}
-            offset={this.state.offset}
+            offset={this.state.offset ?? 0}
             count={this.state.count}
             updateMemoryArguments={this.updateMemoryState}
             refreshMemory={this.refreshMemory}
@@ -78,7 +60,7 @@ class App extends React.Component<{}, MemoryState> {
     protected updateMemoryState = (newState: Partial<MemoryState>) => this.setState(prevState => ({ ...prevState, ...newState }));
 
     protected async setOptions(options?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void> {
-        this.messenger.sendRequest(logMessageType, HOST_EXTENSION, JSON.stringify(options));
+        messenger.sendRequest(logMessageType, HOST_EXTENSION, JSON.stringify(options));
         this.setState(prevState => ({ ...prevState, ...options }));
         return this.fetchMemory(options);
     }
@@ -92,7 +74,7 @@ class App extends React.Component<{}, MemoryState> {
             count: partialOptions?.count ?? this.state.count
         };
 
-        const response = await this.messenger.sendRequest(readMemoryType, HOST_EXTENSION, completeOptions);
+        const response = await messenger.sendRequest(readMemoryType, HOST_EXTENSION, completeOptions);
 
         this.setState({
             memory: this.convertMemory(response)

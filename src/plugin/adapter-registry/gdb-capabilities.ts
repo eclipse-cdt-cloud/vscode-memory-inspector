@@ -16,7 +16,8 @@
 
 import * as vscode from 'vscode';
 import { DebugProtocol } from '@vscode/debugprotocol';
-import { AdapterCapabilities, VariableRange } from './adapter-capabilities';
+import { AdapterCapabilities } from './adapter-capabilities';
+import { VariableRange } from '../../common/memory-range';
 
 type WithChildren<Original> = Original & { children?: Array<WithChildren<DebugProtocol.Variable>> };
 type VariablesTree = Record<number, WithChildren<DebugProtocol.Scope | DebugProtocol.Variable>>;

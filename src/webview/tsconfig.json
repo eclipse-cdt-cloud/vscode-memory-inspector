@@ -1,0 +1,16 @@
+{
+    "compilerOptions": {
+        "jsx": "react",
+        "target": "es2020",
+        "lib": [
+            "es2020",
+            "dom"
+        ],
+        "outDir": "../../out/frontend",
+        "sourceMap": true,
+        "strict": true,
+        "rootDir": "../",
+        "esModuleInterop": true,
+        "moduleResolution": "node"
+    },
+}

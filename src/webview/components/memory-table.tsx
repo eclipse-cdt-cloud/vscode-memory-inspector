@@ -21,7 +21,7 @@ import {
     VSCodeDataGridRow,
     VSCodeDataGridCell
 } from '@vscode/webview-ui-toolkit/react';
-import { Endianness, Memory } from './view-types';
+import { Endianness, Memory } from '../utils/view-types';
 
 interface VariableDecoration {
     name: string;
