@@ -18,8 +18,8 @@ import * as vscode from 'vscode';
 import { AdapterCapabilities } from './adapter-capabilities';
 
 export class AdapterRegistry implements vscode.Disposable {
-    private handlers = new Map<string, AdapterCapabilities>();
-    private isDisposed = false;
+    protected handlers = new Map<string, AdapterCapabilities>();
+    protected isDisposed = false;
     registerAdapter(debugType: string, handlerToRegister: AdapterCapabilities): vscode.Disposable {
         if (this.isDisposed) { return new vscode.Disposable(() => { }); }
         this.handlers.set(debugType, handlerToRegister);

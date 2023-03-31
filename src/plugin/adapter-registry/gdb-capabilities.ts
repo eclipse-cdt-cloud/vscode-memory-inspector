@@ -23,28 +23,25 @@ type WithChildren<Original> = Original & { children?: Array<WithChildren<DebugPr
 type VariablesTree = Record<number, WithChildren<DebugProtocol.Scope | DebugProtocol.Variable>>;
 
 class GdbAdapterTracker implements vscode.DebugAdapterTracker {
-    private currentFrame?: number;
-    private variablesTree: VariablesTree = {};
-    private readonly pendingMessages = new Map<number, number>();
-    private static hexAddress = /0x[0-9a-f]+/i;
-    private static notADigit = /[^0-9]/;
+    protected currentFrame?: number;
+    protected variablesTree: VariablesTree = {};
+    protected readonly pendingMessages = new Map<number, number>();
+    protected static hexAddress = /0x[0-9a-f]+/i;
+    protected static notADigit = /[^0-9]/;
 
-    constructor(private readonly onEnd: vscode.Disposable) { }
+    constructor(protected readonly onEnd: vscode.Disposable) { }
 
     onWillReceiveMessage(message: unknown): void {
         if (isScopesRequest(message)) {
             this.currentFrame = message.arguments.frameId;
-            console.log('Sending a fun scopes request!', message);
         } else if (isVariableRequest(message)) {
             if (message.arguments.variablesReference in this.variablesTree) {
                 this.pendingMessages.set(message.seq, message.arguments.variablesReference);
             }
-            console.log('Sending a fun variable request!', message);
         }
     }
     onDidSendMessage(message: unknown): void {
         if (isScopesResponse(message)) {
-            console.log('Got a fun scope message!', message);
             for (const scope of message.body.scopes) {
                 if (scope.name === 'Local') {
                     if (!this.variablesTree[scope.variablesReference] || this.variablesTree[scope.variablesReference].name !== 'Local') {
@@ -61,7 +58,6 @@ class GdbAdapterTracker implements vscode.DebugAdapterTracker {
                     this.variablesTree[parentReference].children = message.body.variables;
                 }
             }
-            console.log('Got a fun variable message!', message);
         }
     }
     onExit(): void {
@@ -82,7 +78,7 @@ class GdbAdapterTracker implements vscode.DebugAdapterTracker {
         return maybeRanges.filter((candidate): candidate is VariableRange => !!candidate);
     }
 
-    private async variableToVariableRange(variable: DebugProtocol.Variable, session: vscode.DebugSession): Promise<VariableRange | undefined> {
+    protected async variableToVariableRange(variable: DebugProtocol.Variable, session: vscode.DebugSession): Promise<VariableRange | undefined> {
         if (variable.memoryReference === undefined || this.currentFrame === undefined) { return undefined; }
         try {
             const [addressResponse, sizeResponse] = await Promise.all([
@@ -126,7 +122,7 @@ function isVariableResponse(message: unknown): message is DebugProtocol.Variable
 }
 
 export class GdbCapabilities implements AdapterCapabilities {
-    private sessions = new Map<string, GdbAdapterTracker>();
+    protected sessions = new Map<string, GdbAdapterTracker>();
     initializeAdapterTracker(session: vscode.DebugSession): GdbAdapterTracker | undefined {
         if (session.type === 'gdb') {
             const sessionTracker = new GdbAdapterTracker(new vscode.Disposable(() => this.sessions.delete(session.id)));

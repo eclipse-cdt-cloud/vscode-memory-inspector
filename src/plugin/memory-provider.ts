@@ -97,7 +97,7 @@ export class MemoryProvider {
         return session;
     }
 
-    private assertActiveSession(action: string): vscode.DebugSession {
+    protected assertActiveSession(action: string): vscode.DebugSession {
         if (!vscode.debug.activeDebugSession) {
             throw new Error(`Cannot ${action}. No active debug session.`);
         }

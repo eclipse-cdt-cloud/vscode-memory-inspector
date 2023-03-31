@@ -1,5 +1,5 @@
 /********************************************************************************
- * Copyright (C) 2023 YourCompany and others.
+ * Copyright (C) 2023 Ericsson and others.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -17,8 +17,8 @@
 import { Disposable, dispose } from './view-types';
 
 export class EventEmitter<T> {
-    private emitter = new EventTarget();
-    private toDispose = new Array<Disposable>();
+    protected emitter = new EventTarget();
+    protected toDispose = new Array<Disposable>();
 
     event(externalHandler: (event: T) => unknown): Disposable {
         const internalHandler = (event: Event) => {

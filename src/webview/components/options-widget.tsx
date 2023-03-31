@@ -18,11 +18,14 @@ import React from 'react';
 import type { DebugProtocol } from '@vscode/debugprotocol';
 import { Endianness, TableRenderOptions } from '../utils/view-types';
 import { VSCodeButton, VSCodeDivider, VSCodeDropdown, VSCodeOption, VSCodeTextField } from '@vscode/webview-ui-toolkit/react';
+import { ColumnStatus } from '../columns/column-contribution-service';
+import { MultiSelectWithLabel } from './multi-select-bar';
 
 interface OptionsWidgetProps {
     updateRenderOptions: (options: Partial<TableRenderOptions>) => void;
     updateMemoryArguments: (memoryArguments: Partial<DebugProtocol.ReadMemoryArguments>) => void;
     refreshMemory: () => void;
+    toggleColumn(id: string, active: boolean): void;
     memoryReference: string;
     offset: number;
     count: number;
@@ -30,6 +33,7 @@ interface OptionsWidgetProps {
     byteSize: number;
     bytesPerGroup: number;
     groupsPerRow: number;
+    columns: ColumnStatus[];
 }
 
 interface OptionsWidgetState {
@@ -120,6 +124,12 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                             <VSCodeOption>16</VSCodeOption>
                             <VSCodeOption>32</VSCodeOption>
                         </VSCodeDropdown>
+                        {!!this.props.columns.length && <MultiSelectWithLabel
+                            id='column-select'
+                            label='Columns'
+                            items={this.props.columns.map(column => ({ id: column.contribution.id, label: column.contribution.label, checked: column.active }))}
+                            onSelectionChanged={this.props.toggleColumn}
+                        />}
                     </div>
                 </>
             }

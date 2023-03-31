@@ -30,11 +30,10 @@ export interface MemoryRange {
 /** Suitable for arithemetic */
 export interface LongMemoryRange {
     startAddress: bigint;
-    endAddress?: bigint;
+    endAddress: bigint;
 }
 
 export function isWithin(candidate: bigint, container: LongMemoryRange): boolean {
-    if (container.endAddress === undefined) { return container.startAddress === candidate; }
     return container.startAddress <= candidate && container.endAddress > candidate;
 }
 
@@ -45,10 +44,6 @@ export function doOverlap(one: LongMemoryRange, other: LongMemoryRange): boolean
 
 export function areRangesEqual(one: LongMemoryRange, other: LongMemoryRange): boolean {
     return one.startAddress === other.startAddress && one.endAddress === other.endAddress;
-}
-
-export function ensureEndAddress(range: LongMemoryRange): bigint {
-    return range.endAddress ?? range.startAddress + BigInt(1);
 }
 
 export function compareBigInt(left: bigint, right: bigint): number {
@@ -66,7 +61,7 @@ export enum RangeRelationship {
 export function determineRelationship(candidate: bigint, range?: LongMemoryRange): RangeRelationship {
     if (range === undefined) { return RangeRelationship.None; }
     if (candidate < range.startAddress) { return RangeRelationship.Before; }
-    if (candidate >= ensureEndAddress(range)) { return RangeRelationship.Past; }
+    if (candidate >= range.endAddress) { return RangeRelationship.Past; }
     return RangeRelationship.Within;
 }
 

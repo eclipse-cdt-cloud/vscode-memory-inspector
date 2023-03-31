@@ -27,12 +27,13 @@ import type { DebugProtocol } from '@vscode/debugprotocol';
 import { Decoration, Memory, MemoryState } from './utils/view-types';
 import { MemoryWidget } from './components/memory-widget';
 import { messenger } from './view-messenger';
-import { columnContributionService } from './columns/column-contribution-service';
+import { columnContributionService, ColumnStatus } from './columns/column-contribution-service';
 import { decorationService } from './decorations/decoration-service';
 import { variableDecorator } from './variables/variable-decorations';
 
 export interface MemoryAppState extends MemoryState {
     decorations: Decoration[];
+    columns: ColumnStatus[];
 }
 
 class App extends React.Component<{}, MemoryAppState> {
@@ -46,7 +47,8 @@ class App extends React.Component<{}, MemoryAppState> {
             memoryReference: '',
             offset: 0,
             count: 256,
-            decorations: []
+            decorations: [],
+            columns: columnContributionService.getColumns(),
         };
     }
 
@@ -59,11 +61,13 @@ class App extends React.Component<{}, MemoryAppState> {
         return <MemoryWidget
             memory={this.state.memory}
             decorations={this.state.decorations}
+            columns={this.state.columns}
             memoryReference={this.state.memoryReference}
             offset={this.state.offset ?? 0}
             count={this.state.count}
             updateMemoryArguments={this.updateMemoryState}
             refreshMemory={this.refreshMemory}
+            toggleColumn={this.toggleColumn}
         />;
     }
 
@@ -100,6 +104,13 @@ class App extends React.Component<{}, MemoryAppState> {
         const address = BigInt(result.address);
         const bytes = Uint8Array.from(Buffer.from(result.data, 'base64'));
         return { bytes, address };
+    }
+
+    protected toggleColumn = (id: string, active: boolean): void => { this.doToggleColumn(id, active); };
+
+    protected async doToggleColumn(id: string, active: boolean): Promise<void> {
+        const columns = active ? await columnContributionService.show(id, this.state) : columnContributionService.hide(id);
+        this.setState({ columns });
     }
 }
 

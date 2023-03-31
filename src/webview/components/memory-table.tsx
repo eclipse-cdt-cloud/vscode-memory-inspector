@@ -23,6 +23,7 @@ import {
 import { Decoration, Endianness, Memory } from '../utils/view-types';
 import { toHexStringWithRadixMarker } from '../../common/memory-range';
 import { decorationService } from '../decorations/decoration-service';
+import { ColumnStatus } from '../columns/column-contribution-service';
 
 interface VariableDecoration {
     name: string;
@@ -65,8 +66,9 @@ interface FullNodeAttributes extends StylableNodeAttributes {
 }
 
 interface RowOptions {
-    address: string;
+    address: bigint;
     groups: React.ReactNode;
+    gridTemplateColumns: string;
     ascii?: string;
     variables?: VariableDecoration[];
     doShowDivider?: boolean;
@@ -77,6 +79,7 @@ interface RowOptions {
 interface MemoryTableProps {
     memory?: Memory;
     decorations: Decoration[];
+    columns: ColumnStatus[];
     endianness: Endianness;
     byteSize: number;
     bytesPerGroup: number;
@@ -89,13 +92,16 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
         return (
             <div>
                 <VSCodeDataGrid>
-                    <VSCodeDataGridRow rowType='header'>
+                    <VSCodeDataGridRow rowType='header' gridTemplateColumns={new Array(this.props.columns.length + 2).fill('1fr').join(' ')}>
                         <VSCodeDataGridCell cellType='columnheader' gridColumn='1'>
                             Address
                         </VSCodeDataGridCell>
                         <VSCodeDataGridCell cellType='columnheader' gridColumn='2'>
                             Groups
                         </VSCodeDataGridCell>
+                        {this.props.columns.map(({ contribution }, index) => <VSCodeDataGridCell cellType='columnheader' gridColumn={(index + 3).toString()}>
+                            {contribution.label}
+                        </VSCodeDataGridCell>)}
                     </VSCodeDataGridRow>
                     {rows}
                 </VSCodeDataGrid>
@@ -106,9 +112,10 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
     protected getTableRows(): React.ReactNode {
         if (!this.props.memory) {
             return (
-                <VSCodeDataGridRow>
+                <VSCodeDataGridRow gridTemplateColumns={new Array(this.props.columns.length + 2).fill('1fr').join(' ')}>
                     <VSCodeDataGridCell gridColumn='1'>No Data</VSCodeDataGridCell>
                     <VSCodeDataGridCell gridColumn='2'>No Data</VSCodeDataGridCell>
+                    {this.props.columns.map((column, index) => column.active && <VSCodeDataGridCell gridColumn={(index + 3).toString()}>No Data</VSCodeDataGridCell>)}
                 </VSCodeDataGridRow>
             );
         }
@@ -118,6 +125,7 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
 
     protected *renderRows(iteratee: Uint8Array, address: bigint): IterableIterator<React.ReactNode> {
         const bytesPerRow = this.props.bytesPerGroup * this.props.groupsPerRow;
+        const gridTemplateColumns = new Array(this.props.columns.length + 2).fill('1fr').join(' ');
         let rowsYielded = 0;
         let groups = [];
         let ascii = '';
@@ -131,13 +139,14 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
             if (groups.length === this.props.groupsPerRow || index === iteratee.length - 1) {
                 const rowAddress = address + BigInt(bytesPerRow * rowsYielded);
                 const options = {
-                    address: toHexStringWithRadixMarker(rowAddress),
+                    address: rowAddress,
                     doShowDivider: (rowsYielded % 4) === 3,
                     isHighlighted: isRowHighlighted,
                     ascii,
                     groups,
                     variables,
                     index,
+                    gridTemplateColumns
                 };
                 yield this.renderRow(options);
                 ascii = '';
@@ -256,18 +265,25 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
     }
 
     protected renderRow(options: RowOptions, getRowAttributes = this.getRowAttributes.bind(this)): React.ReactNode {
-        const { address, groups } = options;
+        const { address, groups, gridTemplateColumns } = options;
+        const addressString = toHexStringWithRadixMarker(address);
         const { className, style, title } = getRowAttributes(options);
+        const range = { startAddress: address, endAddress: address + BigInt(this.props.bytesPerGroup * this.props.groupsPerRow) };
         return (
             <VSCodeDataGridRow
                 // Add a marker to help visual navigation when scrolling
                 className={className}
                 style={style}
                 title={title}
-                key={address}
+                key={addressString}
+                gridTemplateColumns={gridTemplateColumns}
             >
-                <VSCodeDataGridCell style={{ fontFamily: 'var(--vscode-editor-font-family)' }} gridColumn='1'>{address}</VSCodeDataGridCell>
+                <VSCodeDataGridCell style={{ fontFamily: 'var(--vscode-editor-font-family)' }} gridColumn='1'>{addressString}</VSCodeDataGridCell>
                 <VSCodeDataGridCell style={{ fontFamily: 'var(--vscode-editor-font-family)' }} gridColumn='2'>{groups}</VSCodeDataGridCell>
+                {this.props.columns.map((column, index) => <VSCodeDataGridCell style={{ fontFamily: 'var(--vscode-editor-font-family)' }} gridColumn={(index + 3).toString()}>
+                    {column.contribution.render(range, this.props.memory!)}
+                </VSCodeDataGridCell>
+                )}
             </VSCodeDataGridRow>
         );
     }

@@ -17,12 +17,12 @@
 import { DebugProtocol } from '@vscode/debugprotocol';
 import type * as React from 'react';
 import { LongMemoryRange } from '../../common/memory-range';
-import type { Disposable, MemoryState, UpdateExecutor } from '../utils/view-types';
+import type { Disposable, Memory, MemoryState, UpdateExecutor } from '../utils/view-types';
 
 export interface ColumnContribution {
     readonly label: string;
     readonly id: string;
-    render(range: LongMemoryRange, memory: MemoryState): React.ReactNode
+    render(range: LongMemoryRange, memory: Memory): React.ReactNode
     /** Called when fetching new memory or when activating the column. */
     fetchData?(currentViewParameters: DebugProtocol.ReadMemoryArguments): Promise<void>;
     /** Called when the user reveals the column */
@@ -31,37 +31,49 @@ export interface ColumnContribution {
     deactivate?(): void;
 }
 
+export interface ColumnStatus {
+    contribution: ColumnContribution;
+    active: boolean;
+}
+
 class ColumnContributionService {
-    private activeColumns = new Array<ColumnContribution>();
-    private registeredColumns = new Map<string, ColumnContribution>;
+    protected columnArray = new Array<ColumnStatus>();
+    protected registeredColumns = new Map<string, ColumnStatus>;
     register(contribution: ColumnContribution): Disposable {
-        this.registeredColumns.set(contribution.id, contribution);
+        if (this.registeredColumns.has(contribution.id)) { return { dispose: () => { } }; }
+        const wrapper = { contribution, active: false };
+        this.registeredColumns.set(contribution.id, wrapper);
+        this.columnArray.push(wrapper);
+        this.columnArray.sort((left, right) => left.contribution.id.localeCompare(right.contribution.id));
         return {
             dispose: () => {
                 this.hide(contribution.id);
                 this.registeredColumns.delete(contribution.id);
+                this.columnArray = this.columnArray.filter(candidate => wrapper !== candidate);
             }
         };
     }
-    async show(id: string, memoryState: MemoryState): Promise<ColumnContribution[]> {
-        const contribution = this.registeredColumns.get(id);
-        if (contribution) {
-            await contribution.activate?.(memoryState);
-            this.activeColumns.push(contribution);
-            this.activeColumns.sort((left, right) => left.id.localeCompare(right.id));
+    async show(id: string, memoryState: MemoryState): Promise<ColumnStatus[]> {
+        const wrapper = this.registeredColumns.get(id);
+        if (wrapper) {
+            await wrapper.contribution.activate?.(memoryState);
+            wrapper.active = true;
         }
-        return this.activeColumns.slice();
+        return this.columnArray.slice();
     }
-    hide(id: string): ColumnContribution[] {
-        const contribution = this.registeredColumns.get(id);
-        let index;
-        if (contribution && (index = this.activeColumns.findIndex(candidate => candidate === contribution)) !== -1) {
-            this.activeColumns.splice(index, 1);
+    hide(id: string): ColumnStatus[] {
+        const wrapper = this.registeredColumns.get(id);
+        if (wrapper?.active) {
+            wrapper.active = false;
+            wrapper.contribution.deactivate?.();
         }
-        return this.activeColumns.slice();
+        return this.columnArray.slice();
+    }
+    getColumns(): ColumnStatus[] {
+        return this.columnArray.slice();
     }
     getUpdateExecutors(): UpdateExecutor[] {
-        return this.activeColumns.filter((candidate): candidate is ColumnContribution & UpdateExecutor => candidate.fetchData !== undefined);
+        return this.columnArray.map(({ contribution }) => contribution).filter((candidate): candidate is ColumnContribution & UpdateExecutor => candidate.fetchData !== undefined);
     }
 }
 

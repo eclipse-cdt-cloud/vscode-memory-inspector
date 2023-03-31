@@ -14,7 +14,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-import { compareBigInt, determineRelationship, ensureEndAddress, isWithin, RangeRelationship } from '../../common/memory-range';
+import { compareBigInt, determineRelationship, isWithin, RangeRelationship } from '../../common/memory-range';
 import { EventEmitter, IEvent } from '../utils/events';
 import { areDecorationsEqual, Decoration, Disposable, UpdateExecutor } from '../utils/view-types';
 
@@ -24,11 +24,11 @@ export interface Decorator extends Partial<UpdateExecutor> {
 }
 
 class DecorationService {
-    private onDidChangeEmitter = new EventEmitter();
-    private contributedDecorations = new Map<string, Decoration[]>();
-    private decorators = new Map<string, Decorator>();
+    protected onDidChangeEmitter = new EventEmitter();
+    protected contributedDecorations = new Map<string, Decoration[]>();
+    protected decorators = new Map<string, Decorator>();
     /** Represents the aggregation of all contributed decorations */
-    private currentDecorations = new Array<Decoration>();
+    protected currentDecorations = new Array<Decoration>();
     get decorations(): Decoration[] {
         return this.currentDecorations;
     }
@@ -49,7 +49,7 @@ class DecorationService {
         };
     }
 
-    private reconcileDecorations(affectedDecorator: string, oldDecorations: Decoration[] | undefined, newDecorations: Decoration[]): void {
+    protected reconcileDecorations(affectedDecorator: string, oldDecorations: Decoration[] | undefined, newDecorations: Decoration[]): void {
         if (oldDecorations?.length === newDecorations.length && oldDecorations.every((old, index) => areDecorationsEqual(old, newDecorations[index]))) { return; }
         // TODO: Could be more surgical and figure out the changed ranges. For now, we just rebuild everything.
         if (newDecorations.length) {
@@ -62,7 +62,7 @@ class DecorationService {
             for (const decorationContributions of this.contributedDecorations.values()) {
                 decorationContributions.forEach(decoration => {
                     termini.add(decoration.range.startAddress);
-                    termini.add(ensureEndAddress(decoration.range));
+                    termini.add(decoration.range.endAddress);
                 });
             }
             const decorations = new Array<Decoration>();
@@ -92,15 +92,15 @@ class DecorationService {
         this.onDidChangeEmitter.fire(this.currentDecorations);
     }
 
-    private currentDecorationIndex = 0;
-    private lastCall?: bigint;
+    protected currentDecorationIndex = 0;
+    protected lastCall?: bigint;
     getDecoration(address: bigint): Decoration | undefined {
         if (this.currentDecorations.length === 0) { return undefined; }
         if (this.lastCall === undefined || address < this.lastCall) { this.currentDecorationIndex = 0; }
         this.lastCall = address;
         if (address < this.currentDecorations[this.currentDecorationIndex].range.startAddress) { return undefined; }
         while (this.currentDecorationIndex < this.currentDecorations.length
-            && address >= ensureEndAddress(this.currentDecorations[this.currentDecorationIndex].range)) { this.currentDecorationIndex++; }
+            && address >= this.currentDecorations[this.currentDecorationIndex].range.endAddress) { this.currentDecorationIndex++; }
         this.currentDecorationIndex = Math.min(this.currentDecorationIndex, this.currentDecorations.length - 1);
         return isWithin(address, this.currentDecorations[this.currentDecorationIndex].range) ? this.currentDecorations[this.currentDecorationIndex] : undefined;
     }
