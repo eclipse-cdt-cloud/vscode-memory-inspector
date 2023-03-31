@@ -26,10 +26,12 @@ import {
     readMemoryType,
     writeMemoryType,
     MemoryReadResult,
-    MemoryWriteResult
+    MemoryWriteResult,
+    getVariables
 } from '../common/messaging';
 import { MemoryProvider } from './memory-provider';
 import { logger } from './logger';
+import { VariableRange } from '../common/memory-range';
 
 interface Variable {
     name: string;
@@ -120,6 +122,7 @@ export class MemoryWebview {
             this.messenger.onRequest(logMessageType, message => logger.info(message), { sender: participant }),
             this.messenger.onRequest(readMemoryType, request => this.readMemory(request), { sender: participant }),
             this.messenger.onRequest(writeMemoryType, request => this.writeMemory(request), { sender: participant }),
+            this.messenger.onRequest(getVariables, request => this.getVariables(request), { sender: participant }),
         ];
 
         panel.onDidDispose(() => disposables.forEach(disposible => disposible.dispose()));
@@ -135,5 +138,9 @@ export class MemoryWebview {
 
     protected async writeMemory(request: DebugProtocol.WriteMemoryArguments): Promise<MemoryWriteResult> {
         return this.memoryProvider.writeMemory(request);
+    }
+
+    protected async getVariables(request: DebugProtocol.ReadMemoryArguments): Promise<VariableRange[]> {
+        return this.memoryProvider.getVariables(request);
     }
 }

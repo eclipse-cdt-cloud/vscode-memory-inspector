@@ -24,19 +24,29 @@ import {
     readMemoryType
 } from '../common/messaging';
 import type { DebugProtocol } from '@vscode/debugprotocol';
-import { Memory, MemoryState } from './utils/view-types';
+import { Decoration, Memory, MemoryState } from './utils/view-types';
 import { MemoryWidget } from './components/memory-widget';
 import { messenger } from './view-messenger';
+import { columnContributionService } from './columns/column-contribution-service';
+import { decorationService } from './decorations/decoration-service';
+import { variableDecorator } from './variables/variable-decorations';
 
-class App extends React.Component<{}, MemoryState> {
+export interface MemoryAppState extends MemoryState {
+    decorations: Decoration[];
+}
+
+class App extends React.Component<{}, MemoryAppState> {
 
     public constructor(props: {}) {
         super(props);
+        columnContributionService.register(variableDecorator);
+        decorationService.register(variableDecorator);
         this.state = {
             memory: undefined,
             memoryReference: '',
             offset: 0,
             count: 256,
+            decorations: []
         };
     }
 
@@ -48,6 +58,7 @@ class App extends React.Component<{}, MemoryState> {
     public render(): React.ReactNode {
         return <MemoryWidget
             memory={this.state.memory}
+            decorations={this.state.decorations}
             memoryReference={this.state.memoryReference}
             offset={this.state.offset ?? 0}
             count={this.state.count}
@@ -74,8 +85,12 @@ class App extends React.Component<{}, MemoryState> {
         };
 
         const response = await messenger.sendRequest(readMemoryType, HOST_EXTENSION, completeOptions);
-
+        await Promise.all(Array.from(
+            new Set(columnContributionService.getUpdateExecutors().concat(decorationService.getUpdateExecutors())),
+            execututor => execututor.fetchData(completeOptions)
+        ));
         this.setState({
+            decorations: decorationService.decorations,
             memory: this.convertMemory(response)
         });
     }

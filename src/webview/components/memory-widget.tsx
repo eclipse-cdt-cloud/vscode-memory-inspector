@@ -18,10 +18,11 @@ import { DebugProtocol } from '@vscode/debugprotocol';
 import React from 'react';
 import { MemoryTable } from './memory-table';
 import { OptionsWidget } from './options-widget';
-import { Endianness, Memory } from '../utils/view-types';
+import { Decoration, Endianness, Memory } from '../utils/view-types';
 
 interface MemoryWidgetProps {
     memory?: Memory;
+    decorations: Decoration[];
     memoryReference: string;
     offset: number;
     count: number;
@@ -64,6 +65,7 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 refreshMemory={this.props.refreshMemory}
             />
             <MemoryTable
+                decorations={this.props.decorations}
                 memory={this.props.memory}
                 endianness={this.state.endianness}
                 byteSize={this.state.byteSize}

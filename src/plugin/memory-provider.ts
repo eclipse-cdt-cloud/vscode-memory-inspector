@@ -19,6 +19,7 @@ import * as manifest from './manifest';
 import { DebugProtocol } from '@vscode/debugprotocol';
 import { MemoryReadResult, MemoryWriteResult } from '../common/messaging';
 import { AdapterRegistry } from './adapter-registry/adapter-registry';
+import { VariableRange } from '../common/memory-range';
 
 export interface LabeledUint8Array extends Uint8Array {
     label?: string;
@@ -32,8 +33,10 @@ export class MemoryProvider {
     public static WriteKey = `${manifest.PACKAGE_NAME}.canWrite`;
 
     protected readonly sessions = new Map<string, DebugProtocol.Capabilities | undefined>();
+    protected adapterRegistry?: AdapterRegistry;
 
     public async activate(context: vscode.ExtensionContext, registry: AdapterRegistry): Promise<void> {
+        this.adapterRegistry = registry;
         const createDebugAdapterTracker = (session: vscode.DebugSession): Required<vscode.DebugAdapterTracker> => {
             const handlerForSession = registry.getHandlerForSession(session);
             const contributedTracker = handlerForSession?.initializeAdapterTracker?.(session);
@@ -107,5 +110,12 @@ export class MemoryProvider {
 
     public async writeMemory(writeMemoryArguments: DebugProtocol.WriteMemoryArguments): Promise<MemoryWriteResult> {
         return this.assertCapability('supportsWriteMemoryRequest', 'write memory').customRequest('writeMemory', writeMemoryArguments);
+    }
+
+    public async getVariables(variableArguments: DebugProtocol.ReadMemoryArguments): Promise<VariableRange[]> {
+        const session = this.assertActiveSession('get variables');
+        const handler = this.adapterRegistry?.getHandlerForSession(session);
+        if (handler?.getResidents) { return handler.getResidents(session, variableArguments); }
+        return handler?.getVariables?.(session) ?? [];
     }
 }

@@ -23,7 +23,7 @@ import { EventEmitter, IEvent } from '../utils/events';
 import { ColumnContribution } from '../columns/column-contribution-service';
 import { Decorator } from '../decorations/decoration-service';
 import { ReactNode } from 'react';
-import { areVariablesEqual, doOverlap, LongMemoryRange, LongVariableRange } from '../../common/memory-range';
+import { areVariablesEqual, compareBigInt, doOverlap, LongMemoryRange, LongVariableRange } from '../../common/memory-range';
 
 const NON_HC_COLORS = [
     'var(--vscode-terminal-ansiBlue)',
@@ -49,10 +49,7 @@ export class VariableDecorator implements ColumnContribution, Decorator {
                 startAddress: BigInt(transmissible.startAddress),
                 endAddress: transmissible.endAddress ? BigInt(transmissible.endAddress) : undefined
             }));
-        visibleVariables.sort((left, right) => {
-            const difference = left.startAddress - right.startAddress;
-            return difference === BigInt(0) ? 0 : difference > 0 ? 1 : -1;
-        });
+        visibleVariables.sort((left, right) => compareBigInt(left.startAddress, right.startAddress));
         if (this.didVariableChange(visibleVariables)) {
             this.currentVariables = visibleVariables;
             this.onDidChangeEmitter.fire(this.toDecorations());
@@ -89,4 +86,4 @@ export class VariableDecorator implements ColumnContribution, Decorator {
         this.onDidChangeEmitter.dispose();
     }
 }
-
+export const variableDecorator = new VariableDecorator();

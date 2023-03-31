@@ -35,7 +35,7 @@ module.exports = [
         ...common,
         target: 'node',
         entry: {
-            extension: './src/entry-poinst/desktop/extension.ts'
+            extension: './src/entry-points/desktop/extension.ts'
         },
         output: {
             filename: '[name].js',

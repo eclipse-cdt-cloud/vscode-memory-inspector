@@ -20,7 +20,9 @@ import {
     VSCodeDataGridRow,
     VSCodeDataGridCell
 } from '@vscode/webview-ui-toolkit/react';
-import { Endianness, Memory } from '../utils/view-types';
+import { Decoration, Endianness, Memory } from '../utils/view-types';
+import { toHexStringWithRadixMarker } from '../../common/memory-range';
+import { decorationService } from '../decorations/decoration-service';
 
 interface VariableDecoration {
     name: string;
@@ -74,6 +76,7 @@ interface RowOptions {
 
 interface MemoryTableProps {
     memory?: Memory;
+    decorations: Decoration[];
     endianness: Endianness;
     byteSize: number;
     bytesPerGroup: number;
@@ -128,7 +131,7 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
             if (groups.length === this.props.groupsPerRow || index === iteratee.length - 1) {
                 const rowAddress = address + BigInt(bytesPerRow * rowsYielded);
                 const options = {
-                    address: `0x${rowAddress.toString(16)}`,
+                    address: toHexStringWithRadixMarker(rowAddress),
                     doShowDivider: (rowsYielded % 4) === 3,
                     isHighlighted: isRowHighlighted,
                     ascii,
@@ -211,7 +214,7 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
     protected *renderArrayItems(iteratee: Uint8Array, address: bigint): IterableIterator<ItemData> {
         const getBitAttributes = this.getBitAttributes.bind(this);
         for (let i = 0; i < iteratee.length; i += 1) {
-            const itemID = (address + BigInt(i)).toString(16);
+            const itemID = toHexStringWithRadixMarker(address + BigInt(i));
             const { content = '', className, style, variable, title, isHighlighted } = getBitAttributes(i, iteratee, address);
             const node = (
                 <span
@@ -234,12 +237,13 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
         }
     }
 
-    protected getBitAttributes(arrayOffset: number, iteratee: Uint8Array, _address: bigint): Partial<FullNodeAttributes> {
+    protected getBitAttributes(arrayOffset: number, iteratee: Uint8Array, address: bigint): Partial<FullNodeAttributes> {
+        const currentCellAddress = (address + BigInt(arrayOffset));
         const classNames = ['eight-bits'];
         return {
             className: classNames.join(' '),
             variable: undefined,
-            style: { color: undefined },
+            style: decorationService.getDecoration(currentCellAddress)?.style,
             content: iteratee[arrayOffset].toString(16).padStart(2, '0')
         };
     }

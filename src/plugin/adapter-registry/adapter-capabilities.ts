@@ -14,14 +14,15 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
+import { DebugProtocol } from '@vscode/debugprotocol';
 import * as vscode from 'vscode';
-import { MemoryRange, VariableRange } from '../../common/memory-range';
+import { VariableRange } from '../../common/memory-range';
 
 /** Represents capabilities that may be achieved with particular debug adapters but are not part of the DAP */
 export interface AdapterCapabilities {
     /** Resolve variables known to the adapter to their locations. Fallback if {@link getResidents} is not present */
     getVariables?(session: vscode.DebugSession): Promise<VariableRange[]>;
     /** Resolve symbols resident in the memory at the specified range. Will be preferred to {@link getVariables} if present. */
-    getResidents?(session: vscode.DebugSession, range: MemoryRange): Promise<VariableRange[]>;
+    getResidents?(session: vscode.DebugSession, params: DebugProtocol.ReadMemoryArguments): Promise<VariableRange[]>;
     initializeAdapterTracker?(session: vscode.DebugSession): vscode.DebugAdapterTracker | undefined;
 }

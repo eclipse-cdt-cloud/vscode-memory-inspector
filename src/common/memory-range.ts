@@ -47,6 +47,33 @@ export function areRangesEqual(one: LongMemoryRange, other: LongMemoryRange): bo
     return one.startAddress === other.startAddress && one.endAddress === other.endAddress;
 }
 
+export function ensureEndAddress(range: LongMemoryRange): bigint {
+    return range.endAddress ?? range.startAddress + BigInt(1);
+}
+
+export function compareBigInt(left: bigint, right: bigint): number {
+    const difference = left - right;
+    return difference === BigInt(0) ? 0 : difference > 0 ? 1 : -1;
+}
+
+export enum RangeRelationship {
+    Before,
+    Within,
+    Past,
+    None,
+}
+
+export function determineRelationship(candidate: bigint, range?: LongMemoryRange): RangeRelationship {
+    if (range === undefined) { return RangeRelationship.None; }
+    if (candidate < range.startAddress) { return RangeRelationship.Before; }
+    if (candidate >= ensureEndAddress(range)) { return RangeRelationship.Past; }
+    return RangeRelationship.Within;
+}
+
+export function toHexStringWithRadixMarker(target: bigint): string {
+    return `0x${target.toString(16)}`;
+}
+
 export interface VariableMetadata {
     name: string;
     type?: string;

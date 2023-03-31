@@ -17,12 +17,13 @@
 import * as vscode from 'vscode';
 import { DebugProtocol } from '@vscode/debugprotocol';
 import { AdapterCapabilities } from './adapter-capabilities';
-import { VariableRange } from '../../common/memory-range';
+import { toHexStringWithRadixMarker, VariableRange } from '../../common/memory-range';
 
 type WithChildren<Original> = Original & { children?: Array<WithChildren<DebugProtocol.Variable>> };
 type VariablesTree = Record<number, WithChildren<DebugProtocol.Scope | DebugProtocol.Variable>>;
 
 class GdbAdapterTracker implements vscode.DebugAdapterTracker {
+    private currentFrame?: number;
     private variablesTree: VariablesTree = {};
     private readonly pendingMessages = new Map<number, number>();
     private static hexAddress = /0x[0-9a-f]+/i;
@@ -32,6 +33,7 @@ class GdbAdapterTracker implements vscode.DebugAdapterTracker {
 
     onWillReceiveMessage(message: unknown): void {
         if (isScopesRequest(message)) {
+            this.currentFrame = message.arguments.frameId;
             console.log('Sending a fun scopes request!', message);
         } else if (isVariableRequest(message)) {
             if (message.arguments.variablesReference in this.variablesTree) {
@@ -68,6 +70,7 @@ class GdbAdapterTracker implements vscode.DebugAdapterTracker {
     }
 
     async getLocals(session: vscode.DebugSession): Promise<VariableRange[]> {
+        if (this.currentFrame === undefined) { return []; }
         const maybeRanges = await Promise.all(Object.values(this.variablesTree).reduce<Array<Promise<VariableRange | undefined>>>((previous, parent) => {
             if (parent.name === 'Local' && parent.children?.length) {
                 parent.children.forEach(child => {
@@ -80,11 +83,11 @@ class GdbAdapterTracker implements vscode.DebugAdapterTracker {
     }
 
     private async variableToVariableRange(variable: DebugProtocol.Variable, session: vscode.DebugSession): Promise<VariableRange | undefined> {
-        if (variable.memoryReference === undefined) { return undefined; }
+        if (variable.memoryReference === undefined || this.currentFrame === undefined) { return undefined; }
         try {
             const [addressResponse, sizeResponse] = await Promise.all([
-                session.customRequest('evaluate', { expression: `&(${variable.name})`, context: 'watch' }),
-                session.customRequest('evaluate', { expression: `sizeof(${variable.name})`, context: 'watch' }),
+                session.customRequest('evaluate', <DebugProtocol.EvaluateArguments>{ expression: `&(${variable.name})`, context: 'watch', frameId: this.currentFrame }),
+                session.customRequest('evaluate', <DebugProtocol.EvaluateArguments>{ expression: `sizeof(${variable.name})`, context: 'watch', frameId: this.currentFrame }),
             ]) as DebugProtocol.EvaluateResponse['body'][];
             const addressPart = GdbAdapterTracker.hexAddress.exec(addressResponse.result);
             if (!addressPart) { return undefined; }
@@ -92,11 +95,11 @@ class GdbAdapterTracker implements vscode.DebugAdapterTracker {
             const endAddress = GdbAdapterTracker.notADigit.test(sizeResponse.result) ? undefined : startAddress + BigInt(sizeResponse.result);
             return {
                 name: variable.name,
-                startAddress: startAddress.toString(16),
-                endAddress: endAddress === undefined ? undefined : endAddress.toString(16),
+                startAddress: toHexStringWithRadixMarker(startAddress),
+                endAddress: endAddress === undefined ? undefined : toHexStringWithRadixMarker(endAddress),
                 value: variable.value,
             };
-        } catch {
+        } catch (err) {
             return undefined;
         }
     }
