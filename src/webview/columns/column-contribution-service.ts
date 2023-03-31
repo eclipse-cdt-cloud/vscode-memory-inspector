@@ -16,13 +16,13 @@
 
 import { DebugProtocol } from '@vscode/debugprotocol';
 import type * as React from 'react';
-import { LongMemoryRange } from '../../common/memory-range';
+import { BigIntMemoryRange } from '../../common/memory-range';
 import type { Disposable, Memory, MemoryState, UpdateExecutor } from '../utils/view-types';
 
 export interface ColumnContribution {
     readonly label: string;
     readonly id: string;
-    render(range: LongMemoryRange, memory: Memory): React.ReactNode
+    render(range: BigIntMemoryRange, memory: Memory): React.ReactNode
     /** Called when fetching new memory or when activating the column. */
     fetchData?(currentViewParameters: DebugProtocol.ReadMemoryArguments): Promise<void>;
     /** Called when the user reveals the column */

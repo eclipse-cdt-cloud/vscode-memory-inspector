@@ -28,21 +28,21 @@ export interface MemoryRange {
 }
 
 /** Suitable for arithemetic */
-export interface LongMemoryRange {
+export interface BigIntMemoryRange {
     startAddress: bigint;
     endAddress: bigint;
 }
 
-export function isWithin(candidate: bigint, container: LongMemoryRange): boolean {
+export function isWithin(candidate: bigint, container: BigIntMemoryRange): boolean {
     return container.startAddress <= candidate && container.endAddress > candidate;
 }
 
-export function doOverlap(one: LongMemoryRange, other: LongMemoryRange): boolean {
+export function doOverlap(one: BigIntMemoryRange, other: BigIntMemoryRange): boolean {
     // If they overlap, they either start in the same place, or one starts in the other.
     return isWithin(one.startAddress, other) || isWithin(other.startAddress, one);
 }
 
-export function areRangesEqual(one: LongMemoryRange, other: LongMemoryRange): boolean {
+export function areRangesEqual(one: BigIntMemoryRange, other: BigIntMemoryRange): boolean {
     return one.startAddress === other.startAddress && one.endAddress === other.endAddress;
 }
 
@@ -58,7 +58,7 @@ export enum RangeRelationship {
     None,
 }
 
-export function determineRelationship(candidate: bigint, range?: LongMemoryRange): RangeRelationship {
+export function determineRelationship(candidate: bigint, range?: BigIntMemoryRange): RangeRelationship {
     if (range === undefined) { return RangeRelationship.None; }
     if (candidate < range.startAddress) { return RangeRelationship.Before; }
     if (candidate >= range.endAddress) { return RangeRelationship.Past; }
@@ -79,9 +79,9 @@ export interface VariableMetadata {
 /** Suitable for transmission as JSON */
 export interface VariableRange extends MemoryRange, VariableMetadata { }
 /** Suitable for arithemetic */
-export interface LongVariableRange extends LongMemoryRange, VariableMetadata { }
+export interface BigIntVariableRange extends BigIntMemoryRange, VariableMetadata { }
 
-export function areVariablesEqual(one: LongVariableRange, other: LongVariableRange): boolean {
+export function areVariablesEqual(one: BigIntVariableRange, other: BigIntVariableRange): boolean {
     return areRangesEqual(one, other)
         && one.name === other.name
         && one.type === other.type

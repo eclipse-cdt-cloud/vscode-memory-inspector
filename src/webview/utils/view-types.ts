@@ -16,7 +16,7 @@
 
 import type { DebugProtocol } from '@vscode/debugprotocol';
 import type * as React from 'react';
-import { areRangesEqual, LongMemoryRange } from '../../common/memory-range';
+import { areRangesEqual, BigIntMemoryRange } from '../../common/memory-range';
 import deepequal from 'fast-deep-equal';
 
 export enum Endianness {
@@ -47,7 +47,7 @@ export function dispose(disposable: { dispose(): unknown }): void {
 }
 
 export interface Decoration {
-    range: LongMemoryRange;
+    range: BigIntMemoryRange;
     style: React.CSSProperties;
 }
 
