@@ -5,7 +5,7 @@ const path = require('path');
 const webpack = require('webpack');
 
 /** @typedef {import('webpack').Configuration} WebpackConfig **/
-/** @type WebpackConfig */
+/** @type {WebpackConfig} */
 const common = {
     mode: 'development',
     devtool: 'source-map',
@@ -29,7 +29,7 @@ const common = {
     }
 };
 
-/** @type WebpackConfig[] */
+/** @type {WebpackConfig[]} */
 module.exports = [
     {
         ...common,
