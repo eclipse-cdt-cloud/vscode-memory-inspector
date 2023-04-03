@@ -53,7 +53,7 @@ export class MemoryWebview {
         this.messenger = new Messenger();
     }
 
-    public async activate(context: vscode.ExtensionContext): Promise<void> {
+    public activate(context: vscode.ExtensionContext): void {
         context.subscriptions.push(
             vscode.commands.registerCommand(MemoryWebview.ShowCommandType, () => this.show()),
             vscode.commands.registerCommand(MemoryWebview.VariableCommandType, node => {
@@ -119,7 +119,7 @@ export class MemoryWebview {
 
         const disposables = [
             this.messenger.onNotification(readyType, () => this.refresh(participant, options), { sender: participant }),
-            this.messenger.onRequest(logMessageType, message => logger.info(message), { sender: participant }),
+            this.messenger.onRequest(logMessageType, message => logger.info('[webview]:', message), { sender: participant }),
             this.messenger.onRequest(readMemoryType, request => this.readMemory(request), { sender: participant }),
             this.messenger.onRequest(writeMemoryType, request => this.writeMemory(request), { sender: participant }),
             this.messenger.onRequest(getVariables, request => this.getVariables(request), { sender: participant }),

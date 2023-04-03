@@ -35,10 +35,10 @@ export class MemoryProvider {
     protected readonly sessions = new Map<string, DebugProtocol.Capabilities | undefined>();
     protected adapterRegistry?: AdapterRegistry;
 
-    public async activate(context: vscode.ExtensionContext, registry: AdapterRegistry): Promise<void> {
+    public activate(context: vscode.ExtensionContext, registry: AdapterRegistry): void {
         this.adapterRegistry = registry;
         const createDebugAdapterTracker = (session: vscode.DebugSession): Required<vscode.DebugAdapterTracker> => {
-            const handlerForSession = registry.getHandlerForSession(session);
+            const handlerForSession = registry.getHandlerForSession(session.type);
             const contributedTracker = handlerForSession?.initializeAdapterTracker?.(session);
 
             return ({
@@ -114,7 +114,7 @@ export class MemoryProvider {
 
     public async getVariables(variableArguments: DebugProtocol.ReadMemoryArguments): Promise<VariableRange[]> {
         const session = this.assertActiveSession('get variables');
-        const handler = this.adapterRegistry?.getHandlerForSession(session);
+        const handler = this.adapterRegistry?.getHandlerForSession(session.type);
         if (handler?.getResidents) { return handler.getResidents(session, variableArguments); }
         return handler?.getVariables?.(session) ?? [];
     }

@@ -20,6 +20,11 @@ import { AdapterCapabilities } from './adapter-capabilities';
 export class AdapterRegistry implements vscode.Disposable {
     protected handlers = new Map<string, AdapterCapabilities>();
     protected isDisposed = false;
+
+    constructor(context: vscode.ExtensionContext) {
+        context.subscriptions.push(this);
+    }
+
     registerAdapter(debugType: string, handlerToRegister: AdapterCapabilities): vscode.Disposable {
         if (this.isDisposed) { return new vscode.Disposable(() => { }); }
         this.handlers.set(debugType, handlerToRegister);
@@ -31,8 +36,8 @@ export class AdapterRegistry implements vscode.Disposable {
         });
     };
 
-    getHandlerForSession(session: vscode.DebugSession): AdapterCapabilities | undefined {
-        return this.handlers.get(session.type);
+    getHandlerForSession(sessionType: string): AdapterCapabilities | undefined {
+        return this.handlers.get(sessionType);
     }
 
     dispose(): void {
