@@ -21,7 +21,7 @@ export class AdapterRegistry implements vscode.Disposable {
     protected handlers = new Map<string, AdapterCapabilities>();
     protected isDisposed = false;
 
-    constructor(context: vscode.ExtensionContext) {
+    activate(context: vscode.ExtensionContext): void {
         context.subscriptions.push(this);
     }
 

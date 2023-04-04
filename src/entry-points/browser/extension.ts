@@ -23,10 +23,11 @@ import { MemoryWebview } from '../../plugin/memory-webview-main';
 export const activate = async (context: vscode.ExtensionContext): Promise<AdapterRegistry> => {
     const memoryProvider = new MemoryProvider();
     const memoryView = new MemoryWebview(context.extensionUri, memoryProvider);
-    const registry = new AdapterRegistry(context);
-    context.subscriptions.push(registry.registerAdapter('gdb', new GdbCapabilities));
+    const registry = new AdapterRegistry();
+    registry.activate(context);
     memoryProvider.activate(context, registry);
     memoryView.activate(context);
+    context.subscriptions.push(registry.registerAdapter('gdb', new GdbCapabilities));
     return registry;
 };
 
