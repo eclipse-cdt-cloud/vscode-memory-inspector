@@ -29,7 +29,7 @@ class GdbAdapterTracker extends AdapterVariableTracker {
 export async function cVariableToVariableRange(
     variable: DebugProtocol.Variable, session: vscode.DebugSession, currentFrame: number | undefined, logger: Logger
 ): Promise<VariableRange | undefined> {
-    if (!variable.memoryReference || currentFrame === undefined) {
+    if (!variable.memoryReference || currentFrame === undefined || !variable.name) {
         logger.debug('Unable to resolve', variable.name || variable.memoryReference,
             { noName: !variable.name, noMemoryReference: !variable.memoryReference, noFrame: currentFrame === undefined });
         return undefined;
