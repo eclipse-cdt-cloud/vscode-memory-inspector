@@ -30,14 +30,14 @@ export interface AdapterCapabilities {
 
 export type WithChildren<Original> = Original & { children?: Array<WithChildren<DebugProtocol.Variable>> };
 export type VariablesTree = Record<number, WithChildren<DebugProtocol.Scope | DebugProtocol.Variable>>;
+export const hexAddress = /0x[0-9a-f]+/i;
+export const notADigit = /[^0-9]/;
 
 /** This class implements some of the basic elements of tracking adapter sessions in order to maintain a list of variables. */
 export class AdapterVariableTracker implements vscode.DebugAdapterTracker {
     protected currentFrame?: number;
     protected variablesTree: VariablesTree = {};
     protected readonly pendingMessages = new Map<number, number>();
-    protected static hexAddress = /0x[0-9a-f]+/i;
-    protected static notADigit = /[^0-9]/;
 
     constructor(protected readonly onEnd: vscode.Disposable, protected logger: Logger) { }
 
@@ -51,14 +51,14 @@ export class AdapterVariableTracker implements vscode.DebugAdapterTracker {
         }
     }
 
+    /** Produces a two-level tree of scopes and their immediate children. Does not handle expansion of complex variables. */
     onDidSendMessage(message: unknown): void {
         if (isScopesResponse(message)) {
             for (const scope of message.body.scopes) {
-                if (scope.name === 'Local' || scope.presentationHint === 'locals') {
-                    if (!this.variablesTree[scope.variablesReference] || this.variablesTree[scope.variablesReference].name !== 'Local') {
-                        this.variablesTree = { [scope.variablesReference]: { ...scope } };
+                if (this.isDesiredScope(scope)) {
+                    if (!this.variablesTree[scope.variablesReference] || this.variablesTree[scope.variablesReference].name !== scope.name) {
+                        this.variablesTree[scope.variablesReference] = { ...scope };
                     }
-                    return;
                 }
             }
         } else if (isVariableResponse(message)) {
@@ -70,6 +70,10 @@ export class AdapterVariableTracker implements vscode.DebugAdapterTracker {
                 }
             }
         }
+    }
+
+    protected isDesiredScope(scope: DebugProtocol.Scope): boolean {
+        return scope.name !== 'Registers';
     }
 
     onExit(): void {

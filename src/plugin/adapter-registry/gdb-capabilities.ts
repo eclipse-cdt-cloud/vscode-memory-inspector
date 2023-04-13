@@ -16,39 +16,45 @@
 
 import * as vscode from 'vscode';
 import { DebugProtocol } from '@vscode/debugprotocol';
-import { AdapterVariableTracker, VariableTracker } from './adapter-capabilities';
+import { AdapterVariableTracker, hexAddress, notADigit, VariableTracker } from './adapter-capabilities';
 import { toHexStringWithRadixMarker, VariableRange } from '../../common/memory-range';
-import { logger } from '../logger';
+import { Logger, outputChannelLogger } from '../logger';
 
 class GdbAdapterTracker extends AdapterVariableTracker {
     protected override async variableToVariableRange(variable: DebugProtocol.Variable, session: vscode.DebugSession): Promise<VariableRange | undefined> {
-        if (!variable.memoryReference || this.currentFrame === undefined) {
-            this.logger.debug('Unable to resolve', variable.name, { noMemoryReference: !variable.memoryReference, noFrame: this.currentFrame === undefined });
-            return undefined;
-        }
-        try {
-            const [addressResponse, sizeResponse] = await Promise.all([
-                session.customRequest('evaluate', <DebugProtocol.EvaluateArguments>{ expression: `&(${variable.name})`, context: 'watch', frameId: this.currentFrame }),
-                session.customRequest('evaluate', <DebugProtocol.EvaluateArguments>{ expression: `sizeof(${variable.name})`, context: 'watch', frameId: this.currentFrame }),
-            ]) as DebugProtocol.EvaluateResponse['body'][];
-            const addressPart = GdbAdapterTracker.hexAddress.exec(addressResponse.result);
-            if (!addressPart) { return undefined; }
-            const startAddress = BigInt(addressPart[0]);
-            const endAddress = GdbAdapterTracker.notADigit.test(sizeResponse.result) ? undefined : startAddress + BigInt(sizeResponse.result);
-            this.logger.debug('Resolved', variable.name, { start: addressPart[0], size: sizeResponse.result });
-            return {
-                name: variable.name,
-                startAddress: toHexStringWithRadixMarker(startAddress),
-                endAddress: endAddress === undefined ? undefined : toHexStringWithRadixMarker(endAddress),
-                value: variable.value,
-            };
-        } catch (err) {
-            this.logger.warn('Unable to resolve location and size of', variable.name + (err instanceof Error ? ':\n\t' + err.message : ''));
-            return undefined;
-        }
+        return cVariableToVariableRange(variable, session, this.currentFrame, this.logger);
+    }
+}
+
+export async function cVariableToVariableRange(
+    variable: DebugProtocol.Variable, session: vscode.DebugSession, currentFrame: number | undefined, logger: Logger
+): Promise<VariableRange | undefined> {
+    if (!variable.memoryReference || currentFrame === undefined) {
+        logger.debug('Unable to resolve', variable.name, { noMemoryReference: !variable.memoryReference, noFrame: currentFrame === undefined });
+        return undefined;
+    }
+    try {
+        const [addressResponse, sizeResponse] = await Promise.all([
+            session.customRequest('evaluate', <DebugProtocol.EvaluateArguments>{ expression: `&(${variable.name})`, context: 'variables', frameId: currentFrame }),
+            session.customRequest('evaluate', <DebugProtocol.EvaluateArguments>{ expression: `sizeof(${variable.name})`, context: 'variables', frameId: currentFrame }),
+        ]) as DebugProtocol.EvaluateResponse['body'][];
+        const addressPart = hexAddress.exec(addressResponse.result);
+        if (!addressPart) { return undefined; }
+        const startAddress = BigInt(addressPart[0]);
+        const endAddress = notADigit.test(sizeResponse.result) ? undefined : startAddress + BigInt(sizeResponse.result);
+        logger.debug('Resolved', variable.name, { start: addressPart[0], size: sizeResponse.result });
+        return {
+            name: variable.name,
+            startAddress: toHexStringWithRadixMarker(startAddress),
+            endAddress: endAddress === undefined ? undefined : toHexStringWithRadixMarker(endAddress),
+            value: variable.value,
+        };
+    } catch (err) {
+        logger.warn('Unable to resolve location and size of', variable.name + (err instanceof Error ? ':\n\t' + err.message : ''));
+        return undefined;
     }
 }
 
 export class GdbCapabilities extends VariableTracker {
-    constructor() { super(GdbAdapterTracker, logger, 'gdb'); }
+    constructor() { super(GdbAdapterTracker, outputChannelLogger, 'gdb'); }
 }

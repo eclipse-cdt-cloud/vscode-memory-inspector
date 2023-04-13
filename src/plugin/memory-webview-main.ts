@@ -30,7 +30,7 @@ import {
     getVariables
 } from '../common/messaging';
 import { MemoryProvider } from './memory-provider';
-import { logger } from './logger';
+import { outputChannelLogger } from './logger';
 import { VariableRange } from '../common/memory-range';
 
 interface Variable {
@@ -119,7 +119,7 @@ export class MemoryWebview {
 
         const disposables = [
             this.messenger.onNotification(readyType, () => this.refresh(participant, options), { sender: participant }),
-            this.messenger.onRequest(logMessageType, message => logger.info('[webview]:', message), { sender: participant }),
+            this.messenger.onRequest(logMessageType, message => outputChannelLogger.info('[webview]:', message), { sender: participant }),
             this.messenger.onRequest(readMemoryType, request => this.readMemory(request), { sender: participant }),
             this.messenger.onRequest(writeMemoryType, request => this.writeMemory(request), { sender: participant }),
             this.messenger.onRequest(getVariables, request => this.getVariables(request), { sender: participant }),

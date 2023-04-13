@@ -66,4 +66,4 @@ export class Logger {
     public debug = (...messages: Array<string | any>): void => this.log(Verbosity.debug, ...messages);
 }
 
-export const logger = Logger.instance;
+export const outputChannelLogger = Logger.instance;
