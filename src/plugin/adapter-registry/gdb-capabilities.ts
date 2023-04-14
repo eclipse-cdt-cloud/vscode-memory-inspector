@@ -26,12 +26,16 @@ class GdbAdapterTracker extends AdapterVariableTracker {
     }
 }
 
+/**
+ * Resolves memory location and sice using evaluate requests for `$(variable.name)` and `sizeof(variable.name)`
+ * Ignores the presence or absence of variable.memoryReference.
+ */
 export async function cVariableToVariableRange(
     variable: DebugProtocol.Variable, session: vscode.DebugSession, currentFrame: number | undefined, logger: Logger
 ): Promise<VariableRange | undefined> {
-    if (!variable.memoryReference || currentFrame === undefined || !variable.name) {
-        logger.debug('Unable to resolve', variable.name || variable.memoryReference,
-            { noName: !variable.name, noMemoryReference: !variable.memoryReference, noFrame: currentFrame === undefined });
+    if (currentFrame === undefined || !variable.name) {
+        logger.debug('Unable to resolve', variable.name,
+            { noName: !variable.name, noFrame: currentFrame === undefined });
         return undefined;
     }
     try {
