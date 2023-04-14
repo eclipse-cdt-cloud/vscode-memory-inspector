@@ -40,8 +40,8 @@ export async function cVariableToVariableRange(
     }
     try {
         const [addressResponse, sizeResponse] = await Promise.all([
-            session.customRequest('evaluate', <DebugProtocol.EvaluateArguments>{ expression: `&(${variable.name})`, context: 'variables', frameId: currentFrame }),
-            session.customRequest('evaluate', <DebugProtocol.EvaluateArguments>{ expression: `sizeof(${variable.name})`, context: 'variables', frameId: currentFrame }),
+            session.customRequest('evaluate', <DebugProtocol.EvaluateArguments>{ expression: `&(${variable.name})`, context: 'watch', frameId: currentFrame }),
+            session.customRequest('evaluate', <DebugProtocol.EvaluateArguments>{ expression: `sizeof(${variable.name})`, context: 'watch', frameId: currentFrame }),
         ]) as DebugProtocol.EvaluateResponse['body'][];
         const addressPart = hexAddress.exec(addressResponse.result);
         if (!addressPart) { return undefined; }
