@@ -27,7 +27,7 @@ class GdbAdapterTracker extends AdapterVariableTracker {
 }
 
 /**
- * Resolves memory location and sice using evaluate requests for `$(variable.name)` and `sizeof(variable.name)`
+ * Resolves memory location and size using evaluate requests for `$(variable.name)` and `sizeof(variable.name)`
  * Ignores the presence or absence of variable.memoryReference.
  */
 export async function cVariableToVariableRange(
