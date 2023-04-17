@@ -46,28 +46,24 @@ export class Logger {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public log(verbosity: Verbosity, message: string | any): void {
-        if (this.logVerbosity === Verbosity.off) {
+    public log(verbosity: Verbosity, ...messages: Array<string | any>): void {
+        if (this.logVerbosity === Verbosity.off || verbosity > this.logVerbosity) {
             return;
         }
 
-        if (typeof message !== 'string') {
-            message = JSON.stringify(message, undefined, '\t');
-        }
+        const result = messages.map(message => typeof message === 'string' ? message : JSON.stringify(message, undefined, '\t')).join(' ');
 
-        if (verbosity <= this.logVerbosity) {
-            this.outputChannel.appendLine(message);
-        }
+        this.outputChannel.appendLine(result);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public error = (message: string | any): void => this.log(Verbosity.error, message);
+    public error = (...messages: Array<string | any>): void => this.log(Verbosity.error, ...messages);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public warn = (message: string | any): void => this.log(Verbosity.warn, message);
+    public warn = (...messages: Array<string | any>): void => this.log(Verbosity.warn, ...messages);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public info = (message: string | any): void => this.log(Verbosity.info, message);
+    public info = (...messages: Array<string | any>): void => this.log(Verbosity.info, ...messages);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public debug = (message: string | any): void => this.log(Verbosity.debug, message);
+    public debug = (...messages: Array<string | any>): void => this.log(Verbosity.debug, ...messages);
 }
 
-export const logger = Logger.instance;
+export const outputChannelLogger = Logger.instance;

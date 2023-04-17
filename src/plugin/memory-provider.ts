@@ -17,7 +17,9 @@
 import * as vscode from 'vscode';
 import * as manifest from './manifest';
 import { DebugProtocol } from '@vscode/debugprotocol';
-import { MemoryReadResult, MemoryWriteResult } from './views/memory-webview-common';
+import { MemoryReadResult, MemoryWriteResult } from '../common/messaging';
+import { AdapterRegistry } from './adapter-registry/adapter-registry';
+import { VariableRange } from '../common/memory-range';
 
 export interface LabeledUint8Array extends Uint8Array {
     label?: string;
@@ -31,21 +33,38 @@ export class MemoryProvider {
     public static WriteKey = `${manifest.PACKAGE_NAME}.canWrite`;
 
     protected readonly sessions = new Map<string, DebugProtocol.Capabilities | undefined>();
+    protected adapterRegistry?: AdapterRegistry;
 
-    public async activate(context: vscode.ExtensionContext): Promise<void> {
-        const createDebugAdapterTracker = (session: vscode.DebugSession): vscode.DebugAdapterTracker => ({
-            onWillStartSession: () => this.debugSessionStarted(session),
-            onWillStopSession: () => this.debugSessionTerminated(session),
-            onDidSendMessage: message => {
-                if (isInitializeMessage(message)) {
-                    // Check for right capabilities in the adapter
-                    this.sessions.set(session.id, message.body);
-                    if (vscode.debug.activeDebugSession?.id === session.id) {
-                        this.setContext(message.body);
+    public activate(context: vscode.ExtensionContext, registry: AdapterRegistry): void {
+        this.adapterRegistry = registry;
+        const createDebugAdapterTracker = (session: vscode.DebugSession): Required<vscode.DebugAdapterTracker> => {
+            const handlerForSession = registry.getHandlerForSession(session.type);
+            const contributedTracker = handlerForSession?.initializeAdapterTracker?.(session);
+
+            return ({
+                onWillStartSession: () => {
+                    this.debugSessionStarted(session);
+                    contributedTracker?.onWillStartSession?.();
+                },
+                onWillStopSession: () => {
+                    this.debugSessionTerminated(session);
+                    contributedTracker?.onWillStopSession?.();
+                },
+                onDidSendMessage: message => {
+                    if (isInitializeMessage(message)) {
+                        // Check for right capabilities in the adapter
+                        this.sessions.set(session.id, message.body);
+                        if (vscode.debug.activeDebugSession?.id === session.id) {
+                            this.setContext(message.body);
+                        }
                     }
-                }
-            }
-        });
+                    contributedTracker?.onDidSendMessage?.(message);
+                },
+                onError: error => { contributedTracker?.onError?.(error); },
+                onExit: (code, signal) => { contributedTracker?.onExit?.(code, signal); },
+                onWillReceiveMessage: message => { contributedTracker?.onWillReceiveMessage?.(message); }
+            });
+        };
 
         context.subscriptions.push(
             vscode.debug.registerDebugAdapterTrackerFactory('*', { createDebugAdapterTracker }),
@@ -78,7 +97,7 @@ export class MemoryProvider {
         return session;
     }
 
-    private assertActiveSession(action: string): vscode.DebugSession {
+    protected assertActiveSession(action: string): vscode.DebugSession {
         if (!vscode.debug.activeDebugSession) {
             throw new Error(`Cannot ${action}. No active debug session.`);
         }
@@ -91,5 +110,12 @@ export class MemoryProvider {
 
     public async writeMemory(writeMemoryArguments: DebugProtocol.WriteMemoryArguments): Promise<MemoryWriteResult> {
         return this.assertCapability('supportsWriteMemoryRequest', 'write memory').customRequest('writeMemory', writeMemoryArguments);
+    }
+
+    public async getVariables(variableArguments: DebugProtocol.ReadMemoryArguments): Promise<VariableRange[]> {
+        const session = this.assertActiveSession('get variables');
+        const handler = this.adapterRegistry?.getHandlerForSession(session.type);
+        if (handler?.getResidents) { return handler.getResidents(session, variableArguments); }
+        return handler?.getVariables?.(session) ?? [];
     }
 }

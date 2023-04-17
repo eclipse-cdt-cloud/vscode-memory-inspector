@@ -14,71 +14,67 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-import Long from 'long';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { Messenger } from 'vscode-messenger-webview';
 import { HOST_EXTENSION } from 'vscode-messenger-common';
 import {
     readyType,
     logMessageType,
     setOptionsType,
     readMemoryType
-} from './memory-webview-common';
+} from '../common/messaging';
 import type { DebugProtocol } from '@vscode/debugprotocol';
-import { Memory } from './components/view-types';
+import { Decoration, Memory, MemoryState } from './utils/view-types';
 import { MemoryWidget } from './components/memory-widget';
+import { messenger } from './view-messenger';
+import { columnContributionService, ColumnStatus } from './columns/column-contribution-service';
+import { decorationService } from './decorations/decoration-service';
+import { variableDecorator } from './variables/variable-decorations';
 
-interface MemoryState {
-    memory?: Memory;
-    memoryReference: string;
-    offset: number;
-    count: number;
+export interface MemoryAppState extends MemoryState {
+    decorations: Decoration[];
+    columns: ColumnStatus[];
 }
 
-class App extends React.Component<{}, MemoryState> {
-
-    private _messenger: Messenger | undefined;
-    protected get messenger(): Messenger {
-        if (!this._messenger) {
-            const vscode = acquireVsCodeApi();
-            this._messenger = new Messenger(vscode);
-            this._messenger.start();
-        }
-
-        return this._messenger;
-    }
+class App extends React.Component<{}, MemoryAppState> {
 
     public constructor(props: {}) {
         super(props);
+        columnContributionService.register(variableDecorator);
+        decorationService.register(variableDecorator);
         this.state = {
             memory: undefined,
             memoryReference: '',
             offset: 0,
             count: 256,
+            decorations: [],
+            columns: columnContributionService.getColumns(),
         };
     }
 
     public componentDidMount(): void {
-        this.messenger.onRequest(setOptionsType, options => this.setOptions(options));
-        this.messenger.sendNotification(readyType, HOST_EXTENSION, undefined);
+        messenger.onRequest(setOptionsType, options => this.setOptions(options));
+        messenger.sendNotification(readyType, HOST_EXTENSION, undefined);
     }
 
     public render(): React.ReactNode {
         return <MemoryWidget
             memory={this.state.memory}
+            decorations={this.state.decorations}
+            columns={this.state.columns}
             memoryReference={this.state.memoryReference}
-            offset={this.state.offset}
+            offset={this.state.offset ?? 0}
             count={this.state.count}
             updateMemoryArguments={this.updateMemoryState}
             refreshMemory={this.refreshMemory}
+            toggleColumn={this.toggleColumn}
         />;
     }
 
     protected updateMemoryState = (newState: Partial<MemoryState>) => this.setState(prevState => ({ ...prevState, ...newState }));
 
     protected async setOptions(options?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void> {
-        this.messenger.sendRequest(logMessageType, HOST_EXTENSION, JSON.stringify(options));
+        messenger.sendRequest(logMessageType, HOST_EXTENSION, `Setting options: ${JSON.stringify(options)}`);
         this.setState(prevState => ({ ...prevState, ...options }));
         return this.fetchMemory(options);
     }
@@ -92,20 +88,29 @@ class App extends React.Component<{}, MemoryState> {
             count: partialOptions?.count ?? this.state.count
         };
 
-        const response = await this.messenger.sendRequest(readMemoryType, HOST_EXTENSION, completeOptions);
-
+        const response = await messenger.sendRequest(readMemoryType, HOST_EXTENSION, completeOptions);
+        await Promise.all(Array.from(
+            new Set(columnContributionService.getUpdateExecutors().concat(decorationService.getUpdateExecutors())),
+            execututor => execututor.fetchData(completeOptions)
+        ));
         this.setState({
+            decorations: decorationService.decorations,
             memory: this.convertMemory(response)
         });
     }
 
     protected convertMemory(result: DebugProtocol.ReadMemoryResponse['body']): Memory {
         if (!result?.data) { throw new Error('No memory provided!'); }
-        const address = result.address.startsWith('0x')
-            ? Long.fromString(result.address, true, 16)
-            : Long.fromString(result.address, true, 10);
+        const address = BigInt(result.address);
         const bytes = Uint8Array.from(Buffer.from(result.data, 'base64'));
         return { bytes, address };
+    }
+
+    protected toggleColumn = (id: string, active: boolean): void => { this.doToggleColumn(id, active); };
+
+    protected async doToggleColumn(id: string, active: boolean): Promise<void> {
+        const columns = active ? await columnContributionService.show(id, this.state) : columnContributionService.hide(id);
+        this.setState({ columns });
     }
 }
 

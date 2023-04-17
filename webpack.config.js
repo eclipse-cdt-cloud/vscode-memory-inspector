@@ -5,7 +5,7 @@ const path = require('path');
 const webpack = require('webpack');
 
 /** @typedef {import('webpack').Configuration} WebpackConfig **/
-/** @type WebpackConfig */
+/** @type {WebpackConfig} */
 const common = {
     mode: 'development',
     devtool: 'source-map',
@@ -29,13 +29,13 @@ const common = {
     }
 };
 
-/** @type WebpackConfig[] */
+/** @type {WebpackConfig[]} */
 module.exports = [
     {
         ...common,
         target: 'node',
         entry: {
-            extension: './src/desktop/extension.ts'
+            extension: './src/entry-points/desktop/extension.ts'
         },
         output: {
             filename: '[name].js',
@@ -50,7 +50,7 @@ module.exports = [
         ...common,
         target: 'webworker',
         entry: {
-            extension: './src/browser/extension.ts'
+            extension: './src/entry-points/browser/extension.ts'
         },
         output: {
             filename: '[name].js',
@@ -65,7 +65,7 @@ module.exports = [
         ...common,
         target: 'web',
         entry: {
-            memory: './src/views/memory-webview-view.tsx'
+            memory: './src/webview/memory-webview-view.tsx'
         },
         output: {
             filename: '[name].js',

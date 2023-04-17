@@ -18,15 +18,19 @@ import { DebugProtocol } from '@vscode/debugprotocol';
 import React from 'react';
 import { MemoryTable } from './memory-table';
 import { OptionsWidget } from './options-widget';
-import { Endianness, Memory } from './view-types';
+import { Decoration, Endianness, Memory } from '../utils/view-types';
+import { ColumnStatus } from '../columns/column-contribution-service';
 
 interface MemoryWidgetProps {
     memory?: Memory;
+    decorations: Decoration[];
+    columns: ColumnStatus[];
     memoryReference: string;
     offset: number;
     count: number;
     refreshMemory: () => void;
     updateMemoryArguments: (memoryArguments: Partial<DebugProtocol.ReadMemoryArguments>) => void;
+    toggleColumn(id: string, active: boolean): void;
 }
 
 interface MemoryWidgetState {
@@ -52,6 +56,7 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
     override render(): React.ReactNode {
         return <>
             <OptionsWidget
+                columns={this.props.columns}
                 memoryReference={this.props.memoryReference}
                 offset={this.props.offset}
                 count={this.props.count}
@@ -62,8 +67,11 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 updateMemoryArguments={this.props.updateMemoryArguments}
                 updateRenderOptions={this.updateRenderOptions}
                 refreshMemory={this.props.refreshMemory}
+                toggleColumn={this.props.toggleColumn}
             />
             <MemoryTable
+                decorations={this.props.decorations}
+                columns={this.props.columns.filter(candidate => candidate.active)}
                 memory={this.props.memory}
                 endianness={this.state.endianness}
                 byteSize={this.state.byteSize}

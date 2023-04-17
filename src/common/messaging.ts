@@ -15,7 +15,8 @@
  ********************************************************************************/
 
 import type { DebugProtocol } from '@vscode/debugprotocol';
-import { NotificationType, RequestType } from 'vscode-messenger-common';
+import type { NotificationType, RequestType } from 'vscode-messenger-common';
+import type { VariableRange } from './memory-range';
 
 export type MemoryReadResult = DebugProtocol.ReadMemoryResponse['body'];
 export type MemoryWriteResult = DebugProtocol.WriteMemoryResponse['body'];
@@ -25,3 +26,4 @@ export const logMessageType: RequestType<string, void> = { method: 'logMessage' 
 export const setOptionsType: RequestType<Partial<DebugProtocol.ReadMemoryArguments | undefined>, void> = { method: 'setOptions' };
 export const readMemoryType: RequestType<DebugProtocol.ReadMemoryArguments, MemoryReadResult> = { method: 'readMemory' };
 export const writeMemoryType: RequestType<DebugProtocol.WriteMemoryArguments, MemoryWriteResult> = { method: 'writeMemory' };
+export const getVariables: RequestType<DebugProtocol.ReadMemoryArguments, VariableRange[]> = { method: 'getVariables' };
