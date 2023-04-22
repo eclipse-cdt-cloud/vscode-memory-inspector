@@ -117,7 +117,7 @@ export class VariableTracker {
     }
 
     initializeAdapterTracker(session: vscode.DebugSession): AdapterVariableTracker | undefined {
-        if (session.type === 'gdb') {
+        if (this.types.includes(session.type)) {
             const sessionTracker = new this.TrackerConstructor(new vscode.Disposable(() => this.sessions.delete(session.id)), this.logger);
             this.sessions.set(session.id, sessionTracker);
             return sessionTracker;
