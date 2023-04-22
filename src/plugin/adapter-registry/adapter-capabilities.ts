@@ -85,7 +85,7 @@ export class AdapterVariableTracker implements vscode.DebugAdapterTracker {
         this.logger.debug('Retrieving local variables in', session.name + ' Current variables:\n', this.variablesTree);
         if (this.currentFrame === undefined) { return []; }
         const maybeRanges = await Promise.all(Object.values(this.variablesTree).reduce<Array<Promise<VariableRange | undefined>>>((previous, parent) => {
-            if ((parent.name === 'Local' || parent.presentationHint === 'locals') && parent.children?.length) {
+            if (this.isDesiredVariable(parent) && parent.children?.length) {
                 this.logger.debug('Resolving children of', parent.name);
                 parent.children.forEach(child => {
                     previous.push(this.variableToVariableRange(child, session));
@@ -96,6 +96,10 @@ export class AdapterVariableTracker implements vscode.DebugAdapterTracker {
             return previous;
         }, []));
         return maybeRanges.filter((candidate): candidate is VariableRange => !!candidate);
+    }
+
+    protected isDesiredVariable(candidate: DebugProtocol.Variable | DebugProtocol.Scope): boolean {
+        return candidate.presentationHint !== 'registers' && candidate.name !== 'Registers';
     }
 
     protected variableToVariableRange(_variable: DebugProtocol.Variable, _session: vscode.DebugSession): Promise<VariableRange | undefined> {
@@ -113,7 +117,7 @@ export class VariableTracker {
     }
 
     initializeAdapterTracker(session: vscode.DebugSession): AdapterVariableTracker | undefined {
-        if (session.type === 'gdb') {
+        if (this.types.includes(session.type)) {
             const sessionTracker = new this.TrackerConstructor(new vscode.Disposable(() => this.sessions.delete(session.id)), this.logger);
             this.sessions.set(session.id, sessionTracker);
             return sessionTracker;

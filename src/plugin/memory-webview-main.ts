@@ -133,14 +133,27 @@ export class MemoryWebview {
     }
 
     protected async readMemory(request: DebugProtocol.ReadMemoryArguments): Promise<MemoryReadResult> {
-        return this.memoryProvider.readMemory(request);
+        try {
+            return await this.memoryProvider.readMemory(request);
+        } catch (err) {
+            outputChannelLogger.error('Error fetching memory', err instanceof Error ? `: ${err.message}\n${err.stack}` : '');
+        }
     }
 
     protected async writeMemory(request: DebugProtocol.WriteMemoryArguments): Promise<MemoryWriteResult> {
-        return this.memoryProvider.writeMemory(request);
+        try {
+            return await this.memoryProvider.writeMemory(request);
+        } catch (err) {
+            outputChannelLogger.error('Error writing memory', err instanceof Error ? `: ${err.message}\n${err.stack}` : '');
+        }
     }
 
     protected async getVariables(request: DebugProtocol.ReadMemoryArguments): Promise<VariableRange[]> {
-        return this.memoryProvider.getVariables(request);
+        try {
+            return await this.memoryProvider.getVariables(request);
+        } catch (err) {
+            outputChannelLogger.error('Error fetching variables', err instanceof Error ? `: ${err.message}\n${err.stack}` : '');
+            return [];
+        }
     }
 }

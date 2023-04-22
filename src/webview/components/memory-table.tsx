@@ -99,7 +99,7 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
                         <VSCodeDataGridCell cellType='columnheader' gridColumn='2'>
                             Groups
                         </VSCodeDataGridCell>
-                        {this.props.columns.map(({ contribution }, index) => <VSCodeDataGridCell cellType='columnheader' gridColumn={(index + 3).toString()}>
+                        {this.props.columns.map(({ contribution }, index) => <VSCodeDataGridCell key={contribution.id} cellType='columnheader' gridColumn={(index + 3).toString()}>
                             {contribution.label}
                         </VSCodeDataGridCell>)}
                     </VSCodeDataGridRow>
@@ -115,7 +115,10 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
                 <VSCodeDataGridRow gridTemplateColumns={new Array(this.props.columns.length + 2).fill('1fr').join(' ')}>
                     <VSCodeDataGridCell gridColumn='1'>No Data</VSCodeDataGridCell>
                     <VSCodeDataGridCell gridColumn='2'>No Data</VSCodeDataGridCell>
-                    {this.props.columns.map((column, index) => column.active && <VSCodeDataGridCell gridColumn={(index + 3).toString()}>No Data</VSCodeDataGridCell>)}
+                    {this.props.columns.map((column, index) =>
+                        column.active
+                        && <VSCodeDataGridCell key={column.contribution.id} gridColumn={(index + 3).toString()}>No Data</VSCodeDataGridCell>
+                    )}
                 </VSCodeDataGridRow>
             );
         }
@@ -280,10 +283,11 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
             >
                 <VSCodeDataGridCell style={{ fontFamily: 'var(--vscode-editor-font-family)' }} gridColumn='1'>{addressString}</VSCodeDataGridCell>
                 <VSCodeDataGridCell style={{ fontFamily: 'var(--vscode-editor-font-family)' }} gridColumn='2'>{groups}</VSCodeDataGridCell>
-                {this.props.columns.map((column, index) => <VSCodeDataGridCell style={{ fontFamily: 'var(--vscode-editor-font-family)' }} gridColumn={(index + 3).toString()}>
-                    {column.contribution.render(range, this.props.memory!)}
-                </VSCodeDataGridCell>
-                )}
+                {this.props.columns.map((column, index) => (
+                    <VSCodeDataGridCell key={column.contribution.id} style={{ fontFamily: 'var(--vscode-editor-font-family)' }} gridColumn={(index + 3).toString()}>
+                        {column.contribution.render(range, this.props.memory!)}
+                    </VSCodeDataGridCell>
+                ))}
             </VSCodeDataGridRow>
         );
     }
