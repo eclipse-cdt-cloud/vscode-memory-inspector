@@ -75,14 +75,14 @@ export class VariableDecorator implements ColumnContribution, Decorator {
 
     render(range: BigIntMemoryRange): ReactNode {
         return this.getVariablesInRange(range)?.reduce<ReactNode[]>((result, current, index) => {
-            if (index > 0) { result.push(','); }
-            result.push(React.createElement('span', { style: { color: current.color } }, current.variable.name));
+            if (index > 0) { result.push(', '); }
+            result.push(React.createElement('span', { style: { color: current.color }, key: current.variable.name }, current.variable.name));
             return result;
         }, []);
     }
 
     /** Returns variables that start in the given range. */
-    protected lastCall?: BigInt;
+    protected lastCall?: bigint;
     protected currentIndex = 0;
     protected getVariablesInRange(range: BigIntMemoryRange): Array<{ variable: BigIntVariableRange, color: string }> | undefined {
         if (!this.currentVariables?.length) { return undefined; }
@@ -115,7 +115,7 @@ export class VariableDecorator implements ColumnContribution, Decorator {
                         startAddress: variable.startAddress,
                         endAddress: variable.endAddress
                     },
-                    style: { color: NON_HC_COLORS[colorIndex++] }
+                    style: { color: NON_HC_COLORS[colorIndex++ % 5] }
                 });
             }
         }
