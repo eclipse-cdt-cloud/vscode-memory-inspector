@@ -27,7 +27,8 @@ export const activate = async (context: vscode.ExtensionContext): Promise<Adapte
     memoryProvider.activate(context, registry);
     registry.activate(context);
     memoryView.activate(context);
-    context.subscriptions.push(registry.registerAdapter('gdb', new GdbCapabilities));
+    context.subscriptions.push(registry.registerAdapter('gdb', new GdbCapabilities('gdb')));
+    context.subscriptions.push(registry.registerAdapter('embedded-debug', new GdbCapabilities('embedded-debug')));
     return registry;
 };
 

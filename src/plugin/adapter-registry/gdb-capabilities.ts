@@ -61,5 +61,7 @@ export async function cVariableToVariableRange(
 }
 
 export class GdbCapabilities extends VariableTracker {
-    constructor() { super(GdbAdapterTracker, outputChannelLogger, 'gdb'); }
+    constructor(type: string) {
+        super(GdbAdapterTracker, outputChannelLogger, type);
+    }
 }
