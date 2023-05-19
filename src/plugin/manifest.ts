@@ -18,3 +18,5 @@ export const PACKAGE_NAME = 'memory-inspector';
 export const DISPLAY_NAME = 'Memory Inspector';
 export const CONFIG_LOGGING_VERBOSITY = 'loggingVerbosity';
 export const DEFAULT_LOGGING_VERBOSITY = 'warn';
+export const CONFIG_DEBUG_TYPES = 'debugTypes';
+export const DEFAULT_DEBUG_TYPES = [ 'gdb', 'embedded-debug', 'arm-debug' ];

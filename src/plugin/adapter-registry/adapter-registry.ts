@@ -25,12 +25,21 @@ export class AdapterRegistry implements vscode.Disposable {
         context.subscriptions.push(this);
     }
 
-    registerAdapter(debugType: string, handlerToRegister: AdapterCapabilities): vscode.Disposable {
-        if (this.isDisposed) { return new vscode.Disposable(() => { }); }
-        this.handlers.set(debugType, handlerToRegister);
+    registerAdapter(debugTypes: string | string[], handlerToRegister: AdapterCapabilities): vscode.Disposable {
+        if (this.isDisposed) {
+            return new vscode.Disposable(() => { });
+        }
+
+        if (typeof debugTypes === 'string') {
+            debugTypes = [ debugTypes ];
+        }
+
+        for (const debugType of debugTypes) {
+            this.handlers.set(debugType, handlerToRegister);
+        }
+
         return new vscode.Disposable(() => {
-            const currentlyRegisteredHandler = this.handlers.get(debugType);
-            if (currentlyRegisteredHandler === handlerToRegister) {
+            for (const debugType of debugTypes) {
                 this.handlers.delete(debugType);
             }
         });

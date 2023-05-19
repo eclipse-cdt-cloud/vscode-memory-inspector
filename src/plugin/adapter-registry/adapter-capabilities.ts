@@ -109,11 +109,9 @@ export class AdapterVariableTracker implements vscode.DebugAdapterTracker {
 
 export class VariableTracker {
     protected sessions = new Map<string, AdapterVariableTracker>();
-    protected types: string[];
 
     // Include `type` in addition to the rest parameter to indicate that at least one is required
-    constructor(protected TrackerConstructor: typeof AdapterVariableTracker, protected logger: Logger, type: string, ...otherTypes: string[]) {
-        this.types = otherTypes.concat(type);
+    constructor(protected TrackerConstructor: typeof AdapterVariableTracker, protected logger: Logger, protected types: string[]) {
     }
 
     initializeAdapterTracker(session: vscode.DebugSession): AdapterVariableTracker | undefined {

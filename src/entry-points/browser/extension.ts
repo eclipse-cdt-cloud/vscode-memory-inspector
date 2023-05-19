@@ -16,18 +16,21 @@
 
 import * as vscode from 'vscode';
 import { AdapterRegistry } from '../../plugin/adapter-registry/adapter-registry';
-import { GdbCapabilities } from '../../plugin/adapter-registry/gdb-capabilities';
 import { MemoryProvider } from '../../plugin/memory-provider';
 import { MemoryWebview } from '../../plugin/memory-webview-main';
+import { CAdapter } from '../../plugin/adapter-registry/c-adapter';
 
 export const activate = async (context: vscode.ExtensionContext): Promise<AdapterRegistry> => {
-    const memoryProvider = new MemoryProvider();
-    const memoryView = new MemoryWebview(context.extensionUri, memoryProvider);
     const registry = new AdapterRegistry();
+    const memoryProvider = new MemoryProvider(registry);
+    const memoryView = new MemoryWebview(context.extensionUri, memoryProvider);
+    const cAdapter = new CAdapter(registry);
+
     registry.activate(context);
-    memoryProvider.activate(context, registry);
+    memoryProvider.activate(context);
     memoryView.activate(context);
-    context.subscriptions.push(registry.registerAdapter('gdb', new GdbCapabilities));
+    cAdapter.activate(context);
+
     return registry;
 };
 

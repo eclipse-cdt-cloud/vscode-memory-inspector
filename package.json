@@ -74,7 +74,7 @@
       },
       {
         "command": "memory-inspector.show-variable",
-        "title": "Show variable in Memory Inspector",
+        "title": "Show in Memory Inspector",
         "category": "Memory"
       }
     ],
@@ -92,7 +92,13 @@
       "debug/variables/context": [
         {
           "command": "memory-inspector.show-variable",
-          "when": "memory-inspector.canRead"
+          "when": "canViewMemory && memory-inspector.canRead"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "memory-inspector.show-variable",
+          "when": "canViewMemory && memory-inspector.canRead"
         }
       ]
     },
@@ -110,13 +116,19 @@
           ],
           "default": "warn",
           "description": "Specify the logging verbosity of the memory inspector extension"
+        },
+        "memory-inspector.debugTypes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [ "gdb", "embedded-debug", "arm-debug" ],
+          "description": "C-based debuggers to activate"
         }
       }
     }
   },
   "activationEvents": [
-    "onCommand:memory-inspector.show",
-    "onCommand:memory-inspector.show-variable",
     "onDebug",
     "onStartupFinished"
   ],
