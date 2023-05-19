@@ -27,10 +27,15 @@ export interface LabeledUint8Array extends Uint8Array {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const isInitializeMessage = (message: any): message is DebugProtocol.InitializeResponse => message.command === 'initialize' && message.type === 'response';
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const isStoppedEvent = (message: any): boolean => message.type === 'event' && message.event === 'stopped';
 
 export class MemoryProvider {
     public static ReadKey = `${manifest.PACKAGE_NAME}.canRead`;
     public static WriteKey = `${manifest.PACKAGE_NAME}.canWrite`;
+
+    private _onDidStopDebug: vscode.EventEmitter<vscode.DebugSession> = new vscode.EventEmitter<vscode.DebugSession>();
+    public readonly onDidStopDebug: vscode.Event<vscode.DebugSession> = this._onDidStopDebug.event;
 
     protected readonly sessions = new Map<string, DebugProtocol.Capabilities | undefined>();
     protected adapterRegistry?: AdapterRegistry;
@@ -57,6 +62,9 @@ export class MemoryProvider {
                         if (vscode.debug.activeDebugSession?.id === session.id) {
                             this.setContext(message.body);
                         }
+                    }
+                    if (isStoppedEvent(message)) {
+                        this._onDidStopDebug.fire(session);
                     }
                     contributedTracker?.onDidSendMessage?.(message);
                 },

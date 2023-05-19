@@ -123,6 +123,7 @@ export class MemoryWebview {
             this.messenger.onRequest(readMemoryType, request => this.readMemory(request), { sender: participant }),
             this.messenger.onRequest(writeMemoryType, request => this.writeMemory(request), { sender: participant }),
             this.messenger.onRequest(getVariables, request => this.getVariables(request), { sender: participant }),
+            this.memoryProvider.onDidStopDebug(() => this.refresh(participant))
         ];
 
         panel.onDidDispose(() => disposables.forEach(disposible => disposible.dispose()));
