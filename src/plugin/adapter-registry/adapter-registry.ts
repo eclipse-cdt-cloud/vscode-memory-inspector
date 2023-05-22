@@ -36,7 +36,10 @@ export class AdapterRegistry implements vscode.Disposable {
 
         return new vscode.Disposable(() => {
             for (const debugType of debugTypes) {
-                this.handlers.delete(debugType);
+                const currentlyRegisteredHandler = this.handlers.get(debugType);
+                if (currentlyRegisteredHandler === handlerToRegister) {
+                    this.handlers.delete(debugType);
+                }
             }
         });
     };
