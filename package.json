@@ -110,6 +110,19 @@
           ],
           "default": "warn",
           "description": "Specify the logging verbosity of the memory inspector extension"
+        },
+        "memory-inspector.refreshOnStop": {
+          "type": "string",
+          "enum": [
+            "on",
+            "off"
+          ],
+          "enumDescriptions": [
+            "Refresh memory views when when debugger stops (e.g. a breakpoint is hit)",
+            "Memory view data is manually refreshed by user"
+          ],
+          "default": "on",
+          "description": "Refresh memory views when debugger stops"
         }
       }
     }
