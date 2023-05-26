@@ -30,7 +30,7 @@ interface OptionsWidgetProps {
     offset: number;
     count: number;
     endianness: Endianness;
-    byteSize: number;
+    wordSize: number;
     bytesPerGroup: number;
     groupsPerRow: number;
     columns: ColumnStatus[];

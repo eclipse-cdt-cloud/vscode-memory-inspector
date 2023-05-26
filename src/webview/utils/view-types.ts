@@ -26,6 +26,7 @@ export enum Endianness {
 
 export interface Memory {
     address: bigint;
+    wordSize: 8 | 16 | 32 | 64 | 128;
     bytes: Uint8Array;
 }
 
@@ -34,7 +35,7 @@ export interface TableRenderOptions {
     endianness: Endianness;
     bytesPerGroup: number;
     groupsPerRow: number;
-    byteSize: number;
+    wordSize: number;
 }
 
 export interface Event<T> {
@@ -61,4 +62,14 @@ export interface MemoryState extends DebugProtocol.ReadMemoryArguments {
 
 export interface UpdateExecutor {
     fetchData(currentViewParameters: DebugProtocol.ReadMemoryArguments): Promise<void>;
+}
+
+export interface StylableNodeAttributes {
+    className?: string;
+    style?: React.CSSProperties;
+    title?: string;
+}
+
+export interface FullNodeAttributes extends StylableNodeAttributes {
+    content: string;
 }

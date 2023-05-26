@@ -20,68 +20,16 @@ import {
     VSCodeDataGridRow,
     VSCodeDataGridCell
 } from '@vscode/webview-ui-toolkit/react';
-import { Decoration, Endianness, Memory } from '../utils/view-types';
+import { Decoration, Endianness, Memory, StylableNodeAttributes } from '../utils/view-types';
 import { toHexStringWithRadixMarker } from '../../common/memory-range';
-import { decorationService } from '../decorations/decoration-service';
 import { ColumnStatus } from '../columns/column-contribution-service';
-
-interface VariableDecoration {
-    name: string;
-    color: string;
-    firstAppearance?: boolean;
-}
-
-interface GroupData {
-    node: React.ReactNode;
-    ascii: string; index: number;
-    variables: VariableDecoration[];
-    isHighlighted?: boolean;
-}
-
-interface ByteData {
-    node: React.ReactNode;
-    ascii: string; index: number;
-    variables: VariableDecoration[];
-    isHighlighted?: boolean;
-}
-
-interface ItemData {
-    node: React.ReactNode;
-    content: string;
-    variable?: VariableDecoration;
-    index: number;
-    isHighlighted?: boolean;
-}
-
-interface StylableNodeAttributes {
-    className?: string;
-    style?: React.CSSProperties;
-    variable?: VariableDecoration;
-    title?: string;
-    isHighlighted?: boolean;
-}
-
-interface FullNodeAttributes extends StylableNodeAttributes {
-    content: string;
-}
-
-interface RowOptions {
-    address: bigint;
-    groups: React.ReactNode;
-    gridTemplateColumns: string;
-    ascii?: string;
-    variables?: VariableDecoration[];
-    doShowDivider?: boolean;
-    index: number;
-    isHighlighted?: boolean;
-}
 
 interface MemoryTableProps {
     memory?: Memory;
     decorations: Decoration[];
     columns: ColumnStatus[];
     endianness: Endianness;
-    byteSize: number;
+    wordSize: number;
     bytesPerGroup: number;
     groupsPerRow: number;
 }
@@ -93,13 +41,7 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
             <div>
                 <VSCodeDataGrid>
                     <VSCodeDataGridRow rowType='header' gridTemplateColumns={new Array(this.props.columns.length + 2).fill('1fr').join(' ')}>
-                        <VSCodeDataGridCell cellType='columnheader' gridColumn='1'>
-                            Address
-                        </VSCodeDataGridCell>
-                        <VSCodeDataGridCell cellType='columnheader' gridColumn='2'>
-                            Groups
-                        </VSCodeDataGridCell>
-                        {this.props.columns.map(({ contribution }, index) => <VSCodeDataGridCell key={contribution.id} cellType='columnheader' gridColumn={(index + 3).toString()}>
+                        {this.props.columns.map(({ contribution }, index) => <VSCodeDataGridCell key={contribution.id} cellType='columnheader' gridColumn={index.toString()}>
                             {contribution.label}
                         </VSCodeDataGridCell>)}
                     </VSCodeDataGridRow>
@@ -109,7 +51,7 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
         );
     }
 
-    protected getTableRows(): React.ReactNode {
+    private getTableRows(): React.ReactNode {
         if (!this.props.memory) {
             return (
                 <VSCodeDataGridRow gridTemplateColumns={new Array(this.props.columns.length + 2).fill('1fr').join(' ')}>
@@ -123,155 +65,27 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
             );
         }
 
-        return [...this.renderRows(this.props.memory.bytes, this.props.memory.address)];
+        return this.renderRows(this.props.memory);
     }
 
-    protected *renderRows(iteratee: Uint8Array, address: bigint): IterableIterator<React.ReactNode> {
-        const bytesPerRow = this.props.bytesPerGroup * this.props.groupsPerRow;
+    private renderRows(memory: Memory): React.ReactNode {
+        const wordsPerRow = this.props.wordSize * this.props.bytesPerGroup;
+        const numRows = Math.ceil(memory.bytes.length / wordsPerRow);
+        const bigWordsPerRow = BigInt(wordsPerRow);
         const gridTemplateColumns = new Array(this.props.columns.length + 2).fill('1fr').join(' ');
-        let rowsYielded = 0;
-        let groups = [];
-        let ascii = '';
-        let variables = [];
-        let isRowHighlighted = false;
-        for (const { node, index, ascii: groupAscii, variables: groupVariables, isHighlighted = false } of this.renderGroups(iteratee, address)) {
-            groups.push(node);
-            ascii += groupAscii;
-            variables.push(...groupVariables);
-            isRowHighlighted = isRowHighlighted || isHighlighted;
-            if (groups.length === this.props.groupsPerRow || index === iteratee.length - 1) {
-                const rowAddress = address + BigInt(bytesPerRow * rowsYielded);
-                const options = {
-                    address: rowAddress,
-                    doShowDivider: (rowsYielded % 4) === 3,
-                    isHighlighted: isRowHighlighted,
-                    ascii,
-                    groups,
-                    variables,
-                    index,
-                    gridTemplateColumns
-                };
-                yield this.renderRow(options);
-                ascii = '';
-                variables = [];
-                groups = [];
-                rowsYielded += 1;
-                isRowHighlighted = false;
-            }
+        const rows = [];
+        let startAddress = memory.address;
+        for (let i = 0; i < numRows; i++) {
+            rows.push(this.renderRow(startAddress, startAddress + bigWordsPerRow, gridTemplateColumns));
+            startAddress += bigWordsPerRow;
         }
+        return rows;
     }
 
-    protected *renderGroups(iteratee: Uint8Array, address: bigint): IterableIterator<GroupData> {
-        let bytesInGroup: React.ReactNode[] = [];
-        let ascii = '';
-        let variables = [];
-        let isGroupHighlighted = false;
-        for (const { node, index, ascii: byteAscii, variables: byteVariables, isHighlighted = false } of this.renderBytes(iteratee, address)) {
-            bytesInGroup.push(node);
-            ascii += byteAscii;
-            variables.push(...byteVariables);
-            isGroupHighlighted = isGroupHighlighted || isHighlighted;
-            if (bytesInGroup.length === this.props.bytesPerGroup || index === iteratee.length - 1) {
-                const itemID = address + BigInt(index);
-                if (this.props.endianness === Endianness.Little) {
-                    bytesInGroup.reverse();
-                }
-                yield {
-                    node: <span className='byte-group' key={itemID.toString(16)}>{bytesInGroup}</span>,
-                    ascii,
-                    index,
-                    variables,
-                    isHighlighted: isGroupHighlighted,
-                };
-                bytesInGroup = [];
-                ascii = '';
-                variables = [];
-                isGroupHighlighted = false;
-            }
-        }
-    }
-
-    protected *renderBytes(iteratee: Uint8Array, address: bigint): IterableIterator<ByteData> {
-        const itemsPerByte = this.props.byteSize / 8;
-        let currentByte = 0;
-        let chunksInByte: React.ReactNode[] = [];
-        let variables: VariableDecoration[] = [];
-        let isByteHighlighted = false;
-        for (const { node, content, index, variable, isHighlighted = false } of this.renderArrayItems(iteratee, address)) {
-            chunksInByte.push(node);
-            const numericalValue = parseInt(content, 16);
-            currentByte = (currentByte << 8) + numericalValue;
-            isByteHighlighted = isByteHighlighted || isHighlighted;
-            if (variable?.firstAppearance) {
-                variables.push(variable);
-            }
-            if (chunksInByte.length === itemsPerByte || index === iteratee.length - 1) {
-                const itemID = address + BigInt(index);
-                const ascii = this.getASCIIForSingleByte(currentByte);
-                yield {
-                    node: <span className='single-byte' key={itemID.toString(16)}>{chunksInByte}</span>,
-                    ascii,
-                    index,
-                    variables,
-                    isHighlighted: isByteHighlighted,
-                };
-                currentByte = 0;
-                chunksInByte = [];
-                variables = [];
-                isByteHighlighted = false;
-            }
-        }
-    }
-
-    protected *renderArrayItems(iteratee: Uint8Array, address: bigint): IterableIterator<ItemData> {
-        const getBitAttributes = this.getBitAttributes.bind(this);
-        for (let i = 0; i < iteratee.length; i += 1) {
-            const itemID = toHexStringWithRadixMarker(address + BigInt(i));
-            const { content = '', className, style, variable, title, isHighlighted } = getBitAttributes(i, iteratee, address);
-            const node = (
-                <span
-                    style={style}
-                    key={itemID}
-                    className={className}
-                    data-id={itemID}
-                    title={title}
-                >
-                    {content}
-                </span>
-            );
-            yield {
-                node,
-                content,
-                index: i,
-                variable,
-                isHighlighted,
-            };
-        }
-    }
-
-    protected getBitAttributes(arrayOffset: number, iteratee: Uint8Array, address: bigint): Partial<FullNodeAttributes> {
-        const currentCellAddress = (address + BigInt(arrayOffset));
-        const classNames = ['eight-bits'];
-        return {
-            className: classNames.join(' '),
-            variable: undefined,
-            style: decorationService.getDecoration(currentCellAddress)?.style,
-            content: iteratee[arrayOffset].toString(16).padStart(2, '0')
-        };
-    }
-
-    protected getASCIIForSingleByte(byte: number | undefined): string {
-        const isPrintableAsAscii = (input: number): boolean => input >= 32 && input < (128 - 1);
-
-        return typeof byte === 'undefined'
-            ? ' ' : isPrintableAsAscii(byte) ? String.fromCharCode(byte) : '.';
-    }
-
-    protected renderRow(options: RowOptions, getRowAttributes = this.getRowAttributes.bind(this)): React.ReactNode {
-        const { address, groups, gridTemplateColumns } = options;
-        const addressString = toHexStringWithRadixMarker(address);
-        const { className, style, title } = getRowAttributes(options);
-        const range = { startAddress: address, endAddress: address + BigInt(this.props.bytesPerGroup * this.props.groupsPerRow) };
+    private renderRow(startAddress: bigint, endAddress: bigint, columnStyle: string, divider?: boolean): React.ReactNode {
+        const addressString = toHexStringWithRadixMarker(startAddress);
+        const range = { startAddress, endAddress };
+        const { title, style, className } = this.getRowAttributes(divider);
         return (
             <VSCodeDataGridRow
                 // Add a marker to help visual navigation when scrolling
@@ -279,12 +93,10 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
                 style={style}
                 title={title}
                 key={addressString}
-                gridTemplateColumns={gridTemplateColumns}
+                gridTemplateColumns={columnStyle}
             >
-                <VSCodeDataGridCell style={{ fontFamily: 'var(--vscode-editor-font-family)' }} gridColumn='1'>{addressString}</VSCodeDataGridCell>
-                <VSCodeDataGridCell style={{ fontFamily: 'var(--vscode-editor-font-family)' }} gridColumn='2'>{groups}</VSCodeDataGridCell>
                 {this.props.columns.map((column, index) => (
-                    <VSCodeDataGridCell key={column.contribution.id} style={{ fontFamily: 'var(--vscode-editor-font-family)' }} gridColumn={(index + 3).toString()}>
+                    <VSCodeDataGridCell key={column.contribution.id} style={{ fontFamily: 'var(--vscode-editor-font-family)' }} gridColumn={index.toString()}>
                         {column.contribution.render(range, this.props.memory!)}
                     </VSCodeDataGridCell>
                 ))}
@@ -292,9 +104,9 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
         );
     }
 
-    protected getRowAttributes(options: Partial<RowOptions>): Partial<StylableNodeAttributes> {
+    private getRowAttributes(divider?: boolean): Partial<StylableNodeAttributes> {
         let className = 'row';
-        if (options.doShowDivider) {
+        if (divider) {
             className += ' divider';
         }
         return { className };

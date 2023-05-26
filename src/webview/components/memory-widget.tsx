@@ -29,20 +29,20 @@ interface MemoryWidgetProps {
     offset: number;
     count: number;
     refreshMemory: () => void;
-    updateMemoryArguments: (memoryArguments: Partial<DebugProtocol.ReadMemoryArguments>) => void;
+    updateMemoryArguments: (memoryArguments: Partial<DebugProtocol.ReadMemoryArguments & { wordSize: Memory['wordSize'] }>) => void;
     toggleColumn(id: string, active: boolean): void;
 }
 
 interface MemoryWidgetState {
     endianness: Endianness;
-    byteSize: number;
+    wordSize: number;
     bytesPerGroup: number;
     groupsPerRow: number;
 }
 
 const defaultOptions: MemoryWidgetState = {
     endianness: Endianness.Little,
-    byteSize: 8,
+    wordSize: 8,
     bytesPerGroup: 1,
     groupsPerRow: 4,
 };
@@ -61,7 +61,7 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 offset={this.props.offset}
                 count={this.props.count}
                 endianness={this.state.endianness}
-                byteSize={this.state.byteSize}
+                wordSize={this.state.wordSize}
                 bytesPerGroup={this.state.bytesPerGroup}
                 groupsPerRow={this.state.groupsPerRow}
                 updateMemoryArguments={this.props.updateMemoryArguments}
@@ -74,7 +74,7 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 columns={this.props.columns.filter(candidate => candidate.active)}
                 memory={this.props.memory}
                 endianness={this.state.endianness}
-                byteSize={this.state.byteSize}
+                wordSize={this.state.wordSize}
                 bytesPerGroup={this.state.bytesPerGroup}
                 groupsPerRow={this.state.groupsPerRow}
             />
