@@ -16,6 +16,7 @@
 
 import * as vscode from 'vscode';
 import { AdapterCapabilities } from './adapter-capabilities';
+import { outputChannelLogger as logger } from '../logger';
 
 export class AdapterRegistry implements vscode.Disposable {
     protected handlers = new Map<string, AdapterCapabilities>();
@@ -25,13 +26,25 @@ export class AdapterRegistry implements vscode.Disposable {
         context.subscriptions.push(this);
     }
 
-    registerAdapter(debugType: string, handlerToRegister: AdapterCapabilities): vscode.Disposable {
-        if (this.isDisposed) { return new vscode.Disposable(() => { }); }
-        this.handlers.set(debugType, handlerToRegister);
+    registerAdapter(handlerToRegister: AdapterCapabilities, ...debugTypes: string[]): vscode.Disposable {
+        if (debugTypes.length === 0) {
+            logger.warn('No debug session types to register');
+        }
+
+        if (this.isDisposed) {
+            return new vscode.Disposable(() => { });
+        }
+
+        for (const debugType of debugTypes) {
+            this.handlers.set(debugType, handlerToRegister);
+        }
+
         return new vscode.Disposable(() => {
-            const currentlyRegisteredHandler = this.handlers.get(debugType);
-            if (currentlyRegisteredHandler === handlerToRegister) {
-                this.handlers.delete(debugType);
+            for (const debugType of debugTypes) {
+                const currentlyRegisteredHandler = this.handlers.get(debugType);
+                if (currentlyRegisteredHandler === handlerToRegister) {
+                    this.handlers.delete(debugType);
+                }
             }
         });
     };

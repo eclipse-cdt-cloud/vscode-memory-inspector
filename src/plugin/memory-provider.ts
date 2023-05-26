@@ -38,12 +38,13 @@ export class MemoryProvider {
     public readonly onDidStopDebug: vscode.Event<vscode.DebugSession> = this._onDidStopDebug.event;
 
     protected readonly sessions = new Map<string, DebugProtocol.Capabilities | undefined>();
-    protected adapterRegistry?: AdapterRegistry;
 
-    public activate(context: vscode.ExtensionContext, registry: AdapterRegistry): void {
-        this.adapterRegistry = registry;
+    constructor(protected adapterRegistry: AdapterRegistry) {
+    }
+
+    public activate(context: vscode.ExtensionContext): void {
         const createDebugAdapterTracker = (session: vscode.DebugSession): Required<vscode.DebugAdapterTracker> => {
-            const handlerForSession = registry.getHandlerForSession(session.type);
+            const handlerForSession = this.adapterRegistry.getHandlerForSession(session.type);
             const contributedTracker = handlerForSession?.initializeAdapterTracker?.(session);
 
             return ({
