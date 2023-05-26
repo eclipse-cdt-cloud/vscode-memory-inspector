@@ -15,7 +15,7 @@
  ********************************************************************************/
 
 import * as React from 'react';
-import { BigIntMemoryRange } from '../../common/memory-range';
+import { BigIntMemoryRange, toOffset } from '../../common/memory-range';
 import { FullNodeAttributes, Memory } from '../utils/view-types';
 import { ColumnContribution } from './column-contribution-service';
 import { decorationService } from '../decorations/decoration-service';
@@ -45,7 +45,7 @@ export class DataColumn implements ColumnContribution {
 
     private renderWord(memory: Memory, currentAddress: bigint): React.ReactNode {
         const itemsPerByte = memory.wordSize / 8;
-        const initialOffset = Number(currentAddress - memory.address) * itemsPerByte;
+        const initialOffset = toOffset(memory.address, currentAddress, memory.wordSize);
         const finalOffset = initialOffset + itemsPerByte;
         const bytes = [];
         for (let i = initialOffset; i < finalOffset; i++) {
