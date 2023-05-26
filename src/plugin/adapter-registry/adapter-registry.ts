@@ -16,6 +16,7 @@
 
 import * as vscode from 'vscode';
 import { AdapterCapabilities } from './adapter-capabilities';
+import { outputChannelLogger as logger } from '../logger';
 
 export class AdapterRegistry implements vscode.Disposable {
     protected handlers = new Map<string, AdapterCapabilities>();
@@ -26,6 +27,10 @@ export class AdapterRegistry implements vscode.Disposable {
     }
 
     registerAdapter(handlerToRegister: AdapterCapabilities, ...debugTypes: string[]): vscode.Disposable {
+        if (debugTypes.length === 0) {
+            logger.warn('No debug session types to register');
+        }
+
         if (this.isDisposed) {
             return new vscode.Disposable(() => { });
         }
