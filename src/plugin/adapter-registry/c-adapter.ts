@@ -27,7 +27,7 @@ export class CAdapter {
 
     activate(context: vscode.ExtensionContext): void {
         const debugTypes = vscode.workspace.getConfiguration(manifest.PACKAGE_NAME).get<string[]>(manifest.CONFIG_DEBUG_TYPES) || manifest.DEFAULT_DEBUG_TYPES;
-        const tracker = new VariableTracker(CTracker, outputChannelLogger, debugTypes);
+        const tracker = new VariableTracker(CTracker, outputChannelLogger, ...debugTypes);
         context.subscriptions.push(this.registry.registerAdapter(tracker, ...debugTypes));
     }
 }
