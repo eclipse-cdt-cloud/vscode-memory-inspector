@@ -28,11 +28,13 @@ export class CAdapter {
     }
 
     activate(context: vscode.ExtensionContext): void {
-        vscode.workspace.onDidChangeConfiguration(e => {
-            if (e.affectsConfiguration(`${manifest.PACKAGE_NAME}.${manifest.CONFIG_DEBUG_TYPES}`)) {
-                this.register(context);
-            }
-        });
+        context.subscriptions.push(
+            vscode.workspace.onDidChangeConfiguration(e => {
+                if (e.affectsConfiguration(`${manifest.PACKAGE_NAME}.${manifest.CONFIG_DEBUG_TYPES}`)) {
+                    this.register(context);
+                }
+            })
+        );
 
         this.register(context);
     }
