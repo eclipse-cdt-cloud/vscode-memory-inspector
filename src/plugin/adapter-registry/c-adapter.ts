@@ -22,12 +22,31 @@ import { AdapterRegistry } from './adapter-registry';
 import { CTracker } from './c-tracker';
 
 export class CAdapter {
+    protected disposable: vscode.Disposable | undefined;
+
     constructor(protected registry: AdapterRegistry) {
     }
 
     activate(context: vscode.ExtensionContext): void {
+        vscode.workspace.onDidChangeConfiguration(e => {
+            if (e.affectsConfiguration(`${manifest.PACKAGE_NAME}.${manifest.CONFIG_DEBUG_TYPES}`)) {
+                this.register(context);
+            }
+        });
+
+        this.register(context);
+    }
+
+    protected register(context: vscode.ExtensionContext): void {
+        if (this.disposable) {
+            this.disposable.dispose();
+        }
+
         const debugTypes = vscode.workspace.getConfiguration(manifest.PACKAGE_NAME).get<string[]>(manifest.CONFIG_DEBUG_TYPES) || manifest.DEFAULT_DEBUG_TYPES;
         const tracker = new VariableTracker(CTracker, outputChannelLogger, ...debugTypes);
-        context.subscriptions.push(this.registry.registerAdapter(tracker, ...debugTypes));
+
+        const disposable = this.registry.registerAdapter(tracker, ...debugTypes);
+        context.subscriptions.push(disposable);
+        this.disposable = disposable;
     }
 }

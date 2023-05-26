@@ -35,7 +35,6 @@ export class MemoryProvider {
     protected readonly sessions = new Map<string, DebugProtocol.Capabilities | undefined>();
 
     constructor(protected adapterRegistry: AdapterRegistry) {
-
     }
 
     public activate(context: vscode.ExtensionContext): void {
