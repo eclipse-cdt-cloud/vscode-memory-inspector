@@ -124,6 +124,19 @@
           },
           "default": [ "gdb", "embedded-debug", "arm-debug" ],
           "description": "C-based debuggers to activate"
+        },
+        "memory-inspector.refreshOnStop": {
+          "type": "string",
+          "enum": [
+            "on",
+            "off"
+          ],
+          "enumDescriptions": [
+            "Refresh memory views when when debugger stops (e.g. a breakpoint is hit)",
+            "Memory view data is manually refreshed by user"
+          ],
+          "default": "on",
+          "description": "Refresh memory views when debugger stops"
         }
       }
     }

@@ -40,6 +40,11 @@ interface Variable {
     memoryReference: number;
 }
 
+enum RefreshEnum {
+    off = 0,
+    on = 1
+}
+
 const isMemoryVariable = (variable: Variable): variable is Variable => variable && !!(variable as Variable).memoryReference;
 
 export class MemoryWebview {
@@ -48,9 +53,17 @@ export class MemoryWebview {
     public static VariableCommandType = `${manifest.PACKAGE_NAME}.show-variable`;
 
     protected messenger: Messenger;
+    protected refreshOnStop: RefreshEnum;
 
     public constructor(protected extensionUri: vscode.Uri, protected memoryProvider: MemoryProvider) {
         this.messenger = new Messenger();
+
+        this.refreshOnStop = this.getRefresh();
+        vscode.workspace.onDidChangeConfiguration(e => {
+            if (e.affectsConfiguration(`${manifest.PACKAGE_NAME}.${manifest.CONFIG_REFRESH_ON_STOP}`)) {
+                this.refreshOnStop = this.getRefresh();
+            }
+        });
     }
 
     public activate(context: vscode.ExtensionContext): void {
@@ -84,6 +97,11 @@ export class MemoryWebview {
         // Sets up an event listener to listen for messages passed from the webview view context
         // and executes code based on the message that is recieved
         this.setWebviewMessageListener(panel, initialMemory);
+    }
+
+    protected getRefresh(): RefreshEnum {
+        const config = vscode.workspace.getConfiguration(manifest.PACKAGE_NAME).get<string>(manifest.CONFIG_REFRESH_ON_STOP) || manifest.DEFAULT_REFRESH_ON_STOP;
+        return RefreshEnum[config as keyof typeof RefreshEnum];
     }
 
     protected async getWebviewContent(panel: vscode.WebviewPanel): Promise<void> {
@@ -123,6 +141,11 @@ export class MemoryWebview {
             this.messenger.onRequest(readMemoryType, request => this.readMemory(request), { sender: participant }),
             this.messenger.onRequest(writeMemoryType, request => this.writeMemory(request), { sender: participant }),
             this.messenger.onRequest(getVariables, request => this.getVariables(request), { sender: participant }),
+            this.memoryProvider.onDidStopDebug(() => {
+                if (this.refreshOnStop === RefreshEnum.on) {
+                    this.refresh(participant);
+                }
+            })
         ];
 
         panel.onDidDispose(() => disposables.forEach(disposible => disposible.dispose()));
