@@ -43,7 +43,7 @@ export class VariableDecorator implements ColumnContribution, Decorator {
     /** We expect this to always be sorted from lowest to highest start address */
     protected currentVariables?: BigIntVariableRange[];
 
-    get onDidChange(): IEvent<Decoration[]> { return this.onDidChangeEmitter.event.bind(this.onDidChangeEmitter); }
+    get onDidChange(): IEvent<Decoration[]> { return this.onDidChangeEmitter.event; }
 
     async fetchData(currentViewParameters: DebugProtocol.ReadMemoryArguments): Promise<void> {
         if (!this.active) { return; }

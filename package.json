@@ -26,6 +26,7 @@
     "prepare": "yarn build",
     "clean": "git clean -f -x ./node_modules ./dist",
     "build": "webpack --mode production && yarn lint",
+    "compile": "webpack --mode development",
     "watch": "webpack -w",
     "lint": "eslint . --ext .ts,.tsx",
     "package": "vsce package --yarn",
@@ -122,7 +123,11 @@
           "items": {
             "type": "string"
           },
-          "default": [ "gdb", "embedded-debug", "arm-debug" ],
+          "default": [
+            "gdb",
+            "embedded-debug",
+            "arm-debug"
+          ],
           "description": "C-based debuggers to activate (requires debug session restart)"
         },
         "memory-inspector.refreshOnStop": {
