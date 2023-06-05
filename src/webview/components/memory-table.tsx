@@ -36,7 +36,11 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
             <div>
                 <VSCodeDataGrid>
                     <VSCodeDataGridRow rowType='header' gridTemplateColumns={new Array(this.props.columnOptions.length).fill('1fr').join(' ')}>
-                        {this.props.columnOptions.map(({ contribution }, index) => <VSCodeDataGridCell key={contribution.id} cellType='columnheader' gridColumn={index.toString()}>
+                        {this.props.columnOptions.map(({ contribution }, index) => <VSCodeDataGridCell
+                            key={contribution.id}
+                            cellType='columnheader'
+                            gridColumn={(index + 1).toString()}
+                        >
                             {contribution.label}
                         </VSCodeDataGridCell>)}
                     </VSCodeDataGridRow>
@@ -52,7 +56,7 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
                 <VSCodeDataGridRow gridTemplateColumns={new Array(this.props.columnOptions.length).fill('1fr').join(' ')}>
                     {this.props.columnOptions.map((column, index) =>
                         column.active
-                        && <VSCodeDataGridCell key={column.contribution.id} gridColumn={(index + 3).toString()}>No Data</VSCodeDataGridCell>
+                        && <VSCodeDataGridCell key={column.contribution.id} gridColumn={(index + 1).toString()}>No Data</VSCodeDataGridCell>
                     )}
                 </VSCodeDataGridRow>
             );
@@ -62,7 +66,7 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
     }
 
     private renderRows(memory: Memory): React.ReactNode {
-        const wordsPerRow = this.props.wordSize * this.props.bytesPerGroup;
+        const wordsPerRow = this.props.wordSize * this.props.wordsPerGroup;
         const numRows = Math.ceil(memory.bytes.length / wordsPerRow);
         const bigWordsPerRow = BigInt(wordsPerRow);
         const gridTemplateColumns = new Array(this.props.columnOptions.length).fill('1fr').join(' ');
@@ -89,7 +93,7 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
                 gridTemplateColumns={columnStyle}
             >
                 {this.props.columnOptions.map((column, index) => (
-                    <VSCodeDataGridCell key={column.contribution.id} style={{ fontFamily: 'var(--vscode-editor-font-family)' }} gridColumn={index.toString()}>
+                    <VSCodeDataGridCell key={column.contribution.id} style={{ fontFamily: 'var(--vscode-editor-font-family)' }} gridColumn={(index + 1).toString()}>
                         {column.contribution.render(range, this.props.memory!, this.props)}
                     </VSCodeDataGridCell>
                 ))}

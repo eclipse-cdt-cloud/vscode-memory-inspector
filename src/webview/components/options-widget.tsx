@@ -100,7 +100,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                     <VSCodeDivider />
                     <div className="advanced-options" style={AdvancedOptionsStyle}>
                         <label htmlFor={InputId.BytesPerGroup}>Bytes per Group</label>
-                        <VSCodeDropdown id={InputId.BytesPerGroup} onChange={this.handleInputChange} value={this.props.bytesPerGroup.toString()}>
+                        <VSCodeDropdown id={InputId.BytesPerGroup} onChange={this.handleInputChange} value={this.props.wordsPerGroup.toString()}>
                             <VSCodeOption>1</VSCodeOption>
                             <VSCodeOption>2</VSCodeOption>
                             <VSCodeOption>4</VSCodeOption>
@@ -140,7 +140,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
             case InputId.Address: return this.props.updateMemoryArguments({ memoryReference: event.currentTarget.value });
             case InputId.Offset: return !Number.isNaN(event.currentTarget.value) && this.props.updateMemoryArguments({ offset: Number(event.currentTarget.value) });
             case InputId.Length: return !Number.isNaN(event.currentTarget.value) && this.props.updateMemoryArguments({ count: Number(event.currentTarget.value) });
-            case InputId.BytesPerGroup: return this.props.updateRenderOptions({ bytesPerGroup: Number(event.currentTarget.value) });
+            case InputId.BytesPerGroup: return this.props.updateRenderOptions({ wordsPerGroup: Number(event.currentTarget.value) });
             case InputId.GroupsPerRow: return this.props.updateRenderOptions({ groupsPerRow: Number(event.currentTarget.value) });
         }
     }

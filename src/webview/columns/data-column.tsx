@@ -31,13 +31,12 @@ export class DataColumn implements ColumnContribution {
 
     protected renderGroups(range: BigIntMemoryRange, memory: Memory, options: TableRenderOptions): React.ReactNode {
         const groups = [];
-        const words = [];
+        let words = [];
         for (let i = range.startAddress; i < range.endAddress; i++) {
             words.push(this.renderWord(memory, options, i));
-            /* TODO: SHOULD BE WORDS PER GROUP */
-            if (words.length % 4 === 0) {
+            if (words.length % options.wordsPerGroup === 0) {
                 groups.push(<span className='byte-group' key={i.toString(16)}>{words}</span>);
-                words.length = 0;
+                words = [];
             }
         }
         if (words.length) { groups.push(<span className='byte-group' key={(range.endAddress - BigInt(words.length)).toString(16)}>{words}</span>); }

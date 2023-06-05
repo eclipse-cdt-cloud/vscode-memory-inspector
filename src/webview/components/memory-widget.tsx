@@ -62,7 +62,7 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 count={this.props.count}
                 endianness={this.state.endianness}
                 wordSize={this.state.wordSize}
-                bytesPerGroup={this.state.bytesPerGroup}
+                wordsPerGroup={this.state.bytesPerGroup}
                 groupsPerRow={this.state.groupsPerRow}
                 updateMemoryArguments={this.props.updateMemoryArguments}
                 updateRenderOptions={this.updateRenderOptions}
@@ -75,7 +75,7 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 memory={this.props.memory}
                 endianness={this.state.endianness}
                 wordSize={this.state.wordSize}
-                bytesPerGroup={this.state.bytesPerGroup}
+                wordsPerGroup={this.state.bytesPerGroup}
                 groupsPerRow={this.state.groupsPerRow}
             />
         </>;

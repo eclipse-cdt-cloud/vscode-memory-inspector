@@ -94,10 +94,10 @@ export const columnContributionService = new ColumnContributionService();
 function sortContributions(left: ColumnStatus, right: ColumnStatus): number {
     const leftHasPriority = typeof left.contribution.priority === 'number';
     const rightHasPriority = typeof right.contribution.priority === 'number';
-    if (leftHasPriority && rightHasPriority && (left.contribution.priority! - right.contribution.priority! !== 0)) {
-        return left.contribution.priority! - right.contribution.priority!;
+    if (leftHasPriority && !rightHasPriority) { return -1; }
+    if (rightHasPriority && !leftHasPriority) { return 1; }
+    if ((!rightHasPriority && !leftHasPriority) || (left.contribution.priority! - right.contribution.priority! === 0)) {
+        return left.contribution.id.localeCompare(right.contribution.id);
     }
-    if (leftHasPriority) { return -1; }
-    if (rightHasPriority) { return 1; }
-    return left.contribution.id.localeCompare(right.contribution.id);
+    return left.contribution.priority! - right.contribution.priority!;
 }

@@ -31,7 +31,7 @@ export interface Memory {
 
 export interface SerializedTableRenderOptions {
     endianness: Endianness;
-    bytesPerGroup: number;
+    wordsPerGroup: number;
     groupsPerRow: number;
     wordSize: number;
     columnOptions: Array<{ label: string, doRender: boolean }>;
