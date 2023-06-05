@@ -22,6 +22,8 @@ import type { Disposable, Memory, MemoryState, SerializedTableRenderOptions, Upd
 export interface ColumnContribution {
     readonly label: string;
     readonly id: string;
+    /** Sorted low to high. If ommitted, sorted alphabetically by ID after all contributions with numbers. */
+    priority?: number;
     render(range: BigIntMemoryRange, memory: Memory, options: TableRenderOptions): React.ReactNode
     /** Called when fetching new memory or when activating the column. */
     fetchData?(currentViewParameters: DebugProtocol.ReadMemoryArguments): Promise<void>;
@@ -48,7 +50,7 @@ class ColumnContributionService {
         const wrapper = { contribution, active: false };
         this.registeredColumns.set(contribution.id, wrapper);
         this.columnArray.push(wrapper);
-        this.columnArray.sort((left, right) => left.contribution.id.localeCompare(right.contribution.id));
+        this.columnArray.sort(sortContributions);
         return {
             dispose: () => {
                 this.hide(contribution.id);
@@ -82,3 +84,14 @@ class ColumnContributionService {
 }
 
 export const columnContributionService = new ColumnContributionService();
+
+function sortContributions(left: ColumnStatus, right: ColumnStatus): number {
+    const leftHasPriority = typeof left.contribution.priority === 'number';
+    const rightHasPriority = typeof right.contribution.priority === 'number';
+    if (leftHasPriority && rightHasPriority && (left.contribution.priority! - right.contribution.priority! !== 0)) {
+        return left.contribution.priority! - right.contribution.priority!;
+    }
+    if (leftHasPriority) { return -1; }
+    if (rightHasPriority) { return 1; }
+    return left.contribution.id.localeCompare(right.contribution.id);
+}

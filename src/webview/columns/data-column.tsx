@@ -23,6 +23,7 @@ import { decorationService } from '../decorations/decoration-service';
 export class DataColumn implements ColumnContribution {
     readonly id = 'data';
     readonly label = 'Data';
+    priority = 1;
 
     render(range: BigIntMemoryRange, memory: Memory, options: TableRenderOptions): React.ReactNode {
         return this.renderGroups(range, memory, options);

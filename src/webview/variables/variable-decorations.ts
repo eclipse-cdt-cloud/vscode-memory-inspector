@@ -37,6 +37,7 @@ const NON_HC_COLORS = [
 export class VariableDecorator implements ColumnContribution, Decorator {
     readonly id = 'variables';
     readonly label = 'Variables';
+    priority = 2;
     protected active = false;
     protected onDidChangeEmitter = new EventEmitter<Decoration[]>();
     /** We expect this to always be sorted from lowest to highest start address */
