@@ -36,6 +36,8 @@ export interface ColumnContribution {
 export interface ColumnStatus {
     contribution: ColumnContribution;
     active: boolean;
+    /** If set to false, the column will always be displayed */
+    configurable: boolean;
 }
 
 export interface TableRenderOptions extends Omit<SerializedTableRenderOptions, 'columnOptions'> {
@@ -45,9 +47,13 @@ export interface TableRenderOptions extends Omit<SerializedTableRenderOptions, '
 class ColumnContributionService {
     protected columnArray = new Array<ColumnStatus>();
     protected registeredColumns = new Map<string, ColumnStatus>;
-    register(contribution: ColumnContribution): Disposable {
+    /**
+     * @param configurable - if `false`, the column will always be dispayled.
+     * @param defaultActive if {@link configurable} is `false`, this field will default to `true` and be ignored. Otherwise defaults to `false`.
+     */
+    register(contribution: ColumnContribution, configurable = true, defaultActive?: boolean): Disposable {
         if (this.registeredColumns.has(contribution.id)) { return { dispose: () => { } }; }
-        const wrapper = { contribution, active: false };
+        const wrapper = { contribution, active: !configurable || !!defaultActive, configurable };
         this.registeredColumns.set(contribution.id, wrapper);
         this.columnArray.push(wrapper);
         this.columnArray.sort(sortContributions);

@@ -119,7 +119,9 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                         {!!this.props.columnOptions.length && <MultiSelectWithLabel
                             id='column-select'
                             label='Columns'
-                            items={this.props.columnOptions.map(column => ({ id: column.contribution.id, label: column.contribution.label, checked: column.active }))}
+                            items={this.props.columnOptions
+                                .filter(({ configurable }) => configurable)
+                                .map(column => ({ id: column.contribution.id, label: column.contribution.label, checked: column.active }))}
                             onSelectionChanged={this.props.toggleColumn}
                         />}
                     </div>

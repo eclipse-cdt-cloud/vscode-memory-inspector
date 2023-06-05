@@ -43,8 +43,8 @@ class App extends React.Component<{}, MemoryAppState> {
 
     public constructor(props: {}) {
         super(props);
-        columnContributionService.register(new AddressColumn());
-        columnContributionService.register(new DataColumn());
+        columnContributionService.register(new AddressColumn(), false);
+        columnContributionService.register(new DataColumn(), false);
         columnContributionService.register(variableDecorator);
         columnContributionService.register(new AsciiColumn());
         decorationService.register(variableDecorator);
