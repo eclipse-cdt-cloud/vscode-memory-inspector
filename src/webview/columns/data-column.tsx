@@ -17,22 +17,22 @@
 import * as React from 'react';
 import { BigIntMemoryRange, toOffset } from '../../common/memory-range';
 import { FullNodeAttributes, Memory } from '../utils/view-types';
-import { ColumnContribution } from './column-contribution-service';
+import { ColumnContribution, TableRenderOptions } from './column-contribution-service';
 import { decorationService } from '../decorations/decoration-service';
 
 export class DataColumn implements ColumnContribution {
     readonly id = 'data';
     readonly label = 'Data';
 
-    render(range: BigIntMemoryRange, memory: Memory): React.ReactNode {
-        return this.renderGroups(range, memory);
+    render(range: BigIntMemoryRange, memory: Memory, options: TableRenderOptions): React.ReactNode {
+        return this.renderGroups(range, memory, options);
     }
 
-    protected renderGroups(range: BigIntMemoryRange, memory: Memory): React.ReactNode {
+    protected renderGroups(range: BigIntMemoryRange, memory: Memory, options: TableRenderOptions): React.ReactNode {
         const groups = [];
         const words = [];
         for (let i = range.startAddress; i < range.endAddress; i++) {
-            words.push(this.renderWord(memory, i));
+            words.push(this.renderWord(memory, options, i));
             /* TODO: SHOULD BE WORDS PER GROUP */
             if (words.length % 4 === 0) {
                 groups.push(<span className='byte-group' key={i.toString(16)}>{words}</span>);
@@ -43,9 +43,9 @@ export class DataColumn implements ColumnContribution {
         return groups;
     }
 
-    private renderWord(memory: Memory, currentAddress: bigint): React.ReactNode {
-        const itemsPerByte = memory.wordSize / 8;
-        const initialOffset = toOffset(memory.address, currentAddress, memory.wordSize);
+    private renderWord(memory: Memory, options: TableRenderOptions, currentAddress: bigint): React.ReactNode {
+        const itemsPerByte = options.wordSize / 8;
+        const initialOffset = toOffset(memory.address, currentAddress, options.wordSize);
         const finalOffset = initialOffset + itemsPerByte;
         const bytes = [];
         for (let i = initialOffset; i < finalOffset; i++) {

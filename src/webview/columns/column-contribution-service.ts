@@ -17,12 +17,12 @@
 import { DebugProtocol } from '@vscode/debugprotocol';
 import type * as React from 'react';
 import { BigIntMemoryRange } from '../../common/memory-range';
-import type { Disposable, Memory, MemoryState, UpdateExecutor } from '../utils/view-types';
+import type { Disposable, Memory, MemoryState, SerializedTableRenderOptions, UpdateExecutor } from '../utils/view-types';
 
 export interface ColumnContribution {
     readonly label: string;
     readonly id: string;
-    render(range: BigIntMemoryRange, memory: Memory): React.ReactNode
+    render(range: BigIntMemoryRange, memory: Memory, options: TableRenderOptions): React.ReactNode
     /** Called when fetching new memory or when activating the column. */
     fetchData?(currentViewParameters: DebugProtocol.ReadMemoryArguments): Promise<void>;
     /** Called when the user reveals the column */
@@ -34,6 +34,10 @@ export interface ColumnContribution {
 export interface ColumnStatus {
     contribution: ColumnContribution;
     active: boolean;
+}
+
+export interface TableRenderOptions extends Omit<SerializedTableRenderOptions, 'columnOptions'> {
+    columnOptions: ColumnStatus[];
 }
 
 class ColumnContributionService {

@@ -20,18 +20,13 @@ import {
     VSCodeDataGridRow,
     VSCodeDataGridCell
 } from '@vscode/webview-ui-toolkit/react';
-import { Decoration, Endianness, Memory, StylableNodeAttributes } from '../utils/view-types';
+import { Decoration, Memory, StylableNodeAttributes } from '../utils/view-types';
 import { toHexStringWithRadixMarker } from '../../common/memory-range';
-import { ColumnStatus } from '../columns/column-contribution-service';
+import { TableRenderOptions } from '../columns/column-contribution-service';
 
-interface MemoryTableProps {
+interface MemoryTableProps extends TableRenderOptions {
     memory?: Memory;
     decorations: Decoration[];
-    columns: ColumnStatus[];
-    endianness: Endianness;
-    wordSize: number;
-    bytesPerGroup: number;
-    groupsPerRow: number;
 }
 
 export class MemoryTable extends React.Component<MemoryTableProps> {
@@ -40,8 +35,8 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
         return (
             <div>
                 <VSCodeDataGrid>
-                    <VSCodeDataGridRow rowType='header' gridTemplateColumns={new Array(this.props.columns.length + 2).fill('1fr').join(' ')}>
-                        {this.props.columns.map(({ contribution }, index) => <VSCodeDataGridCell key={contribution.id} cellType='columnheader' gridColumn={index.toString()}>
+                    <VSCodeDataGridRow rowType='header' gridTemplateColumns={new Array(this.props.columnOptions.length).fill('1fr').join(' ')}>
+                        {this.props.columnOptions.map(({ contribution }, index) => <VSCodeDataGridCell key={contribution.id} cellType='columnheader' gridColumn={index.toString()}>
                             {contribution.label}
                         </VSCodeDataGridCell>)}
                     </VSCodeDataGridRow>
@@ -54,10 +49,8 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
     private getTableRows(): React.ReactNode {
         if (!this.props.memory) {
             return (
-                <VSCodeDataGridRow gridTemplateColumns={new Array(this.props.columns.length + 2).fill('1fr').join(' ')}>
-                    <VSCodeDataGridCell gridColumn='1'>No Data</VSCodeDataGridCell>
-                    <VSCodeDataGridCell gridColumn='2'>No Data</VSCodeDataGridCell>
-                    {this.props.columns.map((column, index) =>
+                <VSCodeDataGridRow gridTemplateColumns={new Array(this.props.columnOptions.length).fill('1fr').join(' ')}>
+                    {this.props.columnOptions.map((column, index) =>
                         column.active
                         && <VSCodeDataGridCell key={column.contribution.id} gridColumn={(index + 3).toString()}>No Data</VSCodeDataGridCell>
                     )}
@@ -72,7 +65,7 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
         const wordsPerRow = this.props.wordSize * this.props.bytesPerGroup;
         const numRows = Math.ceil(memory.bytes.length / wordsPerRow);
         const bigWordsPerRow = BigInt(wordsPerRow);
-        const gridTemplateColumns = new Array(this.props.columns.length + 2).fill('1fr').join(' ');
+        const gridTemplateColumns = new Array(this.props.columnOptions.length).fill('1fr').join(' ');
         const rows = [];
         let startAddress = memory.address;
         for (let i = 0; i < numRows; i++) {
@@ -95,9 +88,9 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
                 key={addressString}
                 gridTemplateColumns={columnStyle}
             >
-                {this.props.columns.map((column, index) => (
+                {this.props.columnOptions.map((column, index) => (
                     <VSCodeDataGridCell key={column.contribution.id} style={{ fontFamily: 'var(--vscode-editor-font-family)' }} gridColumn={index.toString()}>
-                        {column.contribution.render(range, this.props.memory!)}
+                        {column.contribution.render(range, this.props.memory!, this.props)}
                     </VSCodeDataGridCell>
                 ))}
             </VSCodeDataGridRow>

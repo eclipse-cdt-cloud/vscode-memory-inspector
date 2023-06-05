@@ -26,16 +26,15 @@ export enum Endianness {
 
 export interface Memory {
     address: bigint;
-    wordSize: 8 | 16 | 32 | 64 | 128;
     bytes: Uint8Array;
 }
 
-export interface TableRenderOptions {
-    columnOptions: Array<{ label: string, doRender: boolean }>;
+export interface SerializedTableRenderOptions {
     endianness: Endianness;
     bytesPerGroup: number;
     groupsPerRow: number;
     wordSize: number;
+    columnOptions: Array<{ label: string, doRender: boolean }>;
 }
 
 export interface Event<T> {

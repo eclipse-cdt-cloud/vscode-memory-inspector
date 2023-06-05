@@ -37,7 +37,6 @@ import { DataColumn } from './columns/data-column';
 export interface MemoryAppState extends MemoryState {
     decorations: Decoration[];
     columns: ColumnStatus[];
-    wordSize: 8 | 16 | 32 | 64 | 128;
 }
 
 class App extends React.Component<{}, MemoryAppState> {
@@ -54,7 +53,6 @@ class App extends React.Component<{}, MemoryAppState> {
             memoryReference: '',
             offset: 0,
             count: 256,
-            wordSize: 16,
             decorations: [],
             columns: columnContributionService.getColumns(),
         };
@@ -111,7 +109,7 @@ class App extends React.Component<{}, MemoryAppState> {
         if (!result?.data) { throw new Error('No memory provided!'); }
         const address = BigInt(result.address);
         const bytes = Uint8Array.from(Buffer.from(result.data, 'base64'));
-        return { bytes, address, wordSize: this.state.wordSize };
+        return { bytes, address };
     }
 
     protected toggleColumn = (id: string, active: boolean): void => { this.doToggleColumn(id, active); };

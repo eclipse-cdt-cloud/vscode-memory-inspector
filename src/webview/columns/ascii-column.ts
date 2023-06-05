@@ -17,7 +17,7 @@
 import { ReactNode } from 'react';
 import { BigIntMemoryRange, toOffset } from '../../common/memory-range';
 import { Memory } from '../utils/view-types';
-import { ColumnContribution } from './column-contribution-service';
+import { ColumnContribution, TableRenderOptions } from './column-contribution-service';
 
 function isPrintableAsAscii(input: number): boolean {
     return input >= 32 && input < (128 - 1);
@@ -31,9 +31,9 @@ function getASCIIForSingleByte(byte: number | undefined): string {
 export class AsciiColumn implements ColumnContribution {
     id = 'ascii';
     label = 'ASCII';
-    render(range: BigIntMemoryRange, memory: Memory): ReactNode {
-        const startOffset = toOffset(memory.address, range.startAddress, memory.wordSize);
-        const endOffset = toOffset(memory.address, range.endAddress, memory.wordSize);
+    render(range: BigIntMemoryRange, memory: Memory, options: TableRenderOptions): ReactNode {
+        const startOffset = toOffset(memory.address, range.startAddress, options.wordSize);
+        const endOffset = toOffset(memory.address, range.endAddress, options.wordSize);
         let result = '';
         for (let i = startOffset; i < endOffset; i++) {
             result += getASCIIForSingleByte(memory.bytes[i]);
