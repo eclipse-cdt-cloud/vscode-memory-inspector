@@ -43,7 +43,7 @@ export class DataColumn implements ColumnContribution {
         return groups;
     }
 
-    private renderWord(memory: Memory, options: TableRenderOptions, currentAddress: bigint): React.ReactNode {
+    protected renderWord(memory: Memory, options: TableRenderOptions, currentAddress: bigint): React.ReactNode {
         const itemsPerByte = options.wordSize / 8;
         const initialOffset = toOffset(memory.address, currentAddress, options.wordSize);
         const finalOffset = initialOffset + itemsPerByte;
@@ -54,7 +54,7 @@ export class DataColumn implements ColumnContribution {
         return <span className='single-word' key={currentAddress.toString(16)}>{bytes}</span>;
     }
 
-    private renderEightBits(memory: Memory, currentAddress: bigint, offset: number): React.ReactNode {
+    protected renderEightBits(memory: Memory, currentAddress: bigint, offset: number): React.ReactNode {
         const { content, className, style, title } = this.getBitAttributes(memory, currentAddress, offset);
         return <span
             style={style}
@@ -67,7 +67,7 @@ export class DataColumn implements ColumnContribution {
         </span>;
     }
 
-    private getBitAttributes(memory: Memory, currentAdress: bigint, offset: number): FullNodeAttributes {
+    protected getBitAttributes(memory: Memory, currentAdress: bigint, offset: number): FullNodeAttributes {
         return {
             className: 'eight-bits',
             style: decorationService.getDecoration(currentAdress)?.style,

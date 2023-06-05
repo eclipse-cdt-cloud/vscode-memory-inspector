@@ -20,10 +20,10 @@ export class EventEmitter<T> {
     protected emitter = new EventTarget();
     protected toDispose = new Array<Disposable>();
 
-    private _boundEvent?: (handler: (event: T) => unknown) => Disposable;
+    protected _boundEvent?: (handler: (event: T) => unknown) => Disposable;
     get event(): (handler: (event: T) => unknown) => Disposable { return this._boundEvent ?? (this._boundEvent = this._event.bind(this)); }
 
-    private _event(externalHandler: (event: T) => unknown): Disposable {
+    protected _event(externalHandler: (event: T) => unknown): Disposable {
         const internalHandler = (event: Event) => {
             const handlerEvent = event as Event & { data: T };
             externalHandler(handlerEvent.data);

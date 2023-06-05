@@ -50,7 +50,7 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
         );
     }
 
-    private getTableRows(): React.ReactNode {
+    protected getTableRows(): React.ReactNode {
         if (!this.props.memory) {
             return (
                 <VSCodeDataGridRow gridTemplateColumns={new Array(this.props.columnOptions.length).fill('1fr').join(' ')}>
@@ -65,7 +65,7 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
         return this.renderRows(this.props.memory);
     }
 
-    private renderRows(memory: Memory): React.ReactNode {
+    protected renderRows(memory: Memory): React.ReactNode {
         const wordsPerRow = this.props.wordSize * this.props.wordsPerGroup;
         const numRows = Math.ceil(memory.bytes.length / wordsPerRow);
         const bigWordsPerRow = BigInt(wordsPerRow);
@@ -79,7 +79,7 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
         return rows;
     }
 
-    private renderRow(startAddress: bigint, endAddress: bigint, columnStyle: string, divider?: boolean): React.ReactNode {
+    protected renderRow(startAddress: bigint, endAddress: bigint, columnStyle: string, divider?: boolean): React.ReactNode {
         const addressString = toHexStringWithRadixMarker(startAddress);
         const range = { startAddress, endAddress };
         const { title, style, className } = this.getRowAttributes(divider);
@@ -101,7 +101,7 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
         );
     }
 
-    private getRowAttributes(divider?: boolean): Partial<StylableNodeAttributes> {
+    protected getRowAttributes(divider?: boolean): Partial<StylableNodeAttributes> {
         let className = 'row';
         if (divider) {
             className += ' divider';
