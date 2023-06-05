@@ -123,11 +123,7 @@
           "items": {
             "type": "string"
           },
-          "default": [
-            "gdb",
-            "embedded-debug",
-            "arm-debug"
-          ],
+          "default": [ "gdb", "embedded-debug", "arm-debug" ],
           "description": "C-based debuggers to activate (requires debug session restart)"
         },
         "memory-inspector.refreshOnStop": {

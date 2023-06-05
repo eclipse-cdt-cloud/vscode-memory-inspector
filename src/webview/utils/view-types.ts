@@ -30,11 +30,11 @@ export interface Memory {
 }
 
 export interface SerializedTableRenderOptions {
+    columnOptions: Array<{ label: string, doRender: boolean }>;
     endianness: Endianness;
     wordsPerGroup: number;
     groupsPerRow: number;
     wordSize: number;
-    columnOptions: Array<{ label: string, doRender: boolean }>;
 }
 
 export interface Event<T> {

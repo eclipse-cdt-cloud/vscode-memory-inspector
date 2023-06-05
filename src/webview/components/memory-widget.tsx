@@ -19,7 +19,7 @@ import React from 'react';
 import { MemoryTable } from './memory-table';
 import { OptionsWidget } from './options-widget';
 import { Decoration, Endianness, Memory } from '../utils/view-types';
-import { ColumnStatus, TableRenderOptions } from '../columns/column-contribution-service';
+import { ColumnStatus } from '../columns/column-contribution-service';
 
 interface MemoryWidgetProps {
     memory?: Memory;
@@ -29,7 +29,7 @@ interface MemoryWidgetProps {
     offset: number;
     count: number;
     refreshMemory: () => void;
-    updateMemoryArguments: (memoryArguments: Partial<DebugProtocol.ReadMemoryArguments & { wordSize: TableRenderOptions['wordSize'] }>) => void;
+    updateMemoryArguments: (memoryArguments: Partial<DebugProtocol.ReadMemoryArguments>) => void;
     toggleColumn(id: string, active: boolean): void;
 }
 

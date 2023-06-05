@@ -21,7 +21,7 @@ import { ColumnContribution } from './column-contribution-service';
 export class AddressColumn implements ColumnContribution {
     readonly label = 'Address';
     readonly id = 'address';
-    priority = 0;
+    readonly priority = 0;
 
     render(range: BigIntMemoryRange): ReactNode {
         return toHexStringWithRadixMarker(range.startAddress);

@@ -34,7 +34,7 @@ export class MemoryProvider {
     public static ReadKey = `${manifest.PACKAGE_NAME}.canRead`;
     public static WriteKey = `${manifest.PACKAGE_NAME}.canWrite`;
 
-    protected _onDidStopDebug: vscode.EventEmitter<vscode.DebugSession> = new vscode.EventEmitter<vscode.DebugSession>();
+    private _onDidStopDebug: vscode.EventEmitter<vscode.DebugSession> = new vscode.EventEmitter<vscode.DebugSession>();
     public readonly onDidStopDebug: vscode.Event<vscode.DebugSession> = this._onDidStopDebug.event;
 
     protected readonly sessions = new Map<string, DebugProtocol.Capabilities | undefined>();
