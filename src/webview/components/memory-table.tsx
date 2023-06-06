@@ -73,7 +73,7 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
         const rows = [];
         let startAddress = memory.address;
         for (let i = 0; i < numRows; i++) {
-            rows.push(this.renderRow(startAddress, startAddress + bigWordsPerRow, gridTemplateColumns));
+            rows.push(this.renderRow(startAddress, startAddress + bigWordsPerRow, gridTemplateColumns, i % 4 === 3));
             startAddress += bigWordsPerRow;
         }
         return rows;
@@ -102,9 +102,9 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
     }
 
     protected getRowAttributes(divider?: boolean): Partial<StylableNodeAttributes> {
-        let className = 'row';
+        const className = 'row';
         if (divider) {
-            className += ' divider';
+            return { style: { borderBottom: '2px solid var(--vscode-editor-lineHighlightBorder)' }, className };
         }
         return { className };
     }
