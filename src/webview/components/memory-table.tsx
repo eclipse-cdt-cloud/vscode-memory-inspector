@@ -66,8 +66,8 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
     }
 
     protected renderRows(memory: Memory): React.ReactNode {
-        const wordsPerRow = this.props.wordSize * this.props.wordsPerGroup;
-        const numRows = Math.ceil(memory.bytes.length / wordsPerRow);
+        const wordsPerRow = this.props.wordsPerGroup * this.props.groupsPerRow;
+        const numRows = Math.ceil((memory.bytes.length * 8) / (wordsPerRow * this.props.wordSize));
         const bigWordsPerRow = BigInt(wordsPerRow);
         const gridTemplateColumns = new Array(this.props.columnOptions.length).fill('1fr').join(' ');
         const rows = [];
