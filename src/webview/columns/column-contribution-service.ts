@@ -53,7 +53,8 @@ class ColumnContributionService {
      */
     register(contribution: ColumnContribution, configurable = true, defaultActive?: boolean): Disposable {
         if (this.registeredColumns.has(contribution.id)) { return { dispose: () => { } }; }
-        const wrapper = { contribution, active: !configurable || !!defaultActive, configurable };
+        const active = defaultActive || !configurable; // If not configurable, must be active.
+        const wrapper = { contribution, active, configurable };
         this.registeredColumns.set(contribution.id, wrapper);
         this.columnArray.push(wrapper);
         this.columnArray.sort(sortContributions);

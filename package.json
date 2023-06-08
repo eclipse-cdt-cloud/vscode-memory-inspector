@@ -26,7 +26,6 @@
     "prepare": "yarn build",
     "clean": "git clean -f -x ./node_modules ./dist",
     "build": "webpack --mode production && yarn lint",
-    "compile": "webpack --mode development",
     "watch": "webpack -w",
     "lint": "eslint . --ext .ts,.tsx",
     "package": "vsce package --yarn",
