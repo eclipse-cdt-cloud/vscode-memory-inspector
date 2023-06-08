@@ -30,6 +30,9 @@ import { messenger } from './view-messenger';
 import { columnContributionService, ColumnStatus } from './columns/column-contribution-service';
 import { decorationService } from './decorations/decoration-service';
 import { variableDecorator } from './variables/variable-decorations';
+import { AsciiColumn } from './columns/ascii-column';
+import { AddressColumn } from './columns/address-column';
+import { DataColumn } from './columns/data-column';
 
 export interface MemoryAppState extends MemoryState {
     decorations: Decoration[];
@@ -40,7 +43,10 @@ class App extends React.Component<{}, MemoryAppState> {
 
     public constructor(props: {}) {
         super(props);
+        columnContributionService.register(new AddressColumn(), false);
+        columnContributionService.register(new DataColumn(), false);
         columnContributionService.register(variableDecorator);
+        columnContributionService.register(new AsciiColumn());
         decorationService.register(variableDecorator);
         this.state = {
             memory: undefined,

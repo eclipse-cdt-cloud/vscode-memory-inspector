@@ -87,3 +87,7 @@ export function areVariablesEqual(one: BigIntVariableRange, other: BigIntVariabl
         && one.type === other.type
         && one.value === other.value;
 }
+
+export function toOffset(startAddress: bigint, targetAddress: bigint, wordSize: number): number {
+    return Number(targetAddress - startAddress) * (wordSize / 8);
+}

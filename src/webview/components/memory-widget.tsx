@@ -35,14 +35,14 @@ interface MemoryWidgetProps {
 
 interface MemoryWidgetState {
     endianness: Endianness;
-    byteSize: number;
+    wordSize: number;
     bytesPerGroup: number;
     groupsPerRow: number;
 }
 
 const defaultOptions: MemoryWidgetState = {
     endianness: Endianness.Little,
-    byteSize: 8,
+    wordSize: 8,
     bytesPerGroup: 1,
     groupsPerRow: 4,
 };
@@ -56,13 +56,13 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
     override render(): React.ReactNode {
         return <>
             <OptionsWidget
-                columns={this.props.columns}
+                columnOptions={this.props.columns}
                 memoryReference={this.props.memoryReference}
                 offset={this.props.offset}
                 count={this.props.count}
                 endianness={this.state.endianness}
-                byteSize={this.state.byteSize}
-                bytesPerGroup={this.state.bytesPerGroup}
+                wordSize={this.state.wordSize}
+                wordsPerGroup={this.state.bytesPerGroup}
                 groupsPerRow={this.state.groupsPerRow}
                 updateMemoryArguments={this.props.updateMemoryArguments}
                 updateRenderOptions={this.updateRenderOptions}
@@ -71,11 +71,11 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
             />
             <MemoryTable
                 decorations={this.props.decorations}
-                columns={this.props.columns.filter(candidate => candidate.active)}
+                columnOptions={this.props.columns.filter(candidate => candidate.active)}
                 memory={this.props.memory}
                 endianness={this.state.endianness}
-                byteSize={this.state.byteSize}
-                bytesPerGroup={this.state.bytesPerGroup}
+                wordSize={this.state.wordSize}
+                wordsPerGroup={this.state.bytesPerGroup}
                 groupsPerRow={this.state.groupsPerRow}
             />
         </>;

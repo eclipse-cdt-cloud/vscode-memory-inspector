@@ -29,12 +29,12 @@ export interface Memory {
     bytes: Uint8Array;
 }
 
-export interface TableRenderOptions {
+export interface SerializedTableRenderOptions {
     columnOptions: Array<{ label: string, doRender: boolean }>;
     endianness: Endianness;
-    bytesPerGroup: number;
+    wordsPerGroup: number;
     groupsPerRow: number;
-    byteSize: number;
+    wordSize: number;
 }
 
 export interface Event<T> {
@@ -61,4 +61,14 @@ export interface MemoryState extends DebugProtocol.ReadMemoryArguments {
 
 export interface UpdateExecutor {
     fetchData(currentViewParameters: DebugProtocol.ReadMemoryArguments): Promise<void>;
+}
+
+export interface StylableNodeAttributes {
+    className?: string;
+    style?: React.CSSProperties;
+    title?: string;
+}
+
+export interface FullNodeAttributes extends StylableNodeAttributes {
+    content: string;
 }
