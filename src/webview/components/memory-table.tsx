@@ -30,11 +30,11 @@ export interface MoreMemorySelectProps {
     offset: number;
     options: number[];
     direction: 'above' | 'below';
-    updateMemoryArguments: (memoryArguments: Partial<DebugProtocol.ReadMemoryArguments>) => Promise<void>;
-    refreshMemory: () => void;
+    fetchMemory(partialOptions?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void>;
+
 }
 
-export const MoreMemorySelect: React.FC<MoreMemorySelectProps> = ({ count, offset, options, updateMemoryArguments, refreshMemory, direction }) => {
+export const MoreMemorySelect: React.FC<MoreMemorySelectProps> = ({ count, offset, options, fetchMemory, direction }) => {
     const [numBytes, setNumBytes] = React.useState<number>(options[0]);
     const containerRef = React.createRef<HTMLDivElement>();
     const onSelectChange = (e: React.ChangeEvent<HTMLSelectElement>): void => {
@@ -54,8 +54,7 @@ export const MoreMemorySelect: React.FC<MoreMemorySelectProps> = ({ count, offse
             } else {
                 newCount = count + numBytes;
             }
-            updateMemoryArguments({ offset: newOffset, count: newCount })
-                .then(refreshMemory);
+            fetchMemory({ offset: newOffset, count: newCount });
         }
     };
 
@@ -93,14 +92,14 @@ interface MemoryTableProps extends TableRenderOptions {
     decorations: Decoration[];
     offset: number;
     count: number;
-    updateMemoryArguments: (memoryArguments: Partial<DebugProtocol.ReadMemoryArguments>) => Promise<void>;
-    refreshMemory: () => void;
+    fetchMemory(partialOptions?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void>;
+
 }
 
 export class MemoryTable extends React.Component<MemoryTableProps> {
     public render(): React.ReactNode {
         const rows = this.getTableRows();
-        const { offset, count, updateMemoryArguments, memory, refreshMemory } = this.props;
+        const { offset, count, memory, fetchMemory } = this.props;
         const showMoreMemoryButton = !!memory?.bytes.length;
         return (
             <div>
@@ -119,8 +118,7 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
                         count={count}
                         options={[128, 256, 512]}
                         direction='above'
-                        updateMemoryArguments={updateMemoryArguments}
-                        refreshMemory={refreshMemory}
+                        fetchMemory={fetchMemory}
                     />)}
                     {rows}
                     {showMoreMemoryButton && (<MoreMemorySelect
@@ -128,8 +126,7 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
                         count={count}
                         options={[128, 256, 512]}
                         direction='below'
-                        updateMemoryArguments={updateMemoryArguments}
-                        refreshMemory={refreshMemory}
+                        fetchMemory={fetchMemory}
                     />)}
                 </VSCodeDataGrid>
             </div>
