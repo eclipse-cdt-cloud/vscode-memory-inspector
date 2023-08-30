@@ -72,3 +72,9 @@ export interface StylableNodeAttributes {
 export interface FullNodeAttributes extends StylableNodeAttributes {
     content: string;
 }
+
+export type ReactInteraction<E extends Element = Element> = React.MouseEvent<E> | React.KeyboardEvent<E>;
+
+export function isTrigger(event: ReactInteraction): boolean {
+    return !('code' in event) || event.code === 'Enter' || event.code === 'Space';
+}

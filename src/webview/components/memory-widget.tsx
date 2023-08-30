@@ -29,7 +29,7 @@ interface MemoryWidgetProps {
     offset: number;
     count: number;
     refreshMemory: () => void;
-    updateMemoryArguments: (memoryArguments: Partial<DebugProtocol.ReadMemoryArguments>) => void;
+    updateMemoryArguments: (memoryArguments: Partial<DebugProtocol.ReadMemoryArguments>) => Promise<void>;
     toggleColumn(id: string, active: boolean): void;
 }
 
@@ -77,6 +77,10 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 wordSize={this.state.wordSize}
                 wordsPerGroup={this.state.bytesPerGroup}
                 groupsPerRow={this.state.groupsPerRow}
+                offset={this.props.offset}
+                count={this.props.count}
+                updateMemoryArguments={this.props.updateMemoryArguments}
+                refreshMemory={this.props.refreshMemory}
             />
         </>;
     }

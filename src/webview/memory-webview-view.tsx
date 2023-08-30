@@ -77,7 +77,9 @@ class App extends React.Component<{}, MemoryAppState> {
         />;
     }
 
-    protected updateMemoryState = (newState: Partial<MemoryState>) => this.setState(prevState => ({ ...prevState, ...newState }));
+    protected updateMemoryState = (newState: Partial<MemoryState>): Promise<void> => new Promise(resolve => {
+        this.setState(prevState => ({ ...prevState, ...newState }), resolve);
+    });
 
     protected async setOptions(options?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void> {
         messenger.sendRequest(logMessageType, HOST_EXTENSION, `Setting options: ${JSON.stringify(options)}`);

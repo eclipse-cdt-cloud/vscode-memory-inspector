@@ -20,18 +20,88 @@ import {
     VSCodeDataGridRow,
     VSCodeDataGridCell
 } from '@vscode/webview-ui-toolkit/react';
-import { Decoration, Memory, StylableNodeAttributes } from '../utils/view-types';
+import { Decoration, Memory, SerializedTableRenderOptions, StylableNodeAttributes, isTrigger } from '../utils/view-types';
 import { toHexStringWithRadixMarker } from '../../common/memory-range';
 import { TableRenderOptions } from '../columns/column-contribution-service';
+import { DebugProtocol } from '@vscode/debugprotocol';
 
+export interface MoreMemorySelectProps {
+    count: number;
+    offset: number;
+    options: number[];
+    direction: 'above' | 'below';
+    updateMemoryArguments: (memoryArguments: Partial<DebugProtocol.ReadMemoryArguments>) => Promise<void>;
+    refreshMemory: () => void;
+}
+
+export const MoreMemorySelect: React.FC<MoreMemorySelectProps> = ({ count, offset, options, updateMemoryArguments, refreshMemory, direction }) => {
+    const [numBytes, setNumBytes] = React.useState<number>(options[0]);
+    const containerRef = React.createRef<HTMLDivElement>();
+    const onSelectChange = (e: React.ChangeEvent<HTMLSelectElement>): void => {
+        e.stopPropagation();
+        const { value } = e.currentTarget;
+        setNumBytes(parseInt(value));
+    };
+
+    const loadMoreMemory = (e: React.MouseEvent | React.KeyboardEvent): void => {
+        containerRef.current?.blur();
+        if (isTrigger(e)) {
+            let newOffset = offset;
+            let newCount = count;
+            if (direction === 'above') {
+                newOffset = offset - numBytes;
+                newCount = count + numBytes;
+            } else {
+                newCount = count + numBytes;
+            }
+            updateMemoryArguments({ offset: newOffset, count: newCount })
+                .then(refreshMemory);
+        }
+    };
+
+    return (
+        <div
+            className='more-memory-select'
+            tabIndex={0}
+            role='button'
+            onClick={loadMoreMemory}
+            onKeyDown={loadMoreMemory}
+            ref={containerRef}
+        >
+            <div className='more-memory-select-top no-select'>
+                Load
+                <select
+                    className='bytes-select'
+                    onChange={onSelectChange}
+                    tabIndex={0}
+                >
+                    {options.map(option => (
+                        <option
+                            key={`more-memory-select-${option}`}
+                            value={option}
+                        >
+                            {option}
+                        </option>))}
+                </select>
+                {`more bytes ${direction}`}
+            </div>
+        </div>
+    );
+};
 interface MemoryTableProps extends TableRenderOptions {
     memory?: Memory;
     decorations: Decoration[];
+    offset: number;
+    count: number;
+    updateMemoryArguments: (memoryArguments: Partial<DebugProtocol.ReadMemoryArguments>) => Promise<void>;
+    refreshMemory: () => void;
 }
 
 export class MemoryTable extends React.Component<MemoryTableProps> {
     public render(): React.ReactNode {
         const rows = this.getTableRows();
+        const { offset, count, updateMemoryArguments, memory, refreshMemory } = this.props;
+        const showMoreMemoryButton = !!memory?.bytes.length;
         return (
             <div>
                 <VSCodeDataGrid>
@@ -44,7 +114,23 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
                             {contribution.label}
                         </VSCodeDataGridCell>)}
                     </VSCodeDataGridRow>
+                    {showMoreMemoryButton && (<MoreMemorySelect
+                        offset={offset}
+                        count={count}
+                        options={[128, 256, 512]}
+                        direction='above'
+                        updateMemoryArguments={updateMemoryArguments}
+                        refreshMemory={refreshMemory}
+                    />)}
                     {rows}
+                    {showMoreMemoryButton && (<MoreMemorySelect
+                        offset={offset}
+                        count={count}
+                        options={[128, 256, 512]}
+                        direction='below'
+                        updateMemoryArguments={updateMemoryArguments}
+                        refreshMemory={refreshMemory}
+                    />)}
                 </VSCodeDataGrid>
             </div>
         );

@@ -23,7 +23,7 @@ import { MultiSelectWithLabel } from './multi-select-bar';
 
 export interface OptionsWidgetProps extends TableRenderOptions, Required<DebugProtocol.ReadMemoryArguments> {
     updateRenderOptions: (options: Partial<SerializedTableRenderOptions>) => void;
-    updateMemoryArguments: (memoryArguments: Partial<DebugProtocol.ReadMemoryArguments>) => void;
+    updateMemoryArguments: (memoryArguments: Partial<DebugProtocol.ReadMemoryArguments>) => Promise<void>;
     refreshMemory: () => void;
     toggleColumn(id: string, active: boolean): void;
 }
