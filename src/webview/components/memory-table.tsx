@@ -20,7 +20,7 @@ import {
     VSCodeDataGridRow,
     VSCodeDataGridCell
 } from '@vscode/webview-ui-toolkit/react';
-import { Decoration, Memory, SerializedTableRenderOptions, StylableNodeAttributes, isTrigger } from '../utils/view-types';
+import { Decoration, Memory, StylableNodeAttributes, isTrigger } from '../utils/view-types';
 import { toHexStringWithRadixMarker } from '../../common/memory-range';
 import { TableRenderOptions } from '../columns/column-contribution-service';
 import { DebugProtocol } from '@vscode/debugprotocol';
