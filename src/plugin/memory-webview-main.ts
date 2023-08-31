@@ -18,7 +18,7 @@ import * as vscode from 'vscode';
 import type { DebugProtocol } from '@vscode/debugprotocol';
 import * as manifest from './manifest';
 import { Messenger } from 'vscode-messenger';
-import { WebviewIdMessageParticipant } from 'vscode-messenger-common';
+import { MessageParticipant, WebviewIdMessageParticipant } from 'vscode-messenger-common';
 import {
     readyType,
     logMessageType,
@@ -27,11 +27,14 @@ import {
     writeMemoryType,
     MemoryReadResult,
     MemoryWriteResult,
-    getVariables
+    getVariables,
+    getConfigurationType,
+    configurationDidChangeType
 } from '../common/messaging';
 import { MemoryProvider } from './memory-provider';
 import { outputChannelLogger } from './logger';
 import { VariableRange } from '../common/memory-range';
+import { MemoryInspectorConfiguration } from '../webview/utils/view-types';
 
 interface Variable {
     name: string;
@@ -138,14 +141,17 @@ export class MemoryWebview {
         const disposables = [
             this.messenger.onNotification(readyType, () => this.refresh(participant, options), { sender: participant }),
             this.messenger.onRequest(logMessageType, message => outputChannelLogger.info('[webview]:', message), { sender: participant }),
+            this.messenger.onRequest(getConfigurationType, () => this.getConfiguration(), { sender: participant }),
             this.messenger.onRequest(readMemoryType, request => this.readMemory(request), { sender: participant }),
             this.messenger.onRequest(writeMemoryType, request => this.writeMemory(request), { sender: participant }),
+            this.messenger.onRequest(getVariables, request => this.getVariables(request), { sender: participant }),
             this.messenger.onRequest(getVariables, request => this.getVariables(request), { sender: participant }),
             this.memoryProvider.onDidStopDebug(() => {
                 if (this.refreshOnStop === RefreshEnum.on) {
                     this.refresh(participant);
                 }
-            })
+            }),
+            this.onConfigurationChanged(participant),
         ];
 
         panel.onDidDispose(() => disposables.forEach(disposible => disposible.dispose()));
@@ -153,6 +159,30 @@ export class MemoryWebview {
 
     protected async refresh(participant: WebviewIdMessageParticipant, options?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void> {
         this.messenger.sendRequest(setOptionsType, participant, options);
+    }
+
+    protected getConfiguration(): MemoryInspectorConfiguration {
+        const memoryInspectorConfiguration = vscode.workspace.getConfiguration(manifest.PACKAGE_NAME);
+        const wordsPerGroup = memoryInspectorConfiguration.get<number>(manifest.CONFIG_WORDS_PER_GROUP) || manifest.DEFAULT_WORDS_PER_GROUP;
+        const groupsPerRow = memoryInspectorConfiguration.get<number>(manifest.CONFIG_GROUPS_PER_ROW) || manifest.DEFAULT_GROUPS_PER_ROW;
+        const showVariablesColumn = memoryInspectorConfiguration.get<boolean>(manifest.CONFIG_SHOW_VARIABLES_COLUMN) || manifest.DEFAULT_SHOW_VARIABLES_COLUMN;
+        const showAsciiColumn = memoryInspectorConfiguration.get<boolean>(manifest.CONFIG_SHOW_ASCII_COLUMN) || manifest.DEFAULT_SHOW_ASCII_COLUMN;
+        return { wordsPerGroup, groupsPerRow, showAsciiColumn, showVariablesColumn };
+    }
+
+    protected onConfigurationChanged(participant: MessageParticipant): vscode.Disposable {
+        const VIEW_CONFIGURATION_OPTIONS = [
+            manifest.CONFIG_WORDS_PER_GROUP,
+            manifest.CONFIG_GROUPS_PER_ROW,
+            manifest.CONFIG_SHOW_ASCII_COLUMN,
+            manifest.CONFIG_SHOW_VARIABLES_COLUMN,
+        ];
+        return vscode.workspace.onDidChangeConfiguration(e => {
+            if (VIEW_CONFIGURATION_OPTIONS.some(configurationOption => e.affectsConfiguration(`${manifest.PACKAGE_NAME}.${configurationOption}`))) {
+                const configuration = this.getConfiguration();
+                this.messenger.sendNotification(configurationDidChangeType, participant, configuration);
+            }
+        });
     }
 
     protected async readMemory(request: DebugProtocol.ReadMemoryArguments): Promise<MemoryReadResult> {

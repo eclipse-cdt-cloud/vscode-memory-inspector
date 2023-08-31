@@ -72,3 +72,10 @@ export interface StylableNodeAttributes {
 export interface FullNodeAttributes extends StylableNodeAttributes {
     content: string;
 }
+
+export interface MemoryInspectorConfiguration {
+    wordsPerGroup: number;
+    groupsPerRow: number;
+    showVariablesColumn: boolean;
+    showAsciiColumn: boolean;
+}

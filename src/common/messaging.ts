@@ -17,12 +17,15 @@
 import type { DebugProtocol } from '@vscode/debugprotocol';
 import type { NotificationType, RequestType } from 'vscode-messenger-common';
 import type { VariableRange } from './memory-range';
+import { MemoryInspectorConfiguration } from '../webview/utils/view-types';
 
 export type MemoryReadResult = DebugProtocol.ReadMemoryResponse['body'];
 export type MemoryWriteResult = DebugProtocol.WriteMemoryResponse['body'];
 
 export const readyType: NotificationType<void> = { method: 'ready' };
 export const logMessageType: RequestType<string, void> = { method: 'logMessage' };
+export const getConfigurationType: RequestType<void, MemoryInspectorConfiguration> = { method: 'getConfiguration' };
+export const configurationDidChangeType: NotificationType<MemoryInspectorConfiguration> = { method: 'configurationDidChangeType' };
 export const setOptionsType: RequestType<Partial<DebugProtocol.ReadMemoryArguments | undefined>, void> = { method: 'setOptions' };
 export const readMemoryType: RequestType<DebugProtocol.ReadMemoryArguments, MemoryReadResult> = { method: 'readMemory' };
 export const writeMemoryType: RequestType<DebugProtocol.WriteMemoryArguments, MemoryWriteResult> = { method: 'writeMemory' };

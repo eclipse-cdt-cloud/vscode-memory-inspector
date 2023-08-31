@@ -122,7 +122,11 @@
           "items": {
             "type": "string"
           },
-          "default": [ "gdb", "embedded-debug", "arm-debug" ],
+          "default": [
+            "gdb",
+            "embedded-debug",
+            "arm-debug"
+          ],
           "description": "C-based debuggers to activate (requires debug session restart)"
         },
         "memory-inspector.refreshOnStop": {
@@ -137,6 +141,41 @@
           ],
           "default": "on",
           "description": "Refresh memory views when debugger stops"
+        },
+        "memory-inspector.wordsPerGroup": {
+          "type": "number",
+          "enum": [
+            1,
+            2,
+            4,
+            8,
+            16
+          ],
+          "default": 1,
+          "description": "Default words per group"
+        },
+        "memory-inspector.groupsPerRow": {
+          "type": "number",
+          "enum": [
+            1,
+            2,
+            4,
+            8,
+            16,
+            32
+          ],
+          "default": 4,
+          "description": "Default groups per row"
+        },
+        "memory-inspector.showVariablesColumn": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show variables column?"
+        },
+        "memory-inspector.showAsciiColumn": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show ASCII column?"
         }
       }
     }
