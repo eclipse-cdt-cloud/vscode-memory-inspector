@@ -16,12 +16,15 @@
 
 import React from 'react';
 import type { DebugProtocol } from '@vscode/debugprotocol';
-import { SerializedTableRenderOptions } from '../utils/view-types';
+import { MemoryDisplayConfiguration, MemoryDisplayConfigurationChangeRequest, SerializedTableRenderOptions } from '../utils/view-types';
 import { VSCodeButton, VSCodeDivider, VSCodeDropdown, VSCodeOption, VSCodeTextField } from '@vscode/webview-ui-toolkit/react';
-import { TableRenderOptions } from '../columns/column-contribution-service';
 import { MultiSelectWithLabel } from './multi-select-bar';
+import { messenger } from '../view-messenger';
+import { setMemoryDisplayConfigurationType } from '../../common/messaging';
+import { HOST_EXTENSION } from 'vscode-messenger-common';
+import { TableRenderOptions } from '../columns/column-contribution-service';
 
-export interface OptionsWidgetProps extends TableRenderOptions, Required<DebugProtocol.ReadMemoryArguments> {
+export interface OptionsWidgetProps extends TableRenderOptions, Required<DebugProtocol.ReadMemoryArguments>, MemoryDisplayConfiguration {
     updateRenderOptions: (options: Partial<SerializedTableRenderOptions>) => void;
     updateMemoryArguments: (memoryArguments: Partial<DebugProtocol.ReadMemoryArguments>) => void;
     refreshMemory: () => void;
@@ -99,7 +102,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                 this.state.showRenderOptions && <>
                     <VSCodeDivider />
                     <div className="advanced-options" style={AdvancedOptionsStyle}>
-                        <label htmlFor={InputId.wordsPerGroup}>Bytes per Group</label>
+                        <label htmlFor={InputId.wordsPerGroup}>Words per Group</label>
                         <VSCodeDropdown id={InputId.wordsPerGroup} onChange={this.handleInputChange} value={this.props.wordsPerGroup.toString()}>
                             <VSCodeOption>1</VSCodeOption>
                             <VSCodeOption>2</VSCodeOption>
@@ -140,9 +143,13 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
             case InputId.Address: return this.props.updateMemoryArguments({ memoryReference: event.currentTarget.value });
             case InputId.Offset: return !Number.isNaN(event.currentTarget.value) && this.props.updateMemoryArguments({ offset: Number(event.currentTarget.value) });
             case InputId.Length: return !Number.isNaN(event.currentTarget.value) && this.props.updateMemoryArguments({ count: Number(event.currentTarget.value) });
-            case InputId.wordsPerGroup: return this.props.updateRenderOptions({ wordsPerGroup: Number(event.currentTarget.value) });
-            case InputId.GroupsPerRow: return this.props.updateRenderOptions({ groupsPerRow: Number(event.currentTarget.value) });
+            case InputId.wordsPerGroup: return this.updateConfiguration({ id: 'wordsPerGroup', value: Number(event.currentTarget.value) });
+            case InputId.GroupsPerRow: return this.updateConfiguration({ id: 'groupsPerRow', value: Number(event.currentTarget.value) });
         }
+    }
+
+    protected updateConfiguration(viewConfigurationChangeRequest: MemoryDisplayConfigurationChangeRequest): void {
+        return messenger.sendNotification(setMemoryDisplayConfigurationType, HOST_EXTENSION, viewConfigurationChangeRequest);
     }
 
     protected toggleRenderOptions = () => this.doToggleRenderOptions();

@@ -122,11 +122,7 @@
           "items": {
             "type": "string"
           },
-          "default": [
-            "gdb",
-            "embedded-debug",
-            "arm-debug"
-          ],
+          "default": [ "gdb", "embedded-debug", "arm-debug" ],
           "description": "C-based debuggers to activate (requires debug session restart)"
         },
         "memory-inspector.refreshOnStop": {
@@ -167,12 +163,12 @@
           "default": 4,
           "description": "Default groups per row"
         },
-        "memory-inspector.showVariablesColumn": {
+        "memory-inspector.variablesVisible": {
           "type": "boolean",
           "default": false,
           "description": "Show variables column?"
         },
-        "memory-inspector.showAsciiColumn": {
+        "memory-inspector.asciiVisible": {
           "type": "boolean",
           "default": false,
           "description": "Show ASCII column?"

@@ -20,11 +20,11 @@ import {
     VSCodeDataGridRow,
     VSCodeDataGridCell
 } from '@vscode/webview-ui-toolkit/react';
-import { Decoration, Memory, StylableNodeAttributes } from '../utils/view-types';
+import { Decoration, Memory, MemoryDisplayConfiguration, StylableNodeAttributes } from '../utils/view-types';
 import { toHexStringWithRadixMarker } from '../../common/memory-range';
 import { TableRenderOptions } from '../columns/column-contribution-service';
 
-interface MemoryTableProps extends TableRenderOptions {
+interface MemoryTableProps extends TableRenderOptions, MemoryDisplayConfiguration {
     memory?: Memory;
     decorations: Decoration[];
 }

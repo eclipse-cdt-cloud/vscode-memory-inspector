@@ -18,6 +18,7 @@ import type { DebugProtocol } from '@vscode/debugprotocol';
 import type * as React from 'react';
 import { areRangesEqual, BigIntMemoryRange } from '../../common/memory-range';
 import deepequal from 'fast-deep-equal';
+import { TableRenderOptions } from '../columns/column-contribution-service';
 
 export enum Endianness {
     Little = 'Little Endian',
@@ -29,11 +30,9 @@ export interface Memory {
     bytes: Uint8Array;
 }
 
-export interface SerializedTableRenderOptions {
+export interface SerializedTableRenderOptions extends MemoryDisplayConfiguration {
     columnOptions: Array<{ label: string, doRender: boolean }>;
     endianness: Endianness;
-    wordsPerGroup: number;
-    groupsPerRow: number;
     wordSize: number;
 }
 
@@ -73,9 +72,17 @@ export interface FullNodeAttributes extends StylableNodeAttributes {
     content: string;
 }
 
-export interface MemoryInspectorConfiguration {
+export interface MemoryDisplayConfiguration {
     wordsPerGroup: number;
     groupsPerRow: number;
-    showVariablesColumn: boolean;
-    showAsciiColumn: boolean;
+}
+
+export interface ColumnVisibilityStatus {
+    id: string;
+    active: boolean;
+}
+
+export interface MemoryDisplayConfigurationChangeRequest {
+    id: keyof MemoryDisplayConfiguration;
+    value: number;
 }
