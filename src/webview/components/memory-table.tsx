@@ -31,7 +31,6 @@ export interface MoreMemorySelectProps {
     options: number[];
     direction: 'above' | 'below';
     fetchMemory(partialOptions?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void>;
-
 }
 
 export const MoreMemorySelect: React.FC<MoreMemorySelectProps> = ({ count, offset, options, fetchMemory, direction }) => {
@@ -50,10 +49,8 @@ export const MoreMemorySelect: React.FC<MoreMemorySelectProps> = ({ count, offse
             let newCount = count;
             if (direction === 'above') {
                 newOffset = offset - numBytes;
-                newCount = count + numBytes;
-            } else {
-                newCount = count + numBytes;
             }
+            newCount = count + numBytes;
             fetchMemory({ offset: newOffset, count: newCount });
         }
     };
@@ -87,13 +84,13 @@ export const MoreMemorySelect: React.FC<MoreMemorySelectProps> = ({ count, offse
         </div>
     );
 };
+
 interface MemoryTableProps extends TableRenderOptions {
     memory?: Memory;
     decorations: Decoration[];
     offset: number;
     count: number;
     fetchMemory(partialOptions?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void>;
-
 }
 
 export class MemoryTable extends React.Component<MemoryTableProps> {

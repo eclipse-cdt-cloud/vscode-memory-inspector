@@ -32,7 +32,6 @@ interface MemoryWidgetProps {
     updateMemoryArguments: (memoryArguments: Partial<DebugProtocol.ReadMemoryArguments>) => void;
     toggleColumn(id: string, active: boolean): void;
     fetchMemory(partialOptions?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void>
-
 }
 
 interface MemoryWidgetState {
