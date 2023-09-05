@@ -18,7 +18,6 @@ import type { DebugProtocol } from '@vscode/debugprotocol';
 import type * as React from 'react';
 import { areRangesEqual, BigIntMemoryRange } from '../../common/memory-range';
 import deepequal from 'fast-deep-equal';
-import { TableRenderOptions } from '../columns/column-contribution-service';
 
 export enum Endianness {
     Little = 'Little Endian',
