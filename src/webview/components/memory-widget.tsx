@@ -20,8 +20,7 @@ import { MemoryTable } from './memory-table';
 import { OptionsWidget } from './options-widget';
 import { Decoration, Endianness, Memory, MemoryDisplayConfiguration } from '../utils/view-types';
 import { messenger } from '../view-messenger';
-import { getMemoryDisplayConfigurationType, memoryDisplayConfigurationChangedType } from '../../common/messaging';
-import { HOST_EXTENSION } from 'vscode-messenger-common';
+import { memoryDisplayConfigurationChangedType } from '../../common/messaging';
 import { ColumnStatus } from '../columns/column-contribution-service';
 
 interface MemoryWidgetProps {
@@ -56,9 +55,6 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
 
     public componentDidMount(): void {
         messenger.onNotification(memoryDisplayConfigurationChangedType, configuration => this.setState(configuration));
-        messenger.sendRequest(getMemoryDisplayConfigurationType, HOST_EXTENSION, undefined).then(configuration => {
-            this.setState(configuration);
-        });
     }
 
     override render(): React.ReactNode {

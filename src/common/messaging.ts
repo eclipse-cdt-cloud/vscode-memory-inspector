@@ -24,10 +24,8 @@ export type MemoryWriteResult = DebugProtocol.WriteMemoryResponse['body'];
 
 export const readyType: NotificationType<void> = { method: 'ready' };
 export const logMessageType: RequestType<string, void> = { method: 'logMessage' };
-export const getMemoryDisplayConfigurationType: RequestType<void, MemoryDisplayConfiguration> = { method: 'getMemoryDisplayConfiguration' };
 export const setMemoryDisplayConfigurationType: NotificationType<MemoryDisplayConfigurationChangeRequest> = { method: 'setMemoryDisplayConfiguration' };
 export const memoryDisplayConfigurationChangedType: NotificationType<MemoryDisplayConfiguration> = { method: 'memoryDisplayConfigurationChanged' };
-export const getColumnsVisibility: RequestType<void, ColumnVisibilityStatus[]> = { method: 'getColumnsVisibility' };
 export const columnVisibilityType: NotificationType<ColumnVisibilityStatus> = { method: 'columnVisibility' };
 export const setOptionsType: RequestType<Partial<DebugProtocol.ReadMemoryArguments | undefined>, void> = { method: 'setOptions' };
 export const readMemoryType: RequestType<DebugProtocol.ReadMemoryArguments, MemoryReadResult> = { method: 'readMemory' };

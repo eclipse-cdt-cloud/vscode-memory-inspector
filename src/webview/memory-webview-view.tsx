@@ -23,7 +23,6 @@ import {
     setOptionsType,
     readMemoryType,
     columnVisibilityType,
-    getColumnsVisibility
 } from '../common/messaging';
 import type { DebugProtocol } from '@vscode/debugprotocol';
 import { ColumnVisibilityStatus, Decoration, Memory, MemoryState } from './utils/view-types';
@@ -67,10 +66,6 @@ class App extends React.Component<{}, MemoryAppState> {
         messenger.onRequest(setOptionsType, options => this.setOptions(options));
         messenger.sendNotification(readyType, HOST_EXTENSION, undefined);
         messenger.onNotification(columnVisibilityType, request => this.handleColumnVisibilityChanged(request));
-        messenger.sendRequest(getColumnsVisibility, HOST_EXTENSION, undefined).then(columnsVisibility => {
-            columnsVisibility.forEach(columnVisibility => this.handleColumnVisibilityChanged(columnVisibility));
-        });
-
     }
 
     public render(): React.ReactNode {

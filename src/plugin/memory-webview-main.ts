@@ -31,8 +31,6 @@ import {
     memoryDisplayConfigurationChangedType,
     columnVisibilityType,
     setMemoryDisplayConfigurationType,
-    getColumnsVisibility,
-    getMemoryDisplayConfigurationType,
 } from '../common/messaging';
 import { MemoryProvider } from './memory-provider';
 import { outputChannelLogger } from './logger';
@@ -52,6 +50,10 @@ enum RefreshEnum {
 }
 
 const isMemoryVariable = (variable: Variable): variable is Variable => variable && !!(variable as Variable).memoryReference;
+const columnConfigurations = [
+    manifest.CONFIG_SHOW_ASCII_COLUMN,
+    manifest.CONFIG_SHOW_VARIABLES_COLUMN,
+];
 
 export class MemoryWebview {
     public static ViewType = `${manifest.PACKAGE_NAME}.memory`;
@@ -142,13 +144,13 @@ export class MemoryWebview {
         const participant = this.messenger.registerWebviewPanel(panel);
 
         const disposables = [
-            this.messenger.onNotification(readyType, () => this.refresh(participant, options), { sender: participant }),
+            this.messenger.onNotification(readyType, () => {
+                this.refresh(participant, options);
+            }, { sender: participant }),
             this.messenger.onRequest(logMessageType, message => outputChannelLogger.info('[webview]:', message), { sender: participant }),
             this.messenger.onRequest(readMemoryType, request => this.readMemory(request), { sender: participant }),
             this.messenger.onRequest(writeMemoryType, request => this.writeMemory(request), { sender: participant }),
             this.messenger.onRequest(getVariables, request => this.getVariables(request), { sender: participant }),
-            this.messenger.onRequest(getMemoryDisplayConfigurationType, () => this.getMemoryDisplayConfiguration(), { sender: participant }),
-            this.messenger.onRequest(getColumnsVisibility, () => this.getColumnConfigurations(), { sender: participant }),
             this.messenger.onNotification(setMemoryDisplayConfigurationType, request => this.setConfiguration(request), { sender: participant }),
             this.messenger.onNotification(columnVisibilityType, request => this.handleColumnToggled(request), { sender: participant }),
 
@@ -160,7 +162,11 @@ export class MemoryWebview {
             this.onMemoryDisplayConfigurationChanged(participant),
             this.onColumnVisibilityConfigurationChanged(participant),
         ];
-
+        panel.onDidChangeViewState(newState => {
+            if (newState.webviewPanel.visible) {
+                this.refresh(participant, options);
+            }
+        });
         panel.onDidDispose(() => disposables.forEach(disposible => disposible.dispose()));
     }
 
@@ -176,6 +182,13 @@ export class MemoryWebview {
 
     protected async refresh(participant: WebviewIdMessageParticipant, options?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void> {
         this.messenger.sendRequest(setOptionsType, participant, options);
+        const memoryDisplayConfiguration = this.getMemoryDisplayConfiguration();
+        this.messenger.sendNotification(memoryDisplayConfigurationChangedType, participant, memoryDisplayConfiguration);
+        columnConfigurations.forEach(columnConfiguration => {
+            const [id] = columnConfiguration.split('Visible');
+            const active = vscode.workspace.getConfiguration(manifest.PACKAGE_NAME).get<boolean>(columnConfiguration) ?? true;
+            this.messenger.sendNotification(columnVisibilityType, participant, { id, active });
+        });
     }
 
     protected getMemoryDisplayConfiguration(): MemoryDisplayConfiguration {
@@ -199,10 +212,6 @@ export class MemoryWebview {
     }
 
     protected onColumnVisibilityConfigurationChanged(participant: MessageParticipant): vscode.Disposable {
-        const columnConfigurations = [
-            manifest.CONFIG_SHOW_ASCII_COLUMN,
-            manifest.CONFIG_SHOW_VARIABLES_COLUMN,
-        ];
         return vscode.workspace.onDidChangeConfiguration(e => {
             columnConfigurations.forEach(configuration => {
                 if (e.affectsConfiguration(`${manifest.PACKAGE_NAME}.${configuration}`)) {
@@ -211,15 +220,6 @@ export class MemoryWebview {
                     this.messenger.sendNotification(columnVisibilityType, participant, { id, active });
                 }
             });
-        });
-    }
-
-    protected getColumnConfigurations(): ColumnVisibilityStatus[] {
-        const COLUMN_CONFIGURATIONS = [manifest.CONFIG_SHOW_VARIABLES_COLUMN, manifest.CONFIG_SHOW_ASCII_COLUMN];
-        return COLUMN_CONFIGURATIONS.map(configuration => {
-            const [id] = configuration.split('Visible');
-            const active = vscode.workspace.getConfiguration(manifest.PACKAGE_NAME).get<boolean>(configuration) ?? false;
-            return { id, active };
         });
     }
 
