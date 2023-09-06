@@ -176,8 +176,8 @@
         "memory-inspector.scrollingBehavior": {
           "type": "string",
           "enum": [
-            "Infinite",
-            "Paginate"
+            "Paginate",
+            "Infinite"
           ],
           "default": "Paginate",
           "description": "Behavior when adding more data beyond the current view. 'Infinite' appends new memory to bounds of current request, resulting in a growing list. 'Paginate' maintains a consistent memory size, replacing the previous request."

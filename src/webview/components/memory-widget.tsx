@@ -18,7 +18,7 @@ import { DebugProtocol } from '@vscode/debugprotocol';
 import React from 'react';
 import { MemoryTable } from './memory-table';
 import { OptionsWidget } from './options-widget';
-import { Decoration, Endianness, Memory, MemoryDisplayConfiguration, ScrollingBehavior } from '../utils/view-types';
+import { Decoration, Endianness, Memory, MemoryDisplayConfiguration } from '../utils/view-types';
 import { messenger } from '../view-messenger';
 import { memoryDisplayConfigurationChangedType } from '../../common/messaging';
 import { ColumnStatus } from '../columns/column-contribution-service';

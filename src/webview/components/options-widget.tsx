@@ -16,7 +16,7 @@
 
 import React from 'react';
 import type { DebugProtocol } from '@vscode/debugprotocol';
-import { MemoryDisplayConfiguration, MemoryDisplayConfigurationChangeRequest, SerializedTableRenderOptions } from '../utils/view-types';
+import { MemoryDisplayConfigurationChangeRequest, SerializedTableRenderOptions } from '../utils/view-types';
 import { VSCodeButton, VSCodeDivider, VSCodeDropdown, VSCodeOption, VSCodeTextField } from '@vscode/webview-ui-toolkit/react';
 import { MultiSelectWithLabel } from './multi-select-bar';
 import { messenger } from '../view-messenger';

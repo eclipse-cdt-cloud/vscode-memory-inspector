@@ -51,7 +51,13 @@ export const MoreMemorySelect: React.FC<MoreMemorySelectProps> = ({ count, offse
             if (direction === 'above') {
                 newOffset = offset - numBytes;
             }
-            newCount = count + numBytes;
+            if (scrollingBehavior === 'Infinite') {
+                newCount = count + numBytes;
+            } else {
+                if (direction === 'below') {
+                    newOffset = offset + numBytes;
+                }
+            }
             fetchMemory({ offset: newOffset, count: newCount });
         }
     };
