@@ -180,7 +180,7 @@
             "Infinite"
           ],
           "default": "Paginate",
-          "description": "Behavior when adding more data beyond the current view. 'Infinite' appends new memory to bounds of current request, resulting in a growing list. 'Paginate' maintains a consistent memory size, replacing the previous request."
+          "description": "Behavior when adding more memory beyond the current view. 'Infinite' appends new memory to bounds of current request, resulting in a growing list. 'Paginate' maintains a consistent memory size, replacing the previous request."
         }
       }
     }
