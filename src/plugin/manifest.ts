@@ -27,5 +27,8 @@ export const CONFIG_WORDS_PER_GROUP = 'wordsPerGroup';
 export const DEFAULT_WORDS_PER_GROUP = 1;
 export const CONFIG_GROUPS_PER_ROW = 'groupsPerRow';
 export const DEFAULT_GROUPS_PER_ROW = 4;
+export const CONFIG_SCROLLING_BEHAVIOR = 'scrollingBehavior';
+export const DEFAULT_SCROLLING_BEHAVIOR = 'Paginate';
+
 export const CONFIG_SHOW_VARIABLES_COLUMN = 'variablesVisible';
 export const CONFIG_SHOW_ASCII_COLUMN = 'asciiVisible';

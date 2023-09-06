@@ -35,7 +35,7 @@ import {
 import { MemoryProvider } from './memory-provider';
 import { outputChannelLogger } from './logger';
 import { VariableRange } from '../common/memory-range';
-import { ColumnVisibilityStatus, MemoryDisplayConfiguration as MemoryDisplayConfiguration } from '../webview/utils/view-types';
+import { ColumnVisibilityStatus, MemoryDisplayConfiguration as MemoryDisplayConfiguration, ScrollingBehavior } from '../webview/utils/view-types';
 
 interface Variable {
     name: string;
@@ -197,13 +197,15 @@ export class MemoryWebview {
         const memoryInspectorConfiguration = vscode.workspace.getConfiguration(manifest.PACKAGE_NAME);
         const wordsPerGroup = memoryInspectorConfiguration.get<number>(manifest.CONFIG_WORDS_PER_GROUP) || manifest.DEFAULT_WORDS_PER_GROUP;
         const groupsPerRow = memoryInspectorConfiguration.get<number>(manifest.CONFIG_GROUPS_PER_ROW) || manifest.DEFAULT_GROUPS_PER_ROW;
-        return { wordsPerGroup, groupsPerRow };
+        const scrollingBehavior = memoryInspectorConfiguration.get<ScrollingBehavior>(manifest.CONFIG_SCROLLING_BEHAVIOR) || manifest.DEFAULT_SCROLLING_BEHAVIOR;
+        return { wordsPerGroup, groupsPerRow, scrollingBehavior };
     }
 
     protected onMemoryDisplayConfigurationChanged(participant: MessageParticipant): vscode.Disposable {
         const memoryDisplayConfigurations = [
             manifest.CONFIG_WORDS_PER_GROUP,
             manifest.CONFIG_GROUPS_PER_ROW,
+            manifest.CONFIG_SCROLLING_BEHAVIOR,
         ];
         return vscode.workspace.onDidChangeConfiguration(e => {
             if (memoryDisplayConfigurations.some(configurationOption => e.affectsConfiguration(`${manifest.PACKAGE_NAME}.${configurationOption}`))) {

@@ -24,7 +24,7 @@ import { setMemoryDisplayConfigurationType } from '../../common/messaging';
 import { HOST_EXTENSION } from 'vscode-messenger-common';
 import { TableRenderOptions } from '../columns/column-contribution-service';
 
-export interface OptionsWidgetProps extends TableRenderOptions, Required<DebugProtocol.ReadMemoryArguments>, MemoryDisplayConfiguration {
+export interface OptionsWidgetProps extends Omit<TableRenderOptions, 'scrollingBehavior'>, Required<DebugProtocol.ReadMemoryArguments> {
     updateRenderOptions: (options: Partial<SerializedTableRenderOptions>) => void;
     updateMemoryArguments: (memoryArguments: Partial<DebugProtocol.ReadMemoryArguments>) => void;
     refreshMemory: () => void;

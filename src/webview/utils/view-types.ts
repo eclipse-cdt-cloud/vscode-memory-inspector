@@ -71,9 +71,11 @@ export interface FullNodeAttributes extends StylableNodeAttributes {
     content: string;
 }
 
+export type ScrollingBehavior = 'Paginate' | 'Infinite';
 export interface MemoryDisplayConfiguration {
     wordsPerGroup: number;
     groupsPerRow: number;
+    scrollingBehavior: ScrollingBehavior;
 }
 
 export interface ColumnVisibilityStatus {

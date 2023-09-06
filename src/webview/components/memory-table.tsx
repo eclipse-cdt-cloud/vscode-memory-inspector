@@ -20,7 +20,7 @@ import {
     VSCodeDataGridRow,
     VSCodeDataGridCell
 } from '@vscode/webview-ui-toolkit/react';
-import { Decoration, Memory, MemoryDisplayConfiguration, StylableNodeAttributes, isTrigger } from '../utils/view-types';
+import { Decoration, Memory, MemoryDisplayConfiguration, ScrollingBehavior, StylableNodeAttributes, isTrigger } from '../utils/view-types';
 import { toHexStringWithRadixMarker } from '../../common/memory-range';
 import { TableRenderOptions } from '../columns/column-contribution-service';
 import { DebugProtocol } from '@vscode/debugprotocol';
@@ -30,10 +30,11 @@ export interface MoreMemorySelectProps {
     offset: number;
     options: number[];
     direction: 'above' | 'below';
+    scrollingBehavior: ScrollingBehavior;
     fetchMemory(partialOptions?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void>;
 }
 
-export const MoreMemorySelect: React.FC<MoreMemorySelectProps> = ({ count, offset, options, fetchMemory, direction }) => {
+export const MoreMemorySelect: React.FC<MoreMemorySelectProps> = ({ count, offset, options, fetchMemory, direction, scrollingBehavior }) => {
     const [numBytes, setNumBytes] = React.useState<number>(options[0]);
     const containerRef = React.createRef<HTMLDivElement>();
     const onSelectChange = (e: React.ChangeEvent<HTMLSelectElement>): void => {
@@ -96,7 +97,7 @@ interface MemoryTableProps extends TableRenderOptions, MemoryDisplayConfiguratio
 export class MemoryTable extends React.Component<MemoryTableProps> {
     public render(): React.ReactNode {
         const rows = this.getTableRows();
-        const { offset, count, memory, fetchMemory } = this.props;
+        const { offset, count, memory, fetchMemory, scrollingBehavior } = this.props;
         const showMoreMemoryButton = !!memory?.bytes.length;
         return (
             <div>
@@ -115,6 +116,7 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
                         count={count}
                         options={[128, 256, 512]}
                         direction='above'
+                        scrollingBehavior={scrollingBehavior}
                         fetchMemory={fetchMemory}
                     />)}
                     {rows}
@@ -123,6 +125,7 @@ export class MemoryTable extends React.Component<MemoryTableProps> {
                         count={count}
                         options={[128, 256, 512]}
                         direction='below'
+                        scrollingBehavior={scrollingBehavior}
                         fetchMemory={fetchMemory}
                     />)}
                 </VSCodeDataGrid>
