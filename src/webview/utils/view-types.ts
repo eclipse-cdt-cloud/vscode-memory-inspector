@@ -85,3 +85,9 @@ export interface MemoryDisplayConfigurationChangeRequest {
     id: keyof MemoryDisplayConfiguration;
     value: number;
 }
+
+export type ReactInteraction<E extends Element = Element> = React.MouseEvent<E> | React.KeyboardEvent<E>;
+
+export function isTrigger(event: ReactInteraction): boolean {
+    return !('code' in event) || event.code === 'Enter' || event.code === 'Space';
+}

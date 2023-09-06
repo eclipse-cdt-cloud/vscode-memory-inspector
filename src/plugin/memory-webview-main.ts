@@ -122,6 +122,7 @@ export class MemoryWebview {
 
         const cspSrc = panel.webview.cspSource;
         const codiconsUri = panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'node_modules', '@vscode/codicons', 'dist', 'codicon.css'));
+        const memoryInspectorCSS = panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'memory-inspector.css'));
 
         panel.webview.html = `
             <!DOCTYPE html>
@@ -132,6 +133,7 @@ export class MemoryWebview {
                     <meta http-equiv='Content-Security-Policy' content="default-src 'none'; font-src ${cspSrc}; style-src ${cspSrc} 'unsafe-inline'; script-src ${cspSrc};">
                     <script type='module' src='${mainUri}'></script>
                     <link href="${codiconsUri}" rel="stylesheet" />
+                    <link href="${memoryInspectorCSS}" rel="stylesheet" />
                 </head>
                 <body>
                     <div id='root'></div>
