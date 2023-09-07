@@ -31,6 +31,7 @@ interface MemoryWidgetProps {
     refreshMemory: () => void;
     updateMemoryArguments: (memoryArguments: Partial<DebugProtocol.ReadMemoryArguments>) => void;
     toggleColumn(id: string, active: boolean): void;
+    fetchMemory(partialOptions?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void>
 }
 
 interface MemoryWidgetState {
@@ -77,6 +78,9 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 wordSize={this.state.wordSize}
                 wordsPerGroup={this.state.bytesPerGroup}
                 groupsPerRow={this.state.groupsPerRow}
+                offset={this.props.offset}
+                count={this.props.count}
+                fetchMemory={this.props.fetchMemory}
             />
         </>;
     }

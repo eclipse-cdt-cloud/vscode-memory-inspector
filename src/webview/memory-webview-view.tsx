@@ -74,6 +74,7 @@ class App extends React.Component<{}, MemoryAppState> {
             updateMemoryArguments={this.updateMemoryState}
             refreshMemory={this.refreshMemory}
             toggleColumn={this.toggleColumn}
+            fetchMemory={this.fetchMemory}
         />;
     }
 
@@ -87,7 +88,8 @@ class App extends React.Component<{}, MemoryAppState> {
 
     protected refreshMemory = () => { this.fetchMemory(); };
 
-    protected async fetchMemory(partialOptions?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void> {
+    protected fetchMemory = async (partialOptions?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void> => this.doFetchMemory(partialOptions);
+    protected async doFetchMemory(partialOptions?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void> {
         const completeOptions = {
             memoryReference: partialOptions?.memoryReference || this.state.memoryReference,
             offset: partialOptions?.offset ?? this.state.offset,
@@ -97,11 +99,13 @@ class App extends React.Component<{}, MemoryAppState> {
         const response = await messenger.sendRequest(readMemoryType, HOST_EXTENSION, completeOptions);
         await Promise.all(Array.from(
             new Set(columnContributionService.getUpdateExecutors().concat(decorationService.getUpdateExecutors())),
-            execututor => execututor.fetchData(completeOptions)
+            executor => executor.fetchData(completeOptions)
         ));
         this.setState({
             decorations: decorationService.decorations,
-            memory: this.convertMemory(response)
+            memory: this.convertMemory(response),
+            offset: completeOptions.offset,
+            count: completeOptions.count,
         });
     }
 
