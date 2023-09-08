@@ -47,11 +47,11 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
     }
 
     override render(): React.ReactNode {
-        return <div className='memory-options-widget' style={{ marginBottom: '8px' }}>
+        return <div className='memory-options-widget' >
             <div className="options-widget-title">
                 <div className="title"></div>
                 <div className="advanced-options-toggle" role='button' tabIndex={0} onClick={this.toggleRenderOptions} >
-                    <i className="codicon codicon-gear" style={{ paddingRight: '3px' }} />
+                    <i className="codicon codicon-gear" />
                     {this.state.showRenderOptions ? 'Hide Settings' : 'Show Settings'}
                 </div>
             </div>

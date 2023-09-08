@@ -64,6 +64,10 @@
   background: var(--vscode-dropdown-background);
 }
 
+.memory-options-widget {
+  margin-bottom: 8px;
+}
+
 .multi-select-bar {
   display: flex;
   flex-flow: row nowrap;
@@ -129,6 +133,10 @@
   display: flex;
   flex-flow: row nowrap;
   align-items: center;
+}
+
+.advanced-options-toggle i.codicon {
+  padding-right: 3px;
 }
 
 .core-options {
