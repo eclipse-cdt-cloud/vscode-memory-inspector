@@ -40,40 +40,6 @@ const enum InputId {
     GroupsPerRow = 'groups-per-row',
 }
 
-const TitleBarStyle: React.CSSProperties = {
-    display: 'flex',
-    flexFlow: 'row nowrap',
-    justifyContent: 'space-between',
-};
-
-const RenderOptionsToggleStyle: React.CSSProperties = {
-    cursor: 'pointer',
-    display: 'flex',
-    flexFlow: 'row nowrap',
-    alignItems: 'center',
-};
-
-const CoreOptionsStyle: React.CSSProperties = {
-    display: 'grid',
-    columnGap: '6px',
-    gridTemplateColumns: '4fr 4fr 2fr 1fr',
-    margin: '6px 0'
-};
-
-const GoButtonStyle: React.CSSProperties = {
-    height: 'calc(var(--input-height) * 1px)', // Match height of inputs;
-    alignSelf: 'end',
-};
-
-const AdvancedOptionsStyle: React.CSSProperties = {
-    display: 'grid',
-    columnGap: '6px',
-    rowGap: '3px',
-    gridTemplateColumns: 'max-content 1fr',
-    alignItems: 'center',
-    margin: '6px 0',
-};
-
 export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWidgetState> {
     constructor(props: OptionsWidgetProps) {
         super(props);
@@ -82,23 +48,23 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
 
     override render(): React.ReactNode {
         return <div className='memory-options-widget' style={{ marginBottom: '8px' }}>
-            <div className="options-widget-title" style={TitleBarStyle}>
+            <div className="options-widget-title">
                 <div className="title"></div>
-                <div className="advanced-options-toggle" role='button' tabIndex={0} onClick={this.toggleRenderOptions} style={RenderOptionsToggleStyle}>
+                <div className="advanced-options-toggle" role='button' tabIndex={0} onClick={this.toggleRenderOptions} >
                     <i className="codicon codicon-gear" style={{ paddingRight: '3px' }} />
                     {this.state.showRenderOptions ? 'Hide Settings' : 'Show Settings'}
                 </div>
             </div>
-            <div className="core-options" style={CoreOptionsStyle}>
+            <div className="core-options" >
                 <VSCodeTextField id={InputId.Address} onChange={this.handleInputChange} value={this.props.memoryReference}>Address</VSCodeTextField>
                 <VSCodeTextField id={InputId.Offset} onChange={this.handleInputChange} value={this.props.offset.toString()}>Offset</VSCodeTextField>
                 <VSCodeTextField id={InputId.Length} onChange={this.handleInputChange} value={this.props.count.toString()}>Length</VSCodeTextField>
-                <VSCodeButton onClick={this.props.refreshMemory} style={GoButtonStyle}>Go</VSCodeButton>
+                <VSCodeButton className='go-button' onClick={this.props.refreshMemory} >Go</VSCodeButton>
             </div>
             {
                 this.state.showRenderOptions && <>
                     <VSCodeDivider />
-                    <div className="advanced-options" style={AdvancedOptionsStyle}>
+                    <div className="advanced-options">
                         <label htmlFor={InputId.BytesPerGroup}>Bytes per Group</label>
                         <VSCodeDropdown id={InputId.BytesPerGroup} onChange={this.handleInputChange} value={this.props.wordsPerGroup.toString()}>
                             <VSCodeOption>1</VSCodeOption>
