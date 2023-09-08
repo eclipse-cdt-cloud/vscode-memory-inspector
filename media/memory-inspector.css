@@ -15,51 +15,105 @@
  ********************************************************************************/
 
 
- .bytes-select {
-    color: var(--vscode-dropdown-forground);
-    border-radius: 2px;
-    font-size: var(--vscode-font-size);
-    border: 1px solid var(--vscode-dropdown-border);
-    background: var(--vscode-dropdown-background);
-    outline: none;
-    cursor: pointer;
-    padding-top: 3px;
-  }
+.bytes-select {
+  color: var(--vscode-dropdown-forground);
+  border-radius: 2px;
+  font-size: var(--vscode-font-size);
+  border: 1px solid var(--vscode-dropdown-border);
+  background: var(--vscode-dropdown-background);
+  outline: none;
+  cursor: pointer;
+  padding-top: 3px;
+}
 
- .more-memory-select {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-style: italic;
-    cursor: pointer;
-  }
-  
-  .more-memory-select-top {
-    display: flex;
-    justify-content: center;
-    height: 16px;
-    padding-bottom: 1px;
-    transition: border-color 0.1s;
-    border-color: transparent;
-  }
-  
-  .more-memory-select-top:hover {
-    border-bottom: 1px solid;
-    padding-bottom: 0;
-    border-color: var(--vscode-sideBar-foreground);
-  }
-  
-  .more-memory-select select {
-    border: none;
-    background: none;
-    border-radius: 3px;
-    margin: 0 2px;
-    position: relative;
-    bottom: 1px;
-    transition: background 0.1s;
-    font-style: italic;
-  }
-  
-  .more-memory-select select:hover {
-    background: var(--vscode-dropdown-background);
-  }
+.more-memory-select {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-style: italic;
+  cursor: pointer;
+}
+
+.more-memory-select-top {
+  display: flex;
+  justify-content: center;
+  height: 16px;
+  padding-bottom: 1px;
+  transition: border-color 0.1s;
+  border-color: transparent;
+}
+
+.more-memory-select-top:hover {
+  border-bottom: 1px solid;
+  padding-bottom: 0;
+  border-color: var(--vscode-sideBar-foreground);
+}
+
+.more-memory-select select {
+  border: none;
+  background: none;
+  border-radius: 3px;
+  margin: 0 2px;
+  position: relative;
+  bottom: 1px;
+  transition: background 0.1s;
+  font-style: italic;
+}
+
+.more-memory-select select:hover {
+  background: var(--vscode-dropdown-background);
+}
+
+.multi-select-bar {
+  display: flex;
+  flex: row nowrap;
+  box-sizing: border-box;
+  user-select: none;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+}
+
+.multi-select-checkbox-wrapper {
+  display: flex;
+  position: relative;
+  flex: auto;
+  text-align: center;
+}
+
+.multi-select-label {
+  height: 100%;
+  flex: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid;
+  padding: 0 6;
+  background-color: var(--vscode-editor-background);
+  border-color: var(--vscode-dropdown-border);
+  box-sizing: border-box;
+  text-transform: uppercase;
+}
+
+.multi-select-label.active {
+  background-color: var(--vscode-input-background);
+  border-color: var(--vscode-sideBar-foreground);
+  text-decoration: underline;
+  font-weight: bold;
+}
+
+.multi-select-label.inactive {
+  font-style: italic;
+  opacity: 0.7;
+}
+
+.multi-select-checkbox {
+  appearance: none;
+  -moz-appearance: none;
+  position: absolute;
+  left: 0;
+  top: 0;
+  margin: 0;
+  height: 100%;
+  width: 100%;
+  cursor: pointer;
+}
