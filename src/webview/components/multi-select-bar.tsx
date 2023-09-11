@@ -16,63 +16,6 @@
 
 import * as React from 'react';
 
-export const MultiSelectBarStyle: React.CSSProperties = {
-    display: 'flex',
-    flexFlow: 'row nowrap',
-    userSelect: 'none',
-    boxSizing: 'border-box',
-    msUserSelect: 'none',
-    MozUserSelect: 'none',
-    WebkitUserSelect: 'none',
-};
-
-export const MultiSelectCheckboxWrapperStyle: React.CSSProperties = {
-    display: 'flex',
-    position: 'relative',
-    flex: 'auto',
-    textAlign: 'center',
-};
-
-export const MultiSelectLabelStyle: React.CSSProperties = {
-    height: '100%',
-    flex: 'auto',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    border: '1px solid',
-    padding: '0 6',
-    backgroundColor: 'var(--vscode-editor-background)',
-    borderColor: 'var(--vscode-dropdown-border)',
-    boxSizing: 'border-box',
-    textTransform: 'uppercase',
-};
-
-export const MultiSelectActiveLabelStyle: React.CSSProperties = {
-    ...MultiSelectLabelStyle,
-    backgroundColor: 'var(--vscode-input-background)',
-    borderColor: 'var(--vscode-sideBar-foreground)',
-    textDecoration: 'underline',
-    fontWeight: 'bold',
-};
-
-export const MultiSelectInactiveLabelStyle: React.CSSProperties = {
-    ...MultiSelectActiveLabelStyle,
-    fontStyle: 'italic',
-    opacity: '0.7',
-};
-
-export const MultiSelectCheckboxStyle: React.CSSProperties = {
-    appearance: 'none',
-    WebkitAppearance: 'none',
-    position: 'absolute',
-    left: '0',
-    top: '0',
-    margin: '0',
-    height: '100%',
-    width: '100%',
-    cursor: 'pointer',
-};
-
 export interface SingleSelectItemProps {
     id: string;
     label: string;
@@ -91,7 +34,7 @@ export const MultiSelectBar: React.FC<MultiSelectBarProps> = ({ items, onSelecti
     }, [onSelectionChanged]);
 
     return (
-        <div className='multi-select-bar' id={id} style={MultiSelectBarStyle}>
+        <div className='multi-select-bar' id={id}>
             {items.map(({ label, id: itemId, checked }) => (<LabeledCheckbox
                 label={label}
                 onChange={changeHandler}
@@ -118,17 +61,19 @@ export const Label: React.FC<LabelProps> = ({ id, label, disabled, classNames, s
 };
 
 const LabeledCheckbox: React.FC<LabeledCheckboxProps> = ({ checked, label, onChange, id }) => (
-    <div className='multi-select-checkbox-wrapper' style={MultiSelectCheckboxWrapperStyle}>
+    <div className='multi-select-checkbox-wrapper' >
         <input
             tabIndex={0}
             type='checkbox'
             id={id}
             className='multi-select-checkbox'
-            style={MultiSelectCheckboxStyle}
             checked={checked}
             onChange={onChange}
         />
-        <Label id={id} label={label} classNames={['multi-select-label']} style={checked ? MultiSelectActiveLabelStyle : MultiSelectLabelStyle} />
+        <Label
+            id={id}
+            label={label}
+            classNames={['multi-select-label', checked ? 'active' : 'inactive']} />
     </div>
 );
 
