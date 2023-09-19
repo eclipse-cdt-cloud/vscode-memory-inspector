@@ -174,7 +174,7 @@ export class MemoryWebview {
 
     protected handleColumnToggled(request: ColumnVisibilityStatus): void {
         const { id, active: visible } = request;
-        vscode.workspace.getConfiguration(manifest.PACKAGE_NAME).update(`${id}Visible`, visible, vscode.ConfigurationTarget.Global);
+        vscode.workspace.getConfiguration(manifest.PACKAGE_NAME).update(`columns.${id}`, visible, vscode.ConfigurationTarget.Global);
     }
 
     protected setConfiguration(request: { id: string, value: unknown }): void {
