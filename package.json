@@ -122,7 +122,11 @@
           "items": {
             "type": "string"
           },
-          "default": [ "gdb", "embedded-debug", "arm-debug" ],
+          "default": [
+            "gdb",
+            "embedded-debug",
+            "arm-debug"
+          ],
           "description": "C-based debuggers to activate (requires debug session restart)"
         },
         "memory-inspector.refreshOnStop": {
@@ -137,6 +141,54 @@
           ],
           "default": "on",
           "description": "Refresh memory views when debugger stops"
+        },
+        "memory-inspector.groupings.wordsPerGroup": {
+          "type": "number",
+          "enum": [
+            1,
+            2,
+            4,
+            8,
+            16
+          ],
+          "default": 1,
+          "description": "Default words per group"
+        },
+        "memory-inspector.groupings.groupsPerRow": {
+          "type": "number",
+          "enum": [
+            1,
+            2,
+            4,
+            8,
+            16,
+            32
+          ],
+          "default": 4,
+          "description": "Default groups per row"
+        },
+        "memory-inspector.columns.variables": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show variables column?"
+        },
+        "memory-inspector.columns.ascii": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show ASCII column?"
+        },
+        "memory-inspector.scrollingBehavior": {
+          "type": "string",
+          "enum": [
+            "Paginate",
+            "Infinite"
+          ],
+          "default": "Paginate",
+          "enumDescriptions": [
+            "Maintains a consistent memory size, replacing the previous request.",
+            "Appends new memory to bounds of current request, resulting in a growing list."
+          ],
+          "description": "Behavior when adding more memory beyond the current view."
         }
       }
     }

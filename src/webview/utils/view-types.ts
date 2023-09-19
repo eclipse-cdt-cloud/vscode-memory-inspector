@@ -29,11 +29,9 @@ export interface Memory {
     bytes: Uint8Array;
 }
 
-export interface SerializedTableRenderOptions {
+export interface SerializedTableRenderOptions extends MemoryDisplayConfiguration {
     columnOptions: Array<{ label: string, doRender: boolean }>;
     endianness: Endianness;
-    wordsPerGroup: number;
-    groupsPerRow: number;
     wordSize: number;
 }
 
@@ -71,6 +69,23 @@ export interface StylableNodeAttributes {
 
 export interface FullNodeAttributes extends StylableNodeAttributes {
     content: string;
+}
+
+export type ScrollingBehavior = 'Paginate' | 'Infinite';
+export interface MemoryDisplayConfiguration {
+    wordsPerGroup: number;
+    groupsPerRow: number;
+    scrollingBehavior: ScrollingBehavior;
+}
+
+export interface ColumnVisibilityStatus {
+    id: string;
+    active: boolean;
+}
+
+export interface MemoryDisplayConfigurationChangeRequest {
+    id: 'groupings.wordsPerGroup' | 'groupings.groupsPerRow' | 'scrollingBehavior';
+    value: number;
 }
 
 export type ReactInteraction<E extends Element = Element> = React.MouseEvent<E> | React.KeyboardEvent<E>;

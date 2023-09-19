@@ -21,13 +21,14 @@ import {
     readyType,
     logMessageType,
     setOptionsType,
-    readMemoryType
+    readMemoryType,
+    columnVisibilityType,
 } from '../common/messaging';
 import type { DebugProtocol } from '@vscode/debugprotocol';
-import { Decoration, Memory, MemoryState } from './utils/view-types';
+import { ColumnVisibilityStatus, Decoration, Memory, MemoryState } from './utils/view-types';
 import { MemoryWidget } from './components/memory-widget';
 import { messenger } from './view-messenger';
-import { columnContributionService, ColumnStatus } from './columns/column-contribution-service';
+import { ColumnStatus, columnContributionService } from './columns/column-contribution-service';
 import { decorationService } from './decorations/decoration-service';
 import { variableDecorator } from './variables/variable-decorations';
 import { AsciiColumn } from './columns/ascii-column';
@@ -38,6 +39,9 @@ export interface MemoryAppState extends MemoryState {
     decorations: Decoration[];
     columns: ColumnStatus[];
 }
+
+export const DEFAULT_WORDS_PER_GROUP = 1;
+export const DEFAULT_GROUPS_PER_ROW = 4;
 
 class App extends React.Component<{}, MemoryAppState> {
 
@@ -61,6 +65,7 @@ class App extends React.Component<{}, MemoryAppState> {
     public componentDidMount(): void {
         messenger.onRequest(setOptionsType, options => this.setOptions(options));
         messenger.sendNotification(readyType, HOST_EXTENSION, undefined);
+        messenger.onNotification(columnVisibilityType, request => this.handleColumnVisibilityChanged(request));
     }
 
     public render(): React.ReactNode {
@@ -76,6 +81,12 @@ class App extends React.Component<{}, MemoryAppState> {
             toggleColumn={this.toggleColumn}
             fetchMemory={this.fetchMemory}
         />;
+    }
+
+    protected async handleColumnVisibilityChanged(request: ColumnVisibilityStatus): Promise<void> {
+        const { active, id } = request;
+        const columns = active ? await columnContributionService.show(id, this.state) : columnContributionService.hide(id);
+        this.setState({ columns });
     }
 
     protected updateMemoryState = (newState: Partial<MemoryState>) => this.setState(prevState => ({ ...prevState, ...newState }));
@@ -118,9 +129,8 @@ class App extends React.Component<{}, MemoryAppState> {
 
     protected toggleColumn = (id: string, active: boolean): void => { this.doToggleColumn(id, active); };
 
-    protected async doToggleColumn(id: string, active: boolean): Promise<void> {
-        const columns = active ? await columnContributionService.show(id, this.state) : columnContributionService.hide(id);
-        this.setState({ columns });
+    protected doToggleColumn(id: string, active: boolean): void {
+        messenger.sendNotification(columnVisibilityType, HOST_EXTENSION, { id, active });
     }
 }
 

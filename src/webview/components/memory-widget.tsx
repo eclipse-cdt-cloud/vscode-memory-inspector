@@ -18,7 +18,9 @@ import { DebugProtocol } from '@vscode/debugprotocol';
 import React from 'react';
 import { MemoryTable } from './memory-table';
 import { OptionsWidget } from './options-widget';
-import { Decoration, Endianness, Memory } from '../utils/view-types';
+import { Decoration, Endianness, Memory, MemoryDisplayConfiguration } from '../utils/view-types';
+import { messenger } from '../view-messenger';
+import { memoryDisplayConfigurationChangedType } from '../../common/messaging';
 import { ColumnStatus } from '../columns/column-contribution-service';
 
 interface MemoryWidgetProps {
@@ -34,24 +36,27 @@ interface MemoryWidgetProps {
     fetchMemory(partialOptions?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void>
 }
 
-interface MemoryWidgetState {
+interface MemoryWidgetState extends MemoryDisplayConfiguration {
     endianness: Endianness;
     wordSize: number;
-    bytesPerGroup: number;
-    groupsPerRow: number;
 }
 
 const defaultOptions: MemoryWidgetState = {
     endianness: Endianness.Little,
     wordSize: 8,
-    bytesPerGroup: 1,
+    wordsPerGroup: 1,
     groupsPerRow: 4,
+    scrollingBehavior: 'Paginate',
 };
 
 export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidgetState> {
     constructor(props: MemoryWidgetProps) {
         super(props);
         this.state = { ...defaultOptions };
+    }
+
+    public componentDidMount(): void {
+        messenger.onNotification(memoryDisplayConfigurationChangedType, configuration => this.setState(configuration));
     }
 
     override render(): React.ReactNode {
@@ -63,7 +68,7 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 count={this.props.count}
                 endianness={this.state.endianness}
                 wordSize={this.state.wordSize}
-                wordsPerGroup={this.state.bytesPerGroup}
+                wordsPerGroup={this.state.wordsPerGroup}
                 groupsPerRow={this.state.groupsPerRow}
                 updateMemoryArguments={this.props.updateMemoryArguments}
                 updateRenderOptions={this.updateRenderOptions}
@@ -76,11 +81,12 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 memory={this.props.memory}
                 endianness={this.state.endianness}
                 wordSize={this.state.wordSize}
-                wordsPerGroup={this.state.bytesPerGroup}
+                wordsPerGroup={this.state.wordsPerGroup}
                 groupsPerRow={this.state.groupsPerRow}
                 offset={this.props.offset}
                 count={this.props.count}
                 fetchMemory={this.props.fetchMemory}
+                scrollingBehavior={this.state.scrollingBehavior}
             />
         </>;
     }
