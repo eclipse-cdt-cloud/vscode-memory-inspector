@@ -187,7 +187,7 @@ export class MemoryWebview {
         const memoryDisplayConfiguration = this.getMemoryDisplayConfiguration();
         this.messenger.sendNotification(memoryDisplayConfigurationChangedType, participant, memoryDisplayConfiguration);
         columnConfigurations.forEach(columnConfiguration => {
-            const [id] = columnConfiguration.split('Visible');
+            const [, id] = columnConfiguration.split('.');
             const active = vscode.workspace.getConfiguration(manifest.PACKAGE_NAME).get<boolean>(columnConfiguration) ?? true;
             this.messenger.sendNotification(columnVisibilityType, participant, { id, active });
         });
@@ -219,7 +219,7 @@ export class MemoryWebview {
         return vscode.workspace.onDidChangeConfiguration(e => {
             columnConfigurations.forEach(configuration => {
                 if (e.affectsConfiguration(`${manifest.PACKAGE_NAME}.${configuration}`)) {
-                    const [id] = configuration.split('Visible');
+                    const [, id] = configuration.split('.');
                     const active = vscode.workspace.getConfiguration(manifest.PACKAGE_NAME).get<boolean>(configuration) ?? true;
                     this.messenger.sendNotification(columnVisibilityType, participant, { id, active });
                 }

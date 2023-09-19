@@ -122,7 +122,11 @@
           "items": {
             "type": "string"
           },
-          "default": [ "gdb", "embedded-debug", "arm-debug" ],
+          "default": [
+            "gdb",
+            "embedded-debug",
+            "arm-debug"
+          ],
           "description": "C-based debuggers to activate (requires debug session restart)"
         },
         "memory-inspector.refreshOnStop": {
@@ -163,12 +167,12 @@
           "default": 4,
           "description": "Default groups per row"
         },
-        "memory-inspector.variablesVisible": {
+        "memory-inspector.columns.variables": {
           "type": "boolean",
           "default": false,
           "description": "Show variables column?"
         },
-        "memory-inspector.asciiVisible": {
+        "memory-inspector.columns.ascii": {
           "type": "boolean",
           "default": false,
           "description": "Show ASCII column?"
@@ -180,7 +184,11 @@
             "Infinite"
           ],
           "default": "Paginate",
-          "description": "Behavior when adding more memory beyond the current view. 'Infinite' appends new memory to bounds of current request, resulting in a growing list. 'Paginate' maintains a consistent memory size, replacing the previous request."
+          "enumDescriptions": [
+            "Maintains a consistent memory size, replacing the previous request.",
+            "Appends new memory to bounds of current request, resulting in a growing list."
+          ],
+          "description": "Behavior when adding more memory beyond the current view."
         }
       }
     }

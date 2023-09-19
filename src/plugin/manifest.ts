@@ -30,5 +30,5 @@ export const DEFAULT_GROUPS_PER_ROW = 4;
 export const CONFIG_SCROLLING_BEHAVIOR = 'scrollingBehavior';
 export const DEFAULT_SCROLLING_BEHAVIOR = 'Paginate';
 
-export const CONFIG_SHOW_VARIABLES_COLUMN = 'variablesVisible';
-export const CONFIG_SHOW_ASCII_COLUMN = 'asciiVisible';
+export const CONFIG_SHOW_VARIABLES_COLUMN = 'columns.variables';
+export const CONFIG_SHOW_ASCII_COLUMN = 'columns.ascii';
