@@ -84,7 +84,7 @@ export interface ColumnVisibilityStatus {
 }
 
 export interface MemoryDisplayConfigurationChangeRequest {
-    id: keyof MemoryDisplayConfiguration;
+    id: 'groupings.wordsPerGroup' | 'groupings.groupsPerRow' | 'scrollingBehavior';
     value: number;
 }
 

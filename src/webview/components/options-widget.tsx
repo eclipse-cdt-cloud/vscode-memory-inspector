@@ -109,8 +109,8 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
             case InputId.Address: return this.props.updateMemoryArguments({ memoryReference: event.currentTarget.value });
             case InputId.Offset: return !Number.isNaN(event.currentTarget.value) && this.props.updateMemoryArguments({ offset: Number(event.currentTarget.value) });
             case InputId.Length: return !Number.isNaN(event.currentTarget.value) && this.props.updateMemoryArguments({ count: Number(event.currentTarget.value) });
-            case InputId.WordsPerGroup: return this.updateConfiguration({ id: 'wordsPerGroup', value: Number(event.currentTarget.value) });
-            case InputId.GroupsPerRow: return this.updateConfiguration({ id: 'groupsPerRow', value: Number(event.currentTarget.value) });
+            case InputId.WordsPerGroup: return this.updateConfiguration({ id: 'groupings.wordsPerGroup', value: Number(event.currentTarget.value) });
+            case InputId.GroupsPerRow: return this.updateConfiguration({ id: 'groupings.groupsPerRow', value: Number(event.currentTarget.value) });
         }
     }
 

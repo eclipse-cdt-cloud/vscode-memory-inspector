@@ -142,7 +142,7 @@
           "default": "on",
           "description": "Refresh memory views when debugger stops"
         },
-        "memory-inspector.wordsPerGroup": {
+        "memory-inspector.groupings.wordsPerGroup": {
           "type": "number",
           "enum": [
             1,
@@ -154,7 +154,7 @@
           "default": 1,
           "description": "Default words per group"
         },
-        "memory-inspector.groupsPerRow": {
+        "memory-inspector.groupings.groupsPerRow": {
           "type": "number",
           "enum": [
             1,
