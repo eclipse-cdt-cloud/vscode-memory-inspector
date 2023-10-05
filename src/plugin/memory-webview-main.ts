@@ -61,7 +61,7 @@ export class MemoryWebview implements vscode.CustomEditorProvider {
     public static VariableCommandType = `${manifest.PACKAGE_NAME}.show-variable`;
 
     private readonly _onDidChangeCustomDocument = new vscode.EventEmitter<vscode.CustomDocumentEditEvent>();
-	public readonly onDidChangeCustomDocument = this._onDidChangeCustomDocument.event;
+    public readonly onDidChangeCustomDocument = this._onDidChangeCustomDocument.event;
 
     protected messenger: Messenger;
     protected refreshOnStop: RefreshEnum;
