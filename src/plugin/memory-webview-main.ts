@@ -94,7 +94,11 @@ export class MemoryWebview implements vscode.CustomEditorProvider {
     public async saveCustomDocument(_document: vscode.CustomDocument, _cancellation: vscode.CancellationToken): Promise<void> {}
     public async saveCustomDocumentAs(_document: vscode.CustomDocument, _destination: vscode.Uri, _cancellation: vscode.CancellationToken): Promise<void> {}
     public async revertCustomDocument(_document: vscode.CustomDocument, _cancellation: vscode.CancellationToken): Promise<void> {}
-    public async backupCustomDocument(_document: vscode.CustomDocument, _context: vscode.CustomDocumentBackupContext, _cancellation: vscode.CancellationToken): Promise<vscode.CustomDocumentBackup> {
+    public async backupCustomDocument(
+        _document: vscode.CustomDocument,
+        _context: vscode.CustomDocumentBackupContext,
+        _cancellation: vscode.CancellationToken
+    ): Promise<vscode.CustomDocumentBackup> {
         return {
             id: '',
             delete: () => {}
@@ -110,11 +114,18 @@ export class MemoryWebview implements vscode.CustomEditorProvider {
 
     public async resolveCustomEditor(document: vscode.CustomDocument, webviewPanel: vscode.WebviewPanel, _token: vscode.CancellationToken): Promise<void> {
         /*
+            memoryReference = debugprotocol.variable.memoryReference
+            displayName = 'memory'
+            DEBUG_MEMORY_SCHEME = 'vscode-debug-memory'
+            sessionId = <debug session ID>
+            range = undefined
+
             document.uri is:
-            scheme: DEBUG_MEMORY_SCHEME, // vscode-debug-memory
-            authority: sessionId,  // debug session ID
-            path: '/' + encodeURIComponent(memoryReference) + `/${encodeURIComponent(displayName)}.bin`,  // memoryReference=debugprotocol.variable.memoryReference, dispolayName =memory
-            query: range ? `?range=${range.fromOffset}:${range.toOffset}` : undefined, range=undefined
+
+            scheme: DEBUG_MEMORY_SCHEME,
+            authority: sessionId,
+            path: '/' + encodeURIComponent(memoryReference) + `/${encodeURIComponent(displayName)}.bin`,
+            query: range ? `?range=${range.fromOffset}:${range.toOffset}` : undefined,
         */
 
         const memoryReference = document.uri.path.split('/')[1];
