@@ -102,6 +102,18 @@
         }
       ]
     },
+    "customEditors": [
+      {
+        "viewType": "memory-inspector.inspect",
+        "displayName": "Memory Inspector",
+        "selector": [
+          {
+            "filenamePattern": "*"
+          }
+        ],
+        "priority": "option"
+      }
+    ],
     "configuration": {
       "title": "Memory Inspector",
       "properties": {
