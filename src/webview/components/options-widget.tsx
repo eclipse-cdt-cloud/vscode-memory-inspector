@@ -18,21 +18,17 @@ import React from 'react';
 import type { DebugProtocol } from '@vscode/debugprotocol';
 import { MemoryDisplayConfigurationChangeRequest, SerializedTableRenderOptions } from '../utils/view-types';
 import { VSCodeButton, VSCodeDivider, VSCodeDropdown, VSCodeOption, VSCodeTextField } from '@vscode/webview-ui-toolkit/react';
-import { MultiSelectWithLabel } from './multi-select-bar';
 import { messenger } from '../view-messenger';
 import { setMemoryDisplayConfigurationType } from '../../common/messaging';
 import { HOST_EXTENSION } from 'vscode-messenger-common';
 import { TableRenderOptions } from '../columns/column-contribution-service';
+import { MultiSelectWithLabel } from './multi-select';
 
 export interface OptionsWidgetProps extends Omit<TableRenderOptions, 'scrollingBehavior'>, Required<DebugProtocol.ReadMemoryArguments> {
     updateRenderOptions: (options: Partial<SerializedTableRenderOptions>) => void;
     updateMemoryArguments: (memoryArguments: Partial<DebugProtocol.ReadMemoryArguments>) => void;
     refreshMemory: () => void;
     toggleColumn(id: string, active: boolean): void;
-}
-
-interface OptionsWidgetState {
-    showRenderOptions: boolean;
 }
 
 const enum InputId {
@@ -43,48 +39,31 @@ const enum InputId {
     GroupsPerRow = 'groups-per-row',
 }
 
-export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWidgetState> {
+export class OptionsWidget extends React.Component<OptionsWidgetProps, {}> {
     constructor(props: OptionsWidgetProps) {
         super(props);
-        this.state = { showRenderOptions: false };
     }
 
     override render(): React.ReactNode {
+
         return <div className='memory-options-widget' >
             <div className="options-widget-title">
                 <div className="title"></div>
-                <div className="advanced-options-toggle" role='button' tabIndex={0} onClick={this.toggleRenderOptions} >
-                    <i className="codicon codicon-gear" />
-                    {this.state.showRenderOptions ? 'Hide Settings' : 'Show Settings'}
-                </div>
             </div>
             <div className="core-options" >
-                <VSCodeTextField id={InputId.Address} onChange={this.handleInputChange} value={this.props.memoryReference}>Address</VSCodeTextField>
-                <VSCodeTextField id={InputId.Offset} onChange={this.handleInputChange} value={this.props.offset.toString()}>Offset</VSCodeTextField>
-                <VSCodeTextField id={InputId.Length} onChange={this.handleInputChange} value={this.props.count.toString()}>Length</VSCodeTextField>
+                <VSCodeTextField
+                    id={InputId.Address}
+                    className='options-texfield-long'
+                    onChange={this.handleInputChange}
+                    value={this.props.memoryReference}>
+                    Address
+                </VSCodeTextField>
+                <VSCodeTextField id={InputId.Offset} className='options-textfield' onChange={this.handleInputChange} value={this.props.offset.toString()}>Offset</VSCodeTextField>
+                <VSCodeTextField id={InputId.Length} className='options-textfield' onChange={this.handleInputChange} value={this.props.count.toString()}>Length</VSCodeTextField>
                 <VSCodeButton className='go-button' onClick={this.props.refreshMemory} >Go</VSCodeButton>
-            </div>
-            {
-                this.state.showRenderOptions && <>
-                    <VSCodeDivider />
-                    <div className="advanced-options">
-                        <label htmlFor={InputId.WordsPerGroup}>Bytes per Group</label>
-                        <VSCodeDropdown id={InputId.WordsPerGroup} onChange={this.handleInputChange} value={this.props.wordsPerGroup.toString()}>
-                            <VSCodeOption>1</VSCodeOption>
-                            <VSCodeOption>2</VSCodeOption>
-                            <VSCodeOption>4</VSCodeOption>
-                            <VSCodeOption>8</VSCodeOption>
-                            <VSCodeOption>16</VSCodeOption>
-                        </VSCodeDropdown>
-                        <label htmlFor={InputId.GroupsPerRow}>Groups per Row</label>
-                        <VSCodeDropdown id={InputId.GroupsPerRow} onChange={this.handleInputChange} value={this.props.groupsPerRow.toString()}>
-                            <VSCodeOption>1</VSCodeOption>
-                            <VSCodeOption>2</VSCodeOption>
-                            <VSCodeOption>4</VSCodeOption>
-                            <VSCodeOption>8</VSCodeOption>
-                            <VSCodeOption>16</VSCodeOption>
-                            <VSCodeOption>32</VSCodeOption>
-                        </VSCodeDropdown>
+                <VSCodeButton className='advanced-options-toggle' appearance='icon' title='Show all data' aria-label='Show all data'>
+                    <div className='codicon codicon-gear'></div>
+                    <div className="advanced-options-content">
                         {!!this.props.columnOptions.length && <MultiSelectWithLabel
                             id='column-select'
                             label='Columns'
@@ -93,9 +72,26 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                 .map(column => ({ id: column.contribution.id, label: column.contribution.label, checked: column.active }))}
                             onSelectionChanged={this.props.toggleColumn}
                         />}
+                        <label htmlFor={InputId.WordsPerGroup} className='options-label'>Bytes per Group</label>
+                        <VSCodeDropdown id={InputId.WordsPerGroup} className='options-dropdown' onChange={this.handleInputChange} value={this.props.wordsPerGroup.toString()}>
+                            <VSCodeOption>1</VSCodeOption>
+                            <VSCodeOption>2</VSCodeOption>
+                            <VSCodeOption>4</VSCodeOption>
+                            <VSCodeOption>8</VSCodeOption>
+                            <VSCodeOption>16</VSCodeOption>
+                        </VSCodeDropdown>
+                        <label htmlFor={InputId.GroupsPerRow} className='options-label'>Groups per Row</label>
+                        <VSCodeDropdown id={InputId.GroupsPerRow} className='options-dropdown' onChange={this.handleInputChange} value={this.props.groupsPerRow.toString()}>
+                            <VSCodeOption>1</VSCodeOption>
+                            <VSCodeOption>2</VSCodeOption>
+                            <VSCodeOption>4</VSCodeOption>
+                            <VSCodeOption>8</VSCodeOption>
+                            <VSCodeOption>16</VSCodeOption>
+                            <VSCodeOption>32</VSCodeOption>
+                        </VSCodeDropdown>
                     </div>
-                </>
-            }
+                </VSCodeButton>
+            </div>
             <VSCodeDivider />
         </div>;
     }
@@ -116,11 +112,5 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
 
     protected updateConfiguration(viewConfigurationChangeRequest: MemoryDisplayConfigurationChangeRequest): void {
         return messenger.sendNotification(setMemoryDisplayConfigurationType, HOST_EXTENSION, viewConfigurationChangeRequest);
-    }
-
-    protected toggleRenderOptions = () => this.doToggleRenderOptions();
-
-    protected doToggleRenderOptions(): void {
-        this.setState(prevState => ({ ...prevState, showRenderOptions: !prevState.showRenderOptions }));
     }
 }
