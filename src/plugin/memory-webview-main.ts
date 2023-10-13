@@ -55,13 +55,10 @@ const columnConfigurations = [
     manifest.CONFIG_SHOW_VARIABLES_COLUMN,
 ];
 
-export class MemoryWebview implements vscode.CustomEditorProvider {
+export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
     public static ViewType = `${manifest.PACKAGE_NAME}.memory`;
     public static ShowCommandType = `${manifest.PACKAGE_NAME}.show`;
     public static VariableCommandType = `${manifest.PACKAGE_NAME}.show-variable`;
-
-    private readonly _onDidChangeCustomDocument = new vscode.EventEmitter<vscode.CustomDocumentEditEvent>();
-    public readonly onDidChangeCustomDocument = this._onDidChangeCustomDocument.event;
 
     protected messenger: Messenger;
     protected refreshOnStop: RefreshEnum;
@@ -79,6 +76,7 @@ export class MemoryWebview implements vscode.CustomEditorProvider {
 
     public activate(context: vscode.ExtensionContext): void {
         context.subscriptions.push(
+            vscode.window.registerCustomEditorProvider(manifest.EDITOR_NAME, this),
             vscode.commands.registerCommand(MemoryWebview.ShowCommandType, () => this.show()),
             vscode.commands.registerCommand(MemoryWebview.VariableCommandType, node => {
                 const variable = node.variable;
@@ -87,19 +85,7 @@ export class MemoryWebview implements vscode.CustomEditorProvider {
                 }
             })
         );
-
-        vscode.window.registerCustomEditorProvider(manifest.EDITOR_NAME, this);
     };
-
-    public async saveCustomDocument(): Promise<void> {}
-    public async saveCustomDocumentAs(): Promise<void> {}
-    public async revertCustomDocument(): Promise<void> {}
-    public async backupCustomDocument(): Promise<vscode.CustomDocumentBackup> {
-        return {
-            id: '',
-            delete: () => {}
-        };
-    }
 
     public openCustomDocument(uri: vscode.Uri): vscode.CustomDocument {
         return {
