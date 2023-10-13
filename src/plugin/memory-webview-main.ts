@@ -91,28 +91,24 @@ export class MemoryWebview implements vscode.CustomEditorProvider {
         vscode.window.registerCustomEditorProvider(manifest.EDITOR_NAME, this);
     };
 
-    public async saveCustomDocument(_document: vscode.CustomDocument, _cancellation: vscode.CancellationToken): Promise<void> {}
-    public async saveCustomDocumentAs(_document: vscode.CustomDocument, _destination: vscode.Uri, _cancellation: vscode.CancellationToken): Promise<void> {}
-    public async revertCustomDocument(_document: vscode.CustomDocument, _cancellation: vscode.CancellationToken): Promise<void> {}
-    public async backupCustomDocument(
-        _document: vscode.CustomDocument,
-        _context: vscode.CustomDocumentBackupContext,
-        _cancellation: vscode.CancellationToken
-    ): Promise<vscode.CustomDocumentBackup> {
+    public async saveCustomDocument(): Promise<void> {}
+    public async saveCustomDocumentAs(): Promise<void> {}
+    public async revertCustomDocument(): Promise<void> {}
+    public async backupCustomDocument(): Promise<vscode.CustomDocumentBackup> {
         return {
             id: '',
             delete: () => {}
         };
     }
 
-    public openCustomDocument(uri: vscode.Uri, _openContext: vscode.CustomDocumentOpenContext, _token: vscode.CancellationToken): vscode.CustomDocument {
+    public openCustomDocument(uri: vscode.Uri): vscode.CustomDocument {
         return {
             uri,
             dispose: () => {}
         };
     }
 
-    public async resolveCustomEditor(document: vscode.CustomDocument, webviewPanel: vscode.WebviewPanel, _token: vscode.CancellationToken): Promise<void> {
+    public async resolveCustomEditor(document: vscode.CustomDocument, webviewPanel: vscode.WebviewPanel): Promise<void> {
         /*
             memoryReference = debugprotocol.variable.memoryReference
             displayName = 'memory'
