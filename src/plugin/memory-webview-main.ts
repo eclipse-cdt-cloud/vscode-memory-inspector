@@ -110,7 +110,8 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
             query: range ? `?range=${range.fromOffset}:${range.toOffset}` : undefined,
         */
 
-        const memoryReference = document.uri.path.split('/')[1];
+        let memoryReference = document.uri.path.split('/')[1];
+        memoryReference = decodeURIComponent(memoryReference);
         await this.show({ memoryReference }, webviewPanel);
     }
 
