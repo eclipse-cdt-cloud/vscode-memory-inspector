@@ -55,7 +55,7 @@ const columnConfigurations = [
     manifest.CONFIG_SHOW_VARIABLES_COLUMN,
 ];
 
-export class MemoryWebview {
+export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
     public static ViewType = `${manifest.PACKAGE_NAME}.memory`;
     public static ShowCommandType = `${manifest.PACKAGE_NAME}.show`;
     public static VariableCommandType = `${manifest.PACKAGE_NAME}.show-variable`;
@@ -76,6 +76,7 @@ export class MemoryWebview {
 
     public activate(context: vscode.ExtensionContext): void {
         context.subscriptions.push(
+            vscode.window.registerCustomEditorProvider(manifest.EDITOR_NAME, this),
             vscode.commands.registerCommand(MemoryWebview.ShowCommandType, () => this.show()),
             vscode.commands.registerCommand(MemoryWebview.VariableCommandType, node => {
                 const variable = node.variable;
@@ -86,7 +87,34 @@ export class MemoryWebview {
         );
     };
 
-    public async show(initialMemory?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void> {
+    public openCustomDocument(uri: vscode.Uri): vscode.CustomDocument {
+        return {
+            uri,
+            dispose: () => {}
+        };
+    }
+
+    public async resolveCustomEditor(document: vscode.CustomDocument, webviewPanel: vscode.WebviewPanel): Promise<void> {
+        /*
+            memoryReference = debugprotocol.variable.memoryReference
+            displayName = 'memory'
+            DEBUG_MEMORY_SCHEME = 'vscode-debug-memory'
+            sessionId = <debug session ID>
+            range = undefined
+
+            document.uri is:
+
+            scheme: DEBUG_MEMORY_SCHEME,
+            authority: sessionId,
+            path: '/' + encodeURIComponent(memoryReference) + `/${encodeURIComponent(displayName)}.bin`,
+            query: range ? `?range=${range.fromOffset}:${range.toOffset}` : undefined,
+        */
+
+        const memoryReference = decodeURIComponent(document.uri.path.split('/')[1]);
+        await this.show({ memoryReference }, webviewPanel);
+    }
+
+    public async show(initialMemory?: Partial<DebugProtocol.ReadMemoryArguments>, panel?: vscode.WebviewPanel): Promise<void> {
         const distPathUri = vscode.Uri.joinPath(this.extensionUri, 'dist', 'views');
         const mediaPathUri = vscode.Uri.joinPath(this.extensionUri, 'media');
         const codiconPathUri = vscode.Uri.joinPath(this.extensionUri, 'node_modules', '@vscode', 'codicons', 'dist');
@@ -97,7 +125,11 @@ export class MemoryWebview {
             localResourceRoots: [distPathUri, mediaPathUri, codiconPathUri] // restrict extension's local file access
         };
 
-        const panel = vscode.window.createWebviewPanel(MemoryWebview.ViewType, 'Memory Inspector', vscode.ViewColumn.Active, options);
+        if (!panel) {
+            panel = vscode.window.createWebviewPanel(MemoryWebview.ViewType, 'Memory Inspector', vscode.ViewColumn.Active, options);
+        } else {
+            panel.webview.options = options;
+        }
 
         // Set HTML content
         await this.getWebviewContent(panel);
