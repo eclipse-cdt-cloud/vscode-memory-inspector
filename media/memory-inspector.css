@@ -23,7 +23,6 @@
   background: var(--vscode-dropdown-background);
   outline: none;
   cursor: pointer;
-  padding-top: 3px;
 }
 
 .more-memory-select {
@@ -55,7 +54,6 @@
   border-radius: 3px;
   margin: 0 2px;
   position: relative;
-  bottom: 1px;
   transition: background 0.1s;
   font-style: italic;
 }
