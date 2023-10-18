@@ -4,7 +4,7 @@
   "description": "A set of widgets for viewing memory in different ways",
   "version": "1.0.0",
   "preview": true,
-  "publisher": "Eclipse",
+  "publisher": "eclipse-cdt",
   "author": "Rob Moran <rob.moran@arm.com>",
   "license": "EPL-2.0",
   "main": "dist/desktop/extension.js",
