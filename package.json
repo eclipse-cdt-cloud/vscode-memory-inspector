@@ -2,7 +2,7 @@
   "name": "memory-inspector",
   "displayName": "Memory Inspector",
   "description": "A set of widgets for viewing memory in different ways",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "preview": true,
   "publisher": "eclipse-cdt",
   "author": "Rob Moran <rob.moran@arm.com>",
