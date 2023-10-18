@@ -62,7 +62,7 @@ jobs:
           node-version: 16.x
       - name: Publish
         run: |
-          npx ovsx@0.5.1 publish -i artifacts/*/*.vsix -p ${{secrets.OPEN_VSX_TOKEN}}
+          npx ovsx publish -i artifacts/*/*.vsix -p ${{secrets.OPEN_VSX_TOKEN}}
 
   publish-vscode-marketplace:
     needs: build
