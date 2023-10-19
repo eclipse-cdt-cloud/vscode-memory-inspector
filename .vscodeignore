@@ -4,3 +4,5 @@ src
 *.vsix
 dist/**/*.js.map
 node_modules
+!node_modules/@vscode/codicons/dist/codicon.css
+!node_modules/@vscode/codicons/dist/codicon.ttf
