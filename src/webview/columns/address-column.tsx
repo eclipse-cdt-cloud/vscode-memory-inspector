@@ -31,7 +31,7 @@ export class AddressColumn implements ColumnContribution {
     render(range: BigIntMemoryRange, _: Memory, options: TableRenderOptions): ReactNode {
         return <span className='memory-start-address'>
             {options.showRadixPrefix && <span className='radix-prefix'>{getRadixMarker(options.addressRadix)}</span>}
-            <span className='address'>{getAddressString(range.startAddress, options.addressRadix, options.effectiveAddressLength)}</span>
+            <span className='address hoverable' data-column='address'>{getAddressString(range.startAddress, options.addressRadix, options.effectiveAddressLength)}</span>
         </span>;
     }
 }

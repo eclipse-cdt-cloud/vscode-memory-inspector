@@ -19,6 +19,7 @@ import memoize from 'memoize-one';
 import { Column } from 'primereact/column';
 import { DataTable, DataTableCellSelection, DataTableProps, DataTableSelectionCellChangeEvent } from 'primereact/datatable';
 import { ProgressSpinner } from 'primereact/progressspinner';
+import { Tooltip } from 'primereact/tooltip';
 import React from 'react';
 import { TableRenderOptions } from '../columns/column-contribution-service';
 import { Decoration, Memory, MemoryDisplayConfiguration, ScrollingBehavior, isTrigger } from '../utils/view-types';
@@ -29,6 +30,8 @@ import { DataColumn } from '../columns/data-column';
 import { createColumnVscodeContext, createSectionVscodeContext } from '../utils/vscode-contexts';
 import { WebviewSelection } from '../../common/messaging';
 import { debounce } from 'lodash';
+import type { HoverService } from '../hovers/hover-service';
+import { TooltipEvent } from 'primereact/tooltip/tooltipoptions';
 
 export interface MoreMemorySelectProps {
     activeReadArguments: Required<DebugProtocol.ReadMemoryArguments>;
@@ -130,6 +133,7 @@ interface MemoryTableProps extends TableRenderOptions, MemoryDisplayConfiguratio
     memory?: Memory;
     decorations: Decoration[];
     effectiveAddressLength: number;
+    hoverService: HoverService;
     fetchMemory(partialOptions?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void>;
     isMemoryFetching: boolean;
     isFrozen: boolean;
@@ -157,6 +161,7 @@ interface MemoryTableState {
      */
     groupsPerRowToRender: number;
     selection: MemoryTableCellSelection | null;
+    hoverContent: React.ReactNode;
 }
 
 export type MemorySizeOptions = Pick<MemoryTableProps, 'bytesPerWord' | 'wordsPerGroup'> & { groupsPerRow: number };
@@ -196,6 +201,7 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
             groupsPerRowToRender: 1,
             // eslint-disable-next-line no-null/no-null
             selection: null,
+            hoverContent: <></>,
         };
     }
 
@@ -276,7 +282,15 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
         const columnWidth = remainingWidth / (this.props.columnOptions.length);
 
         return (
-            <div className='flex-1 overflow-auto px-4' >
+            <div className='flex-1 overflow-auto px-4'>
+                <Tooltip
+                    // On mouseover of a .hoverable element, this.handleOnBeforeTooltipShow runs and generates this.state.hoverContent
+                    target=".hoverable"
+                    onBeforeShow={this.handleOnBeforeTooltipShow}
+                    onHide={this.handleOnTooltipHide}
+                    showDelay={1000}
+                    autoHide={false}
+                >{this.state.hoverContent}</Tooltip>
                 <DataTable<MemoryRowData[]>
                     ref={this.datatableRef}
                     onContextMenuCapture={this.onContextMenu}
@@ -558,6 +572,27 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
         const textSelection = window.getSelection()?.toString() ?? '';
         return this.state.selection ? { textSelection, selectedCell: { column: this.state.selection.field, value: this.state.selection.textContent } } : { textSelection };
     }
+
+    protected handleOnBeforeTooltipShow = async (event: TooltipEvent): Promise<void> => {
+        const textContent = event.target.textContent ?? '';
+        const columnId = event.target.dataset.column ?? '';
+        let extraData = {};
+        try {
+            extraData = JSON.parse(event.target.dataset[columnId] ?? '{}');
+        } catch { /* no-op */ }
+        const node = await this.props.hoverService.render({ columnId, textContent, extraData });
+        this.setState(prev => ({
+            ...prev,
+            hoverContent: node,
+        }));
+    };
+
+    protected handleOnTooltipHide = (): void => {
+        this.setState(prev => ({
+            ...prev,
+            hoverContent: <></>,
+        }));
+    };
 }
 
 export namespace MemoryTable {

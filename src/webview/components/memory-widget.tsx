@@ -23,6 +23,7 @@ import { OptionsWidget } from './options-widget';
 import { WebviewIdMessageParticipant } from 'vscode-messenger-common';
 import { VscodeContext, createAppVscodeContext } from '../utils/vscode-contexts';
 import { WebviewSelection } from '../../common/messaging';
+import { HoverService } from '../hovers/hover-service';
 
 interface MemoryWidgetProps extends MemoryDisplayConfiguration {
     messageParticipant: WebviewIdMessageParticipant;
@@ -31,6 +32,7 @@ interface MemoryWidgetProps extends MemoryDisplayConfiguration {
     memory?: Memory;
     title: string;
     decorations: Decoration[];
+    hoverService: HoverService;
     columns: ColumnStatus[];
     effectiveAddressLength: number;
     isMemoryFetching: boolean;
@@ -98,6 +100,7 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 configuredReadArguments={this.props.configuredReadArguments}
                 activeReadArguments={this.props.activeReadArguments}
                 decorations={this.props.decorations}
+                hoverService={this.props.hoverService}
                 columnOptions={this.props.columns.filter(candidate => candidate.active)}
                 memory={this.props.memory}
                 endianness={this.props.endianness}

@@ -43,12 +43,17 @@ import { PrimeReactProvider } from 'primereact/api';
 import 'primeflex/primeflex.css';
 import { getAddressLength, getAddressString } from '../common/memory-range';
 import { Endianness } from '../common/memory-range';
+import { hoverService, HoverService } from './hovers/hover-service';
+import { AddressHover } from './hovers/address-hover';
+import { DataHover } from './hovers/data-hover';
+import { VariableHover } from './hovers/variable-hover';
 
 export interface MemoryAppState extends MemoryState, MemoryDisplayConfiguration {
     messageParticipant: WebviewIdMessageParticipant;
     title: string;
     effectiveAddressLength: number;
     decorations: Decoration[];
+    hoverService: HoverService;
     columns: ColumnStatus[];
     isFrozen: boolean;
 }
@@ -79,6 +84,9 @@ class App extends React.Component<{}, MemoryAppState> {
         columnContributionService.register(variableDecorator);
         columnContributionService.register(new AsciiColumn());
         decorationService.register(variableDecorator);
+        hoverService.register(new AddressHover());
+        hoverService.register(new DataHover());
+        hoverService.register(new VariableHover());
         this.state = {
             messageParticipant: { type: 'webview', webviewId: '' },
             title: 'Memory',
@@ -87,6 +95,7 @@ class App extends React.Component<{}, MemoryAppState> {
             configuredReadArguments: DEFAULT_READ_ARGUMENTS,
             activeReadArguments: DEFAULT_READ_ARGUMENTS,
             decorations: [],
+            hoverService: hoverService,
             columns: columnContributionService.getColumns(),
             isMemoryFetching: false,
             isFrozen: false,
@@ -121,6 +130,7 @@ class App extends React.Component<{}, MemoryAppState> {
                 this.setState({ effectiveAddressLength });
             }
         }
+        hoverService.setMemoryState(this.state);
     }
 
     public render(): React.ReactNode {
@@ -132,6 +142,7 @@ class App extends React.Component<{}, MemoryAppState> {
                 activeReadArguments={this.state.activeReadArguments}
                 memory={this.state.memory}
                 decorations={this.state.decorations}
+                hoverService={this.state.hoverService}
                 columns={this.state.columns}
                 title={this.state.title}
                 effectiveAddressLength={this.state.effectiveAddressLength}

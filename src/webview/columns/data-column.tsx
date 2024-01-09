@@ -47,11 +47,11 @@ export class DataColumn implements ColumnContribution {
                 this.applyEndianness(words, options);
                 const isLast = address + 1n >= range.endAddress;
                 const style: React.CSSProperties | undefined = isLast ? undefined : this.byteGroupStyle;
-                groups.push(<span className='byte-group' style={style} key={address.toString(16)}>{words}</span>);
+                groups.push(<span className='byte-group hoverable' data-column='data' style={style} key={address.toString(16)}>{words}</span>);
                 words = [];
             }
         }
-        if (words.length) { groups.push(<span className='byte-group' key={(range.endAddress - BigInt(words.length)).toString(16)}>{words}</span>); }
+        if (words.length) { groups.push(<span className='byte-group hoverable' data-column='data' key={(range.endAddress - BigInt(words.length)).toString(16)}>{words}</span>); }
         return groups;
     }
 

@@ -81,7 +81,11 @@ export class VariableDecorator implements ColumnContribution, Decorator {
         return this.getVariablesInRange(range)?.reduce<ReactNode[]>((result, current, index) => {
             if (index > 0) { result.push(', '); }
             result.push(React.createElement('span', {
-                style: { color: current.color }, key: current.variable.name,
+                style: { color: current.color },
+                key: current.variable.name,
+                className: 'hoverable',
+                'data-column': 'variables',
+                'data-variables': stringifyWithBigInts(current.variable),
                 ...createVariableVscodeContext(current.variable)
             }, current.variable.name));
             return result;
@@ -132,6 +136,11 @@ export class VariableDecorator implements ColumnContribution, Decorator {
     dispose(): void {
         this.onDidChangeEmitter.dispose();
     }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function stringifyWithBigInts(object: any): any {
+    return JSON.stringify(object, (_key, value) => typeof value === 'bigint' ? value.toString() : value);
 }
 
 export const variableDecorator = new VariableDecorator();
