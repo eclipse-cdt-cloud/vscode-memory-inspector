@@ -14,6 +14,11 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
+.memory-inspector-table .group-separator > td {
+  border-bottom: 2px solid var(--vscode-editor-lineHighlightBorder);
+}
+
+/* == MoreMemorySelect == */
 
 .bytes-select {
   color: var(--vscode-dropdown-forground);
@@ -42,7 +47,7 @@
   border-color: transparent;
 }
 
-.more-memory-select-top:hover {
+.more-memory-select:hover .more-memory-select-top {
   border-bottom: 1px solid;
   padding-bottom: 0;
   border-color: var(--vscode-sideBar-foreground);
@@ -60,97 +65,4 @@
 
 .more-memory-select select:hover {
   background: var(--vscode-dropdown-background);
-}
-
-.memory-options-widget {
-  margin-bottom: 8px;
-}
-
-.multi-select {
-  width: 160px;
-  display: flex;
-  flex-direction: column;
-  text-align: left;
-}
-
-.multi-select-bar {
-  display: flex;
-  flex-direction: column;
-}
-
-.multi-select-checkbox {
-  appearance: none;
-  -moz-appearance: none;
-  position: absolute;
-  left: 0;
-  top: 0;
-  margin: 0;
-  height: 100%;
-  width: 100%;
-  cursor: pointer;
-}
-
-.options-widget-title {
-  display: flex;
-  flex-flow: row nowrap;
-  justify-content: space-between;
-}
-
-.advanced-options-toggle {
-  margin-left: auto;
-}
-
-.advanced-options-content {
-  position: absolute;
-  z-index: 1;
-  margin: 20px -165px;
-  width: 160px;
-  padding: 12px;
-  border-radius: 1px;
-  background-color: var(--vscode-dropdown-background);
-  box-shadow: var(--vscode-dropdown-border) 0 2px 4px;
-  text-align: left;
-  display: none;
-  flex-direction: column;
-}
-
-.advanced-options-toggle:focus .advanced-options-content, .advanced-options-content:active, .advanced-options-content:focus-within {
-  display: flex;
-}
-
-.options-dropdown {
-  width: 70px;
-  min-width: 70px;
-}
-
-.options-label {
-  margin: 10px 0px 2px 0px;
-  font-weight: bold;
-}
-
-.multi-select-label {
-  margin-bottom: 2px;
-  font-weight: bold;
-}
-
-.core-options {
-  display: flex;
-  flex-direction: row;
-  align-items: end;
-  column-gap: 12px;
-  margin: 6px 0;
-}
-
-.options-textfield {
-  width: 100px;
-}
-
-.options-texfield-long {
-  width: 200px;
-}
-
-.go-button {
-  /* Match height of inputs */
-  height: calc(var(--input-height) * 1px);
-  align-self: end;
 }

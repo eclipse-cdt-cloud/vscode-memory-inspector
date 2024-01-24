@@ -1,0 +1,159 @@
+/********************************************************************************
+ * Copyright (C) 2024 EclipseSource.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License v. 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0.
+ *
+ * This Source Code may also be made available under the following Secondary
+ * Licenses when the conditions for such availability set forth in the Eclipse
+ * Public License v. 2.0 are satisfied: GNU General Public License, version 2
+ * with the GNU Classpath Exception which is available at
+ * https://www.gnu.org/software/classpath/license.html.
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
+ ********************************************************************************/
+
+/// Font of the theme
+/// @group general
+$fontFamily: var(--vscode-font-family);
+
+/// Size of the font
+/// @group general
+$fontSize: 13px; // VSCODE var(--vscode-font-size)
+
+/// Thickness of the texts
+/// @group general
+$fontWeight: var(--vscode-font-weight);
+
+/// Primary text color
+/// @group general
+$textColor: var(--vscode-editor-foreground);
+
+/// Secondary text color
+/// @group general
+$textSecondaryColor: #6c757d;
+
+/// Background of a highlighted item
+/// @group general
+$highlightBg: $primaryColor;
+
+/// Text color of a highlighted item
+/// @group general
+$highlightTextColor: $primaryTextColor;
+
+/// Background of a highlighted item in focus state
+/// @group general
+$highlightFocusBg: rgba($primaryColor, 0.24) !default;
+
+/// Radius of the corners
+/// @group general
+$borderRadius: 3px;
+
+/// Duration of the property transitions
+/// @group general
+$transitionDuration: 0.2s;
+
+/// Properties of a form element transition
+/// @group general
+$formElementTransition: background-color $transitionDuration,
+  color $transitionDuration, border-color $transitionDuration,
+  box-shadow $transitionDuration;
+
+/// Properties of a action icon transition
+/// @group general
+$actionIconTransition: background-color $transitionDuration,
+  color $transitionDuration, box-shadow $transitionDuration;
+
+/// Properties of a list item transition
+/// @group general
+$listItemTransition: background-color $transitionDuration,
+  border-color $transitionDuration, box-shadow $transitionDuration;
+
+/// Size of the Icons
+/// @group general
+$primeIconFontSize: 1rem;
+
+/// Separator border
+/// @group general
+$divider: 1px solid #dee2e6;
+
+/// Space between two inline items
+/// @group general
+$inlineSpacing: 0.5rem;
+
+/// Opacity of the disabled elements
+/// @group general
+$disabledOpacity: 0.8;
+
+/// Background of the modal layer
+/// @group general
+$maskBg: rgba(0, 0, 0, 0.4);
+
+/// Font size of the loading icons
+/// @group general
+$loadingIconFontSize: 2rem;
+
+/// Color to use on an invalid element e.g. invalid input
+/// @group general
+$errorColor: var(--vscode-errorForeground);
+
+/// Outline color of a focused element
+/// @group general
+$focusOutlineColor: none;
+
+/// Outline of a focused element
+/// @group general
+$focusOutline: 0 none;
+
+/// Outline offset of a focused element
+/// @group general
+$focusOutlineOffset: 0;
+
+/// Box shadow of a focused element
+/// @group general
+$focusShadow: 0 0 0 0.2rem $focusOutlineColor;
+
+/// Width of an action icon
+/// @group general
+$actionIconWidth: 2rem;
+
+/// Height of an action icon
+/// @group general
+$actionIconHeight: 2rem;
+
+/// Background of an action icon
+/// @group general
+$actionIconBg: transparent;
+
+/// Border of an action icon
+/// @group general
+$actionIconBorder: 0 none;
+
+/// Color of an action icon
+/// @group general
+$actionIconColor: $textSecondaryColor;
+
+/// Backgroun of an action icon in hover state
+/// @group general
+$actionIconHoverBg: #e9ecef;
+
+/// Border of an action icon in hover state
+/// @group general
+$actionIconHoverBorderColor: transparent;
+
+/// Color of an action icon in hover state
+/// @group general
+$actionIconHoverColor: $textColor;
+
+/// Border radius of an action icon
+/// @group general
+$actionIconBorderRadius: 50%;
+
+/// Scale factor of small component size
+/// @group general
+$scaleSM: 0.875;
+
+/// Scale factor of small large size
+/// @group general
+$scaleLG: 1.25;

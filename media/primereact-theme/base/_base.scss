@@ -1,0 +1,121 @@
+/********************************************************************************
+ * Copyright (C) 2024 EclipseSource.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License v. 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0.
+ *
+ * This Source Code may also be made available under the following Secondary
+ * Licenses when the conditions for such availability set forth in the Eclipse
+ * Public License v. 2.0 are satisfied: GNU General Public License, version 2
+ * with the GNU Classpath Exception which is available at
+ * https://www.gnu.org/software/classpath/license.html.
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
+ ********************************************************************************/
+
+@import "~primereact-sass-theme/theme-base/_mixins";
+@import "~primereact-sass-theme/theme-base/_colors";
+
+@import "~primereact-sass-theme/theme-base/components/input/_editor";
+
+@layer primereact {
+  @import "~primereact-sass-theme/theme-base/_common";
+
+  //Input
+  @import "~primereact-sass-theme/theme-base/components/input/_autocomplete";
+  @import "~primereact-sass-theme/theme-base/components/input/_calendar";
+  @import "~primereact-sass-theme/theme-base/components/input/_cascadeselect";
+  @import "~primereact-sass-theme/theme-base/components/input/_checkbox";
+  @import "~primereact-sass-theme/theme-base/components/input/_chips";
+  @import "~primereact-sass-theme/theme-base/components/input/_colorpicker";
+  @import "~primereact-sass-theme/theme-base/components/input/_dropdown";
+  @import "~primereact-sass-theme/theme-base/components/input/_inputgroup";
+  @import "~primereact-sass-theme/theme-base/components/input/_inputnumber";
+  @import "~primereact-sass-theme/theme-base/components/input/_inputswitch";
+  @import "~primereact-sass-theme/theme-base/components/input/_inputtext";
+  @import "~primereact-sass-theme/theme-base/components/input/_listbox";
+  @import "~primereact-sass-theme/theme-base/components/input/_mention";
+  @import "~primereact-sass-theme/theme-base/components/input/_multiselect";
+  @import "~primereact-sass-theme/theme-base/components/input/_password";
+  @import "~primereact-sass-theme/theme-base/components/input/_radiobutton";
+  @import "~primereact-sass-theme/theme-base/components/input/_rating";
+  @import "~primereact-sass-theme/theme-base/components/input/_selectbutton";
+  @import "~primereact-sass-theme/theme-base/components/input/_slider";
+  @import "~primereact-sass-theme/theme-base/components/input/_treeselect";
+  @import "~primereact-sass-theme/theme-base/components/input/_togglebutton";
+
+  //Button
+  @import "~primereact-sass-theme/theme-base/components/button/_button";
+  @import "~primereact-sass-theme/theme-base/components/button/_splitbutton";
+  @import "~primereact-sass-theme/theme-base/components/button/_speeddial";
+
+  //Data
+  @import "~primereact-sass-theme/theme-base/components/data/_carousel";
+  @import "~primereact-sass-theme/theme-base/components/data/_datatable";
+  @import "~primereact-sass-theme/theme-base/components/data/_dataview";
+  @import "~primereact-sass-theme/theme-base/components/data/_datascroller";
+  @import "~primereact-sass-theme/theme-base/components/data/_filter";
+  @import "~primereact-sass-theme/theme-base/components/data/_orderlist";
+  @import "~primereact-sass-theme/theme-base/components/data/_organizationchart";
+  @import "~primereact-sass-theme/theme-base/components/data/_paginator";
+  @import "~primereact-sass-theme/theme-base/components/data/_picklist";
+  @import "~primereact-sass-theme/theme-base/components/data/_tree";
+  @import "~primereact-sass-theme/theme-base/components/data/_treetable";
+  @import "~primereact-sass-theme/theme-base/components/data/_timeline";
+
+  //Panel
+  @import "~primereact-sass-theme/theme-base/components/panel/_accordion";
+  @import "~primereact-sass-theme/theme-base/components/panel/_card";
+  @import "~primereact-sass-theme/theme-base/components/panel/_fieldset";
+  @import "~primereact-sass-theme/theme-base/components/panel/_divider";
+  @import "~primereact-sass-theme/theme-base/components/panel/_panel";
+  @import "~primereact-sass-theme/theme-base/components/panel/_splitter";
+  @import "~primereact-sass-theme/theme-base/components/panel/_scrollpanel";
+  @import "~primereact-sass-theme/theme-base/components/panel/_tabview";
+  @import "~primereact-sass-theme/theme-base/components/panel/_toolbar";
+
+  //Overlay
+  @import "./components/overlay/_confirmpopup";
+  @import "~primereact-sass-theme/theme-base/components/overlay/_dialog";
+  @import "./components/overlay/_overlaypanel";
+  @import "~primereact-sass-theme/theme-base/components/overlay/_sidebar";
+  @import "~primereact-sass-theme/theme-base/components/overlay/_tooltip";
+
+  //File
+  @import "~primereact-sass-theme/theme-base/components/file/_fileupload";
+
+  //Menu
+  @import "~primereact-sass-theme/theme-base/components/menu/_breadcrumb";
+  @import "~primereact-sass-theme/theme-base/components/menu/_contextmenu";
+  @import "~primereact-sass-theme/theme-base/components/menu/_dock";
+  @import "~primereact-sass-theme/theme-base/components/menu/_megamenu";
+  @import "~primereact-sass-theme/theme-base/components/menu/_menu";
+  @import "~primereact-sass-theme/theme-base/components/menu/_menubar";
+  @import "~primereact-sass-theme/theme-base/components/menu/_panelmenu";
+  @import "~primereact-sass-theme/theme-base/components/menu/_slidemenu";
+  @import "~primereact-sass-theme/theme-base/components/menu/_steps";
+  @import "~primereact-sass-theme/theme-base/components/menu/_tabmenu";
+  @import "~primereact-sass-theme/theme-base/components/menu/_tieredmenu";
+
+  //Messages
+  @import "~primereact-sass-theme/theme-base/components/messages/_inlinemessage";
+  @import "~primereact-sass-theme/theme-base/components/messages/_message";
+  @import "~primereact-sass-theme/theme-base/components/messages/toast";
+
+  //MultiMedia
+  @import "~primereact-sass-theme/theme-base/components/multimedia/_galleria";
+  @import "~primereact-sass-theme/theme-base/components/multimedia/_image";
+
+  //Misc
+  @import "~primereact-sass-theme/theme-base/components/misc/_avatar";
+  @import "~primereact-sass-theme/theme-base/components/misc/_chip";
+  @import "~primereact-sass-theme/theme-base/components/misc/_scrolltop";
+  @import "~primereact-sass-theme/theme-base/components/misc/_skeleton";
+  @import "~primereact-sass-theme/theme-base/components/misc/_tag";
+  @import "~primereact-sass-theme/theme-base/components/misc/_inplace";
+  @import "~primereact-sass-theme/theme-base/components/misc/_progressbar";
+  @import "~primereact-sass-theme/theme-base/components/misc/_terminal";
+  @import "~primereact-sass-theme/theme-base/components/misc/_blockui";
+  @import "~primereact-sass-theme/theme-base/components/misc/_badge";
+}

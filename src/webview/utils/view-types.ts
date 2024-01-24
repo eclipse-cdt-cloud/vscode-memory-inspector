@@ -55,6 +55,7 @@ export function areDecorationsEqual(one: Decoration, other: Decoration): boolean
 
 export interface MemoryState extends DebugProtocol.ReadMemoryArguments {
     memory?: Memory;
+    isMemoryFetching: boolean;
 }
 
 export interface UpdateExecutor {
@@ -72,10 +73,12 @@ export interface FullNodeAttributes extends StylableNodeAttributes {
 }
 
 export type ScrollingBehavior = 'Paginate' | 'Infinite';
+export type LoadingBehavior = 'Manual' | 'Automatic';
 export interface MemoryDisplayConfiguration {
     wordsPerGroup: number;
     groupsPerRow: number;
     scrollingBehavior: ScrollingBehavior;
+    loadingBehavior: LoadingBehavior;
 }
 
 export interface ColumnVisibilityStatus {
@@ -84,7 +87,7 @@ export interface ColumnVisibilityStatus {
 }
 
 export interface MemoryDisplayConfigurationChangeRequest {
-    id: 'groupings.wordsPerGroup' | 'groupings.groupsPerRow' | 'scrollingBehavior';
+    id: 'groupings.wordsPerGroup' | 'groupings.groupsPerRow' | 'scrollingBehavior' | 'loadingBehavior';
     value: number;
 }
 

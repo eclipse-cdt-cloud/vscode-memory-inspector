@@ -33,8 +33,10 @@
   },
   "dependencies": {
     "@vscode/codicons": "^0.0.32",
-    "@vscode/webview-ui-toolkit": "^1.2.0",
     "fast-deep-equal": "^3.1.3",
+    "formik": "^2.4.5",
+    "primeflex": "^3.3.1",
+    "primereact": "^10.3.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "vscode-messenger": "^0.4.3",
@@ -50,20 +52,25 @@
     "@typescript-eslint/eslint-plugin": "^5.45.0",
     "@typescript-eslint/eslint-plugin-tslint": "^5.45.0",
     "@typescript-eslint/parser": "^5.45.0",
+    "@vscode/debugprotocol": "^1.55.0",
     "@vscode/vsce": "^2.15.0",
+    "css-loader": "^6.9.0",
     "eslint": "^8.29.0",
     "eslint-plugin-deprecation": "^1.3.3",
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-no-null": "^1.0.2",
     "eslint-plugin-no-unsanitized": "^4.0.2",
     "eslint-plugin-react": "^7.31.11",
+    "sass": "^1.70.0",
+    "sass-loader": "^14.0.0",
     "serve": "^14.1.2",
+    "style-loader": "^3.3.4",
     "ts-loader": "^9.4.2",
     "tslint": "^6.1.3",
     "typescript": "^4.9.3",
-    "@vscode/debugprotocol": "^1.55.0",
     "webpack": "^5.75.0",
-    "webpack-cli": "^5.0.0"
+    "webpack-cli": "^5.0.0",
+    "primereact-sass-theme": "github:primefaces/primereact-sass-theme#10.3.3"
   },
   "contributes": {
     "commands": [
@@ -201,6 +208,19 @@
             "Appends new memory to bounds of current request, resulting in a growing list."
           ],
           "description": "Behavior when adding more memory beyond the current view."
+        },
+        "memory-inspector.loadingBehavior": {
+          "type": "string",
+          "enum": [
+            "Manual",
+            "Automatic"
+          ],
+          "default": "Manual",
+          "markdownEnumDescriptions": [
+            "Shows a button to load the next bytes.",
+            "Automatically loads the next bytes if the bottom of the list is reached. Only applies when `#memory-inspector.scrollingBehavior#` is set to `Infinite`."
+          ],
+          "description": "Behavior on how new memory should be loaded."
         }
       }
     }

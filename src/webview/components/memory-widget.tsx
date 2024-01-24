@@ -30,6 +30,7 @@ interface MemoryWidgetProps {
     memoryReference: string;
     offset: number;
     count: number;
+    isMemoryFetching: boolean;
     refreshMemory: () => void;
     updateMemoryArguments: (memoryArguments: Partial<DebugProtocol.ReadMemoryArguments>) => void;
     toggleColumn(id: string, active: boolean): void;
@@ -47,6 +48,7 @@ const defaultOptions: MemoryWidgetState = {
     wordsPerGroup: 1,
     groupsPerRow: 4,
     scrollingBehavior: 'Paginate',
+    loadingBehavior: 'Manual'
 };
 
 export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidgetState> {
@@ -60,7 +62,7 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
     }
 
     override render(): React.ReactNode {
-        return <>
+        return (<div className='flex flex-column h-full'>
             <OptionsWidget
                 columnOptions={this.props.columns}
                 memoryReference={this.props.memoryReference}
@@ -86,9 +88,11 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 offset={this.props.offset}
                 count={this.props.count}
                 fetchMemory={this.props.fetchMemory}
+                isMemoryFetching={this.props.isMemoryFetching}
                 scrollingBehavior={this.state.scrollingBehavior}
+                loadingBehavior={this.state.loadingBehavior}
             />
-        </>;
+        </div>);
     }
 
     protected updateRenderOptions = (newState: Partial<MemoryWidgetState>) => this.setState(prevState => ({ ...prevState, ...newState }));

@@ -1,0 +1,75 @@
+/********************************************************************************
+ * Copyright (C) 2023-2024 Ericsson, EclipseSource and others.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License v. 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0.
+ *
+ * This Source Code may also be made available under the following Secondary
+ * Licenses when the conditions for such availability set forth in the Eclipse
+ * Public License v. 2.0 are satisfied: GNU General Public License, version 2
+ * with the GNU Classpath Exception which is available at
+ * https://www.gnu.org/software/classpath/license.html.
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
+ ********************************************************************************/
+
+.memory-options-widget {
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+}
+
+.core-options {
+  display: flex;
+  flex-direction: row;
+  align-items: end;
+  margin: 6px 0;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--vscode-widget-border);
+}
+
+.form-options {
+  display: flex;
+  flex-direction: row;
+  align-items: start;
+  flex-wrap: wrap;
+  column-gap: 12px;
+  row-gap: 12px;
+}
+
+.form-textfield {
+  width: 150px;
+}
+
+.form-texfield-long {
+  width: 200px;
+}
+
+.form-options button[type="submit"] {
+  /* Match height of inputs */
+  height: calc(var(--input-height) * 1px);
+  margin-top: 1rem;
+  align-self: start;
+}
+
+.advanced-options-toggle {
+  margin-left: auto;
+  align-self: start;
+  margin-top: 1rem;
+}
+
+.advanced-options-content {
+  width: 160px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.advanced-options-dropdown {
+  width: 100%;
+}
+
+.advanced-options-label {
+  width: 100%;
+}

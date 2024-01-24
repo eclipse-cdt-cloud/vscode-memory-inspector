@@ -1,0 +1,91 @@
+/********************************************************************************
+ * Copyright (C) 2024 EclipseSource.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License v. 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0.
+ *
+ * This Source Code may also be made available under the following Secondary
+ * Licenses when the conditions for such availability set forth in the Eclipse
+ * Public License v. 2.0 are satisfied: GNU General Public License, version 2
+ * with the GNU Classpath Exception which is available at
+ * https://www.gnu.org/software/classpath/license.html.
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
+ ********************************************************************************/
+
+/*
+* We want to use the CSS variables provided by VS Code. This file fixes compatibility issues. 
+* 
+* Changes: 
+* - Removes `scale-color` from `.p-confirm-popup &:before`.
+*/
+
+.p-confirm-popup {
+  background: $overlayContentBg;
+  color: $panelContentTextColor;
+  border: $overlayContentBorder;
+  border-radius: $borderRadius;
+  box-shadow: $overlayContainerShadow;
+
+  .p-confirm-popup-content {
+    padding: $confirmPopupContentPadding;
+  }
+
+  .p-confirm-popup-footer {
+    text-align: right;
+    padding: $confirmPopupFooterPadding;
+
+    button {
+      margin: 0 $inlineSpacing 0 0;
+      width: auto;
+
+      &:last-child {
+        margin: 0;
+      }
+    }
+  }
+
+  &:after {
+    border: solid transparent;
+    border-color: rgba($overlayContentBg, 0);
+    border-bottom-color: $overlayContentBg;
+  }
+
+  &:before {
+    border: solid transparent;
+
+    @if (nth($overlayContentBorder, 2) == "none") {
+      border-color: rgba($overlayContentBg, 0);
+    } @else {
+      border-color: rgba(nth($overlayContentBorder, 3), 0);
+    }
+  }
+
+  &.p-confirm-popup-flipped {
+    &:after {
+      border-top-color: $overlayContentBg;
+    }
+
+    &:before {
+      @if (nth($overlayContentBorder, 2) == "none") {
+        border-top-color: $overlayContentBg;
+      } @else {
+        border-top-color: nth($overlayContentBorder, 3);
+      }
+    }
+  }
+
+  .p-confirm-popup-icon {
+    font-size: $primeIconFontSize * 1.5;
+
+    &.p-icon {
+      width: $primeIconFontSize * 1.5;
+      height: $primeIconFontSize * 1.5;
+    }
+  }
+
+  .p-confirm-popup-message {
+    margin-left: $inlineSpacing * 2;
+  }
+}

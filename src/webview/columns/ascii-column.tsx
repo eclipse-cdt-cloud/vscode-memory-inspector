@@ -14,10 +14,12 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
+import * as React from 'react';
 import { ReactNode } from 'react';
 import { BigIntMemoryRange, toOffset } from '../../common/memory-range';
 import { ColumnContribution, TableRenderOptions } from './column-contribution-service';
 import { Memory } from '../utils/view-types';
+import { chunkIntoN } from '../utils/arrays';
 
 function isPrintableAsAscii(input: number): boolean {
     return input >= 32 && input < (128 - 1);
@@ -32,13 +34,28 @@ export class AsciiColumn implements ColumnContribution {
     readonly id = 'ascii';
     readonly label = 'ASCII';
     readonly priority = 3;
+
     render(range: BigIntMemoryRange, memory: Memory, options: TableRenderOptions): ReactNode {
         const startOffset = toOffset(memory.address, range.startAddress, options.wordSize);
         const endOffset = toOffset(memory.address, range.endAddress, options.wordSize);
-        let result = '';
-        for (let i = startOffset; i < endOffset; i++) {
-            result += getASCIIForSingleByte(memory.bytes[i]);
+
+        const indices = Array.from({ length: endOffset - startOffset }, (_, a) => a + startOffset);
+        const chunks = chunkIntoN(indices, options.groupsPerRow);
+        const groups: ReactNode[] = [];
+
+        for (const chunk of chunks) {
+            let result = '';
+            for (const i of chunk) {
+                result += getASCIIForSingleByte(memory.bytes[i]);
+            }
+
+            groups.push(<span key={`ascii_${chunk[0]}-${chunk[chunk.length - 1]}`}>{result}</span>);
         }
-        return result;
+
+        return (
+            <div className='flex flex-column'>
+                {groups}
+            </div>
+        );
     }
 }

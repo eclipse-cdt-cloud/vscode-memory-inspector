@@ -35,7 +35,7 @@ import {
 import { MemoryProvider } from './memory-provider';
 import { outputChannelLogger } from './logger';
 import { VariableRange } from '../common/memory-range';
-import { ColumnVisibilityStatus, MemoryDisplayConfiguration as MemoryDisplayConfiguration, ScrollingBehavior } from '../webview/utils/view-types';
+import { ColumnVisibilityStatus, LoadingBehavior, MemoryDisplayConfiguration as MemoryDisplayConfiguration, ScrollingBehavior } from '../webview/utils/view-types';
 
 interface Variable {
     name: string;
@@ -90,7 +90,7 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
     public openCustomDocument(uri: vscode.Uri): vscode.CustomDocument {
         return {
             uri,
-            dispose: () => {}
+            dispose: () => { }
         };
     }
 
@@ -154,7 +154,7 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
 
         const cspSrc = panel.webview.cspSource;
         const codiconsUri = panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'node_modules', '@vscode/codicons', 'dist', 'codicon.css'));
-        const memoryInspectorCSS = panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'memory-inspector.css'));
+        const memoryInspectorCSS = panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'index.css'));
 
         panel.webview.html = `
             <!DOCTYPE html>
@@ -180,6 +180,9 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
         const disposables = [
             this.messenger.onNotification(readyType, () => {
                 this.refresh(participant, options);
+            }, { sender: participant }),
+            this.messenger.onRequest(setOptionsType, o => {
+                options = { ...options, ...o };
             }, { sender: participant }),
             this.messenger.onRequest(logMessageType, message => outputChannelLogger.info('[webview]:', message), { sender: participant }),
             this.messenger.onRequest(readMemoryType, request => this.readMemory(request), { sender: participant }),
@@ -230,7 +233,8 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
         const wordsPerGroup = memoryInspectorConfiguration.get<number>(manifest.CONFIG_WORDS_PER_GROUP) || manifest.DEFAULT_WORDS_PER_GROUP;
         const groupsPerRow = memoryInspectorConfiguration.get<number>(manifest.CONFIG_GROUPS_PER_ROW) || manifest.DEFAULT_GROUPS_PER_ROW;
         const scrollingBehavior = memoryInspectorConfiguration.get<ScrollingBehavior>(manifest.CONFIG_SCROLLING_BEHAVIOR) || manifest.DEFAULT_SCROLLING_BEHAVIOR;
-        return { wordsPerGroup, groupsPerRow, scrollingBehavior };
+        const loadingBehavior = memoryInspectorConfiguration.get<LoadingBehavior>(manifest.CONFIG_LOADING_BEHAVIOR) || manifest.DEFAULT_LOADING_BEHAVIOR;
+        return { wordsPerGroup, groupsPerRow, scrollingBehavior, loadingBehavior };
     }
 
     protected onMemoryDisplayConfigurationChanged(participant: MessageParticipant): vscode.Disposable {

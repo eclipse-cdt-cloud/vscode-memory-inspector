@@ -1,0 +1,110 @@
+/********************************************************************************
+ * Copyright (C) 2024 EclipseSource.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License v. 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0.
+ *
+ * This Source Code may also be made available under the following Secondary
+ * Licenses when the conditions for such availability set forth in the Eclipse
+ * Public License v. 2.0 are satisfied: GNU General Public License, version 2
+ * with the GNU Classpath Exception which is available at
+ * https://www.gnu.org/software/classpath/license.html.
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
+ ********************************************************************************/
+
+/* Customizations to the designer theme should be defined here */
+
+.p-inputtext {
+  height: calc(var(--input-height) * 1px);
+}
+
+.pm-top-label {
+  display: flex;
+  flex-direction: column;
+  font-size: var(--type-ramp-base-font-size);
+
+  .p-inputtext-label {
+    margin-bottom: 2px;
+    cursor: pointer;
+  }
+}
+
+.p-button-icon-only {
+  background: var(--button-icon-background);
+  border-radius: var(--button-icon-corner-radius);
+  color: var(--vscode-editor-foreground);
+  border: none;
+
+  &:not(:disabled):hover {
+    background: var(--button-icon-hover-background);
+    outline: 1px dotted var(--contrast-active-border);
+    outline-offset: -1px;
+  }
+
+  &:not(:disabled):active {
+    background: color-mix(
+      in srgb,
+      var(--button-icon-hover-background),
+      #fff 10%
+    );
+  }
+}
+
+// Remove arrow
+.p-overlaypanel {
+  &:before {
+    content: none;
+  }
+
+  &:after {
+    content: none;
+  }
+
+  margin-top: 4px;
+}
+
+.p-checkbox {
+  .p-checkbox-box {
+    background: var(--vscode-checkbox-background);
+  }
+}
+
+.p-dropdown {
+  border: 1px solid var(--vscode-dropdown-border);
+}
+
+.p-datatable {
+  .p-datatable-tbody {
+    > tr {
+      > td {
+        vertical-align: text-top;
+
+        &.p-highlight {
+          background: var(--vscode-list-activeSelectionBackground);
+          color: var(--vscode-list-activeSelectionForeground);
+        }
+      }
+
+      &.p-highlight {
+        background: var(--vscode-settings-focusedRowBackground);
+      }
+    }
+  }
+
+  .p-selectable-row:hover {
+    background: $tableBodyRowHoverBg;
+  }
+}
+
+.p-progress-spinner-circle {
+  stroke: var(--vscode-notificationsInfoIcon-foreground);
+  stroke-width: 3;
+  animation: none;
+}
+
+small.p-invalid {
+  margin-top: 4px;
+  color: var(--vscode-errorForeground);
+}

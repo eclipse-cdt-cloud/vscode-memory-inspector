@@ -1,0 +1,83 @@
+/********************************************************************************
+ * Copyright (C) 2024 EclipseSource.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License v. 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0.
+ *
+ * This Source Code may also be made available under the following Secondary
+ * Licenses when the conditions for such availability set forth in the Eclipse
+ * Public License v. 2.0 are satisfied: GNU General Public License, version 2
+ * with the GNU Classpath Exception which is available at
+ * https://www.gnu.org/software/classpath/license.html.
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
+ ********************************************************************************/
+
+/*
+* We want to use the CSS variables provided by VS Code. This file fixes compatibility issues. 
+* 
+* Changes: 
+* - Removes `scale-color` from `.p-overlaypanel &:before`.
+*/
+
+@use "sass:math";
+
+.p-overlaypanel {
+  background: $overlayContentBg;
+  color: $panelContentTextColor;
+  border: $overlayContentBorder;
+  border-radius: $borderRadius;
+  box-shadow: $overlayContainerShadow;
+
+  .p-overlaypanel-content {
+    padding: $panelContentPadding;
+  }
+
+  .p-overlaypanel-close {
+    background: $buttonBg;
+    color: $buttonTextColor;
+    width: $actionIconWidth;
+    height: $actionIconHeight;
+    transition: $actionIconTransition;
+    border-radius: $actionIconBorderRadius;
+    position: absolute;
+    top: math.div(-1 * $actionIconWidth, 2);
+    right: math.div(-1 * $actionIconWidth, 2);
+
+    &:enabled:hover {
+      background: $buttonHoverBg;
+      color: $buttonTextHoverColor;
+    }
+  }
+
+  &:after {
+    border: solid transparent;
+    border-color: rgba($overlayContentBg, 0);
+    border-bottom-color: $overlayContentBg;
+  }
+
+  &:before {
+    border: solid transparent;
+
+    @if (nth($overlayContentBorder, 2) == "none") {
+      border-color: rgba($overlayContentBg, 0);
+    } @else {
+      border-color: rgba(nth($overlayContentBorder, 3), 0);
+    }
+  }
+
+  &.p-overlaypanel-flipped {
+    &:after {
+      border-top-color: $overlayContentBg;
+    }
+
+    &:before {
+      @if (nth($overlayContentBorder, 2) == "none") {
+        border-top-color: $overlayContentBg;
+      } @else {
+        border-top-color: nth($overlayContentBorder, 3);
+      }
+    }
+  }
+}

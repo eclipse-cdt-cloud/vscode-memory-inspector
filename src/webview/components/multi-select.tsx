@@ -14,7 +14,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-import { VSCodeCheckbox } from '@vscode/webview-ui-toolkit/react';
+import { Checkbox, CheckboxChangeEvent } from 'primereact/checkbox';
 import * as React from 'react';
 
 export interface SingleSelectItemProps {
@@ -31,31 +31,33 @@ interface MultiSelectProps {
 }
 
 const MultiSelectBar: React.FC<MultiSelectProps> = ({ items, onSelectionChanged, id }) => {
-    const changeHandler: ((e: Event) => unknown) & React.FormEventHandler<HTMLInputElement> = React.useCallback(e => {
+    const changeHandler: ((e: CheckboxChangeEvent) => unknown) = React.useCallback(e => {
         const target = e.target as HTMLInputElement;
         if (target) {
             onSelectionChanged(target.id, target.checked);
         }
     }, [onSelectionChanged]);
+
     return (
-        <div className='multi-select-bar' id={id}>
+        <div className='flex flex-column align-items-start gap-1' id={id}>
             {items.map(({ label, id: itemId, checked }) => (
-                <VSCodeCheckbox
-                    tabIndex={0}
-                    onChange={changeHandler}
-                    defaultChecked={!!checked}
-                    id={itemId}
-                    key={`${label}-${id}-checkbox`}
-                >{label}
-                </VSCodeCheckbox>
+                <div key={`${label}-${id}-checkbox`} className='flex align-items-center'>
+                    <Checkbox
+                        tabIndex={0}
+                        onChange={changeHandler}
+                        checked={!!checked}
+                        id={itemId}
+                    />
+                    <label htmlFor={itemId} className='ml-2'>{label}</label>
+                </div>
             ))}
         </div>
     );
 };
 
 export const MultiSelectWithLabel: React.FC<MultiSelectProps> = ({ id, label, items, onSelectionChanged }) => (
-    <div className='multi-select'>
-        <label className='multi-select-label'>{label}</label>
+    <div className='flex flex-column'>
+        <label className='multi-select-label mb-2'>{label}</label>
         <MultiSelectBar id={id} items={items} onSelectionChanged={onSelectionChanged} label={label} />
     </div>
 );

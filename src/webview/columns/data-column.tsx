@@ -40,7 +40,11 @@ export class DataColumn implements ColumnContribution {
             }
         }
         if (words.length) { groups.push(<span className='byte-group' key={(range.endAddress - BigInt(words.length)).toString(16)}>{words}</span>); }
-        return groups;
+        return (
+            <div className="flex flex-column">
+                {groups}
+            </div>
+        );
     }
 
     protected renderWord(memory: Memory, options: TableRenderOptions, currentAddress: bigint): React.ReactNode {
