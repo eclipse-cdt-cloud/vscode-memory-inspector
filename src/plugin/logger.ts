@@ -25,10 +25,7 @@ export enum Verbosity {
     debug = 4
 }
 
-export class Logger {
-    public static instance = new Logger();
-
-    protected outputChannel = vscode.window.createOutputChannel(manifest.DISPLAY_NAME);
+export abstract class Logger {
     protected logVerbosity: Verbosity;
 
     protected constructor() {
@@ -45,6 +42,8 @@ export class Logger {
         return Verbosity[config as keyof typeof Verbosity];
     }
 
+    protected abstract logMessage(message: string): void;
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public log(verbosity: Verbosity, ...messages: Array<string | any>): void {
         if (this.logVerbosity === Verbosity.off || verbosity > this.logVerbosity) {
@@ -53,7 +52,7 @@ export class Logger {
 
         const result = messages.map(message => typeof message === 'string' ? message : JSON.stringify(message, undefined, '\t')).join(' ');
 
-        this.outputChannel.appendLine(result);
+        this.logMessage(result);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -66,4 +65,17 @@ export class Logger {
     public debug = (...messages: Array<string | any>): void => this.log(Verbosity.debug, ...messages);
 }
 
-export const outputChannelLogger = Logger.instance;
+class OutputChannelLogger extends Logger {
+    public static instance = new OutputChannelLogger();
+
+    protected outputChannel: vscode.OutputChannel | undefined;
+
+    protected override logMessage(message: string): void {
+        if (!this.outputChannel) {
+            this.outputChannel = vscode.window.createOutputChannel(manifest.DISPLAY_NAME);
+        }
+        this.outputChannel.appendLine(message);
+    }
+}
+
+export const outputChannelLogger = OutputChannelLogger.instance;
