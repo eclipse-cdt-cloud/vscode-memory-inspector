@@ -23,7 +23,7 @@ import { EventEmitter, IEvent } from '../utils/events';
 import { ColumnContribution } from '../columns/column-contribution-service';
 import { Decorator } from '../decorations/decoration-service';
 import { ReactNode } from 'react';
-import { areVariablesEqual, compareBigInt, isWithin, BigIntMemoryRange, BigIntVariableRange } from '../../common/memory-range';
+import { areVariablesEqual, compareBigInt, BigIntMemoryRange, BigIntVariableRange, doOverlap } from '../../common/memory-range';
 import * as React from 'react';
 
 const NON_HC_COLORS = [
@@ -82,9 +82,9 @@ export class VariableDecorator implements ColumnContribution, Decorator {
         }, []);
     }
 
-    /** Returns variables that start in the given range. */
     protected lastCall?: bigint;
     protected currentIndex = 0;
+    /** Returns variables that start in the given range. */
     protected getVariablesInRange(range: BigIntMemoryRange): Array<{ variable: BigIntVariableRange, color: string }> | undefined {
         if (!this.currentVariables?.length) { return undefined; }
         if (this.currentIndex === this.currentVariables.length - 1 && this.currentVariables[this.currentIndex].startAddress < range.startAddress) { return undefined; }
@@ -92,7 +92,7 @@ export class VariableDecorator implements ColumnContribution, Decorator {
         this.lastCall = range.startAddress;
         const result = [];
         while (this.currentIndex < this.currentVariables.length && this.currentVariables[this.currentIndex].startAddress < range.endAddress) {
-            if (isWithin(this.currentVariables[this.currentIndex].startAddress, range)) {
+            if (doOverlap(this.currentVariables[this.currentIndex], range)) {
                 result.push({ color: NON_HC_COLORS[this.currentIndex % 5], variable: this.currentVariables[this.currentIndex] });
             }
             this.currentIndex++;
