@@ -47,7 +47,7 @@
 
 .form-options button[type="submit"] {
   /* Match height of inputs */
-  height: calc(var(--input-height) * 1px);
+  height: calc(var(--input-minHeight) * 1px);
   margin-top: 1rem;
   align-self: start;
 }
