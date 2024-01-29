@@ -33,7 +33,7 @@ import { MultiSelectWithLabel } from './multi-select';
 import { classNames } from 'primereact/utils';
 
 export interface OptionsWidgetProps
-    extends Omit<TableRenderOptions, 'scrollingBehavior' | 'loadingBehavior'>,
+    extends Omit<TableRenderOptions, 'scrollingBehavior'>,
     Required<DebugProtocol.ReadMemoryArguments> {
     updateRenderOptions: (options: Partial<SerializedTableRenderOptions>) => void;
     updateMemoryArguments: (

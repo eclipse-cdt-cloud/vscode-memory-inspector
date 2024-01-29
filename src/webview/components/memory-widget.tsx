@@ -48,7 +48,6 @@ const defaultOptions: MemoryWidgetState = {
     wordsPerGroup: 1,
     groupsPerRow: 4,
     scrollingBehavior: 'Paginate',
-    loadingBehavior: 'Manual'
 };
 
 export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidgetState> {
@@ -90,7 +89,6 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 fetchMemory={this.props.fetchMemory}
                 isMemoryFetching={this.props.isMemoryFetching}
                 scrollingBehavior={this.state.scrollingBehavior}
-                loadingBehavior={this.state.loadingBehavior}
             />
         </div>);
     }

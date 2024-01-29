@@ -23,9 +23,7 @@ import { TableRenderOptions } from '../columns/column-contribution-service';
 import { DebugProtocol } from '@vscode/debugprotocol';
 import { DataTable, DataTableCellSelection, DataTableProps, DataTableRowData, DataTableSelectionCellChangeEvent } from 'primereact/datatable';
 import { Column } from 'primereact/column';
-import { VirtualScrollerLazyEvent } from 'primereact/virtualscroller';
 import deepequal from 'fast-deep-equal';
-import { resize } from '../utils/arrays';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { Nullable } from 'primereact/ts-helpers';
 
@@ -120,13 +118,11 @@ interface MemoryRowData {
 interface MemoryTableState {
     memory?: Memory;
     data: MemoryRowData[];
-    isLazyLoading: boolean;
     selectedData: Nullable<DataTableCellSelection<MemoryRowData[]>>;
 }
 
 const itemHeightSingleGroupPerRow = 31;
 const heightGroupsPerRowGain = 14;
-const datatableRequestCount = 32;
 
 export class MemoryTable extends React.Component<MemoryTableProps, MemoryTableState> {
 
@@ -134,10 +130,6 @@ export class MemoryTable extends React.Component<MemoryTableProps, MemoryTableSt
 
     protected get isShowMoreEnabled(): boolean {
         return !!this.props.memory?.bytes.length;
-    }
-
-    protected get isInfiniteAutomaticBehavior(): boolean {
-        return this.props.scrollingBehavior === 'Infinite' && this.props.loadingBehavior === 'Automatic';
     }
 
     constructor(props: MemoryTableProps) {
@@ -153,55 +145,23 @@ export class MemoryTable extends React.Component<MemoryTableProps, MemoryTableSt
         this.state = {
             data: Array.from({ length: numRows }),
             selectedData: null,
-            isLazyLoading: false
         };
     }
 
     public componentDidUpdate(prevProps: Readonly<MemoryTableProps>): void {
         this.onMemoryChange(this.props);
         this.onOptionsChange(prevProps, this.props);
-        this.onBehaviorChange(prevProps, this.props);
     }
 
     /**
      * Updates the internal `state.data` to the new memory changes.
-     *
-     * **Details**
-     *
-     * Depending on how the memory changed, the new memory will be handled differently.
-     *
-     * - Through lazy loading: The new data will be appended to the bottom of our `state.data`.
-     * - Outside (e.g., options): The whole `state.data` will be replaced with the incoming data.
      */
     protected onMemoryChange(currentProps: Readonly<MemoryTableProps>): void {
         const state = this.state;
         const memory = currentProps.memory;
 
         if (!deepequal(memory, state.memory)) {
-            if (memory !== undefined) {
-                // We triggered the change through lazy loading
-                if (this.state.isLazyLoading) {
-                    const options = this.createMemoryRowListOptions(memory, currentProps);
-                    const first = state.data.length - 1;
-                    const last = options.numRows;
-                    let virtualData = [...state.data];
-                    virtualData = resize(virtualData, options.numRows);
-
-                    const newRows = this.createTableRows(options, first, last, memory);
-                    virtualData.splice(first, last - first, ...newRows);
-
-                    this.setState(({
-                        memory,
-                        data: virtualData,
-                        isLazyLoading: false
-                    }));
-                } else {
-                    // The memory changed from somewhere else
-                    this.resetState(currentProps);
-                }
-            } else {
-                this.resetState(currentProps);
-            }
+            this.resetState(currentProps);
         }
     }
 
@@ -218,30 +178,9 @@ export class MemoryTable extends React.Component<MemoryTableProps, MemoryTableSt
         }
     }
 
-    /**
-     * Updates the internal `state.data` to respect the new behaviors provided.
-     *
-     * **Details**
-     *
-     * To allow the `virtualScroller` to work correctly, there needs to be sufficient rows available in the bottom of the list.
-     * Consequently, additional data will be requested if there is a switch to `Infinite + Automatic` behavior.
-     */
-    protected onBehaviorChange(prevProps: Readonly<MemoryTableProps>, currentProps: Readonly<MemoryTableProps>): void {
-        if ((prevProps.loadingBehavior !== currentProps.loadingBehavior || prevProps.scrollingBehavior !== currentProps.scrollingBehavior)) {
-            const memory = currentProps.memory;
-
-            if (this.isInfiniteAutomaticBehavior && memory !== undefined) {
-                const { wordsPerRow } = this.createMemoryRowListOptions(memory, currentProps);
-                const scrollingCount = currentProps.count + wordsPerRow * datatableRequestCount;
-
-                this.props.fetchMemory({ count: scrollingCount });
-            }
-        }
-    }
-
     public render(): React.ReactNode {
         const columnWidth = 100 / (this.props.columnOptions.length);
-        const props = this.createBehaviorSpecificProperties(this.createDataTableProperties());
+        const props = this.createDataTableProperties();
 
         return (
             <div className='flex-1 overflow-auto px-4'>
@@ -268,91 +207,27 @@ export class MemoryTable extends React.Component<MemoryTableProps, MemoryTableSt
             dataKey: 'startAddress',
             cellSelection: true,
             className: MemoryTable.TABLE_CLASS,
-            resizableColumns: true,
+            footer: this.renderFooter(),
             header: this.renderHeader(),
             lazy: true,
             loading: false,
             metaKeySelection: false,
             onSelectionChange: this.onSelectionChanged,
             rowClassName: this.rowClass,
-            value: this.state.data,
+            resizableColumns: true,
             scrollable: true,
             scrollHeight: 'flex',
             selectionMode: 'single',
             selection: this.state.selectedData as DataTableCellSelection<MemoryRowData[]>,
             tableStyle: { minWidth: '30rem' },
+            value: this.state.data,
+            virtualScrollerOptions: {
+                items: this.state.data,
+                itemSize: itemHeightSingleGroupPerRow + heightGroupsPerRowGain * (this.props.groupsPerRow - 1),
+            },
         };
 
     }
-
-    protected createBehaviorSpecificProperties(props: DataTableProps<MemoryRowData[]>): DataTableProps<MemoryRowData[]> {
-        if (this.isInfiniteAutomaticBehavior) {
-            return {
-                ...props,
-                virtualScrollerOptions: {
-                    lazy: true,
-                    items: this.state.data,
-                    onLazyLoad: this.onLazyLoad,
-                    itemSize: itemHeightSingleGroupPerRow + heightGroupsPerRowGain * (this.props.groupsPerRow - 1),
-                }
-            };
-        } else {
-            return {
-                ...props,
-                virtualScrollerOptions: {
-                    items: this.state.data,
-                    itemSize: itemHeightSingleGroupPerRow + heightGroupsPerRowGain * (this.props.groupsPerRow - 1),
-                },
-                footer: this.renderFooter()
-            };
-        }
-    }
-
-    /**
-     * Handles the lazy load triggered from the `virtualScroller`.
-     *
-     * **Details**
-     *
-     * This method fetches extra data to allow a smooth scrolling experience.
-     */
-    protected onLazyLoad = async (event: VirtualScrollerLazyEvent) => {
-        if (this.state.isLazyLoading || this.props.isMemoryFetching) {
-            return;
-        }
-        this.setState(prev => ({ ...prev, isLazyLoading: true }));
-        const first = event.first as number;
-        const last = event.last as number;
-        const virtualData = [...this.state.data];
-        const memory = this.props.memory;
-
-        // Something in the background changed the data - ignore it
-        if (first > last) {
-            this.setState(prev => ({ ...prev, isLazyLoading: false }));
-            return;
-        }
-
-        if (memory !== undefined) {
-            const options = this.createMemoryRowListOptions(memory, this.props);
-
-            if (last === options.numRows) {
-                // We reached the end of the list
-                const wordsPerRow = options.wordsPerRow;
-                const newCount = this.props.count + wordsPerRow * datatableRequestCount;
-
-                this.props.fetchMemory({ count: newCount });
-            } else {
-                // We are somewhere between
-                const loadedData = this.createTableRows(options, first, last, memory);
-
-                virtualData.splice(first, last - first, ...loadedData);
-
-                this.setState(prev => ({ ...prev, data: virtualData, isLazyLoading: false }));
-            }
-
-        } else {
-            this.setState(prev => ({ ...prev, isLazyLoading: false }));
-        }
-    };
 
     protected onSelectionChanged = (event: DataTableSelectionCellChangeEvent<MemoryRowData[]>) => {
         this.setState(prev => ({ ...prev, selectedData: event.value }));
@@ -477,8 +352,7 @@ export class MemoryTable extends React.Component<MemoryTableProps, MemoryTableSt
         this.setState(({
             memory,
             data,
-            selectedData: null,
-            isLazyLoading: false
+            selectedData: null
         }));
     }
 }

@@ -208,19 +208,6 @@
             "Appends new memory to bounds of current request, resulting in a growing list."
           ],
           "description": "Behavior when adding more memory beyond the current view."
-        },
-        "memory-inspector.loadingBehavior": {
-          "type": "string",
-          "enum": [
-            "Manual",
-            "Automatic"
-          ],
-          "default": "Manual",
-          "markdownEnumDescriptions": [
-            "Shows a button to load the next bytes.",
-            "Automatically loads the next bytes if the bottom of the list is reached. Only applies when `#memory-inspector.scrollingBehavior#` is set to `Infinite`."
-          ],
-          "description": "Behavior on how new memory should be loaded."
         }
       }
     }

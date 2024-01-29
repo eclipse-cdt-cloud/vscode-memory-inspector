@@ -21,7 +21,3 @@ export function chunkIntoN<T>(arr: T[], n: number): T[][] {
         arr.slice(i * size, i * size + size)
     );
 }
-
-export function resize<T>(arr: T[], newSize: number, defaultValue?: T): T[] {
-    return [...arr, ...Array(Math.max(newSize - arr.length, 0)).fill(defaultValue)];
-}

@@ -35,7 +35,7 @@ import {
 import { MemoryProvider } from './memory-provider';
 import { outputChannelLogger } from './logger';
 import { VariableRange } from '../common/memory-range';
-import { ColumnVisibilityStatus, LoadingBehavior, MemoryDisplayConfiguration as MemoryDisplayConfiguration, ScrollingBehavior } from '../webview/utils/view-types';
+import { ColumnVisibilityStatus, MemoryDisplayConfiguration as MemoryDisplayConfiguration, ScrollingBehavior } from '../webview/utils/view-types';
 
 interface Variable {
     name: string;
@@ -233,8 +233,7 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
         const wordsPerGroup = memoryInspectorConfiguration.get<number>(manifest.CONFIG_WORDS_PER_GROUP) || manifest.DEFAULT_WORDS_PER_GROUP;
         const groupsPerRow = memoryInspectorConfiguration.get<number>(manifest.CONFIG_GROUPS_PER_ROW) || manifest.DEFAULT_GROUPS_PER_ROW;
         const scrollingBehavior = memoryInspectorConfiguration.get<ScrollingBehavior>(manifest.CONFIG_SCROLLING_BEHAVIOR) || manifest.DEFAULT_SCROLLING_BEHAVIOR;
-        const loadingBehavior = memoryInspectorConfiguration.get<LoadingBehavior>(manifest.CONFIG_LOADING_BEHAVIOR) || manifest.DEFAULT_LOADING_BEHAVIOR;
-        return { wordsPerGroup, groupsPerRow, scrollingBehavior, loadingBehavior };
+        return { wordsPerGroup, groupsPerRow, scrollingBehavior };
     }
 
     protected onMemoryDisplayConfigurationChanged(participant: MessageParticipant): vscode.Disposable {
