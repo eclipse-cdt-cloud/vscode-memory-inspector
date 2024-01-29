@@ -40,5 +40,5 @@
   outline-offset: 0;
 }
 .p-checkbox.p-invalid > .p-checkbox-box {
-  border-color: #d8222f;
+  border-color: var(--vscode-errorForeground);
 }

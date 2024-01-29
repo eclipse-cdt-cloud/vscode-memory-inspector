@@ -39,7 +39,7 @@
   width: 2.357rem;
 }
 .p-dropdown.p-invalid.p-component {
-  border-color: #d8222f;
+  border-color: var(--vscode-errorForeground);
 }
 .p-dropdown-panel {
   background: var(--vscode-dropdown-background);
