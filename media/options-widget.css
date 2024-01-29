@@ -37,11 +37,11 @@
   row-gap: 12px;
 }
 
-.form-textfield {
+.form-textfield > input {
   width: 150px;
 }
 
-.form-texfield-long {
+.form-texfield-long > input {
   width: 200px;
 }
 

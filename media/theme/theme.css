@@ -14,7 +14,19 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-@import "./variables";
-@import "./_fonts";
-@import "../../base/_base";
-@import "./_extensions";
+@import "./components/button.css";
+@import "./components/checkbox.css";
+@import "./components/dropdown.css";
+@import "./components/input.css";
+@import "./components/overlay.css";
+@import "./components/progress-spinner.css";
+@import "./components/table.css";
+
+@import "./extensions.css";
+
+:root {
+  --border-width: 1;
+
+  --type-ramp-base-font-size: 13px;
+  --type-ramp-base-line-height: normal;
+}

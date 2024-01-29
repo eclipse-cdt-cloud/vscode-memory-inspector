@@ -1,0 +1,72 @@
+/********************************************************************************
+ * Copyright (C) 2024 EclipseSource.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License v. 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0.
+ *
+ * This Source Code may also be made available under the following Secondary
+ * Licenses when the conditions for such availability set forth in the Eclipse
+ * Public License v. 2.0 are satisfied: GNU General Public License, version 2
+ * with the GNU Classpath Exception which is available at
+ * https://www.gnu.org/software/classpath/license.html.
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
+ ********************************************************************************/
+
+.p-dropdown {
+  color: var(--vscode-dropdown-foreground);
+  background: var(--vscode-dropdown-background);
+  border: 1px solid var(--vscode-dropdown-border);
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s,
+    box-shadow 0.2s;
+}
+.p-dropdown:not(.p-disabled).p-focus {
+  outline: 0 none;
+  outline-offset: 0;
+  border-color: var(--vscode-focusBorder);
+}
+.p-dropdown .p-dropdown-label {
+  background: transparent;
+  border: 0 none;
+  line-height: var(--input-minHeight);
+}
+.p-dropdown .p-dropdown-label.p-placeholder {
+  color: var(--vscode-input-placeholderForeground);
+}
+.p-dropdown .p-dropdown-trigger {
+  background: transparent;
+  width: 2.357rem;
+}
+.p-dropdown.p-invalid.p-component {
+  border-color: #d8222f;
+}
+.p-dropdown-panel {
+  background: var(--vscode-dropdown-background);
+  box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.2), 0 4px 5px 0 rgba(0, 0, 0, 0.14),
+    0 1px 10px 0 rgba(0, 0, 0, 0.12);
+}
+.p-dropdown-panel .p-dropdown-items-wrapper {
+  border: 1px solid var(--vscode-focusBorder);
+}
+.p-dropdown-panel .p-dropdown-items {
+  padding: 0.25rem 0;
+}
+.p-dropdown-panel .p-dropdown-items .p-dropdown-item {
+  margin: 0;
+  padding: 0.25rem 0.5rem;
+  border: 0 none;
+  background: transparent;
+  transition: box-shadow 0.2s;
+  border-radius: 0;
+}
+.p-dropdown-panel .p-dropdown-items .p-dropdown-item.p-highlight {
+  background: var(--vscode-list-activeSelectionBackground);
+  color: var(--vscode-list-activeSelectionForeground);
+}
+.p-dropdown-panel
+  .p-dropdown-items
+  .p-dropdown-item:not(.p-highlight):not(.p-disabled):hover {
+  background: var(--vscode-list-activeSelectionBackground);
+  color: var(--vscode-list-activeSelectionForeground);
+}

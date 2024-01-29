@@ -14,9 +14,30 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-@import "./theme/theme.css";
+:root {
+  --input-minHeight: 26px;
+  --input-width: 100px;
+}
 
-@import "./root.css";
-@import "./multi-select.css";
-@import "./options-widget.css";
-@import "./memory-table.css";
+.p-inputtext {
+  font-family: var(--vscode-font-family);
+  line-height: var(--type-ramp-base-line-height);
+  font-size: var(--type-ramp-base-font-size);
+  color: var(--vscode-input-foreground);
+  background: var(--vscode-input-background);
+  padding: 0 11px;
+  border: 1px solid var(--vscode-input-border);
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s,
+    box-shadow 0.2s;
+  appearance: none;
+  min-height: var(--input-minHeight);
+  width: var(--input-width);
+}
+.p-inputtext:enabled:focus {
+  outline: none;
+  border-color: var(--vscode-focusBorder);
+}
+
+.p-inputtext.p-invalid.p-component {
+  border-color: #d8222f;
+}

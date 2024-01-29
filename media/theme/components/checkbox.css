@@ -14,9 +14,31 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-@import "./theme/theme.css";
-
-@import "./root.css";
-@import "./multi-select.css";
-@import "./options-widget.css";
-@import "./memory-table.css";
+.p-checkbox {
+  width: 14px;
+  height: 14px;
+}
+.p-checkbox .p-checkbox-box {
+  border: 1px solid var(--vscode-checkbox-border);
+  background: var(--vscode-checkbox-background);
+  width: 14px;
+  height: 14px;
+  color: var(--vscode-checkbox-foreground);
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s,
+    box-shadow 0.2s;
+}
+.p-checkbox .p-checkbox-box .p-checkbox-icon {
+  transition-duration: 0.2s;
+  font-size: 12px;
+}
+.p-checkbox .p-checkbox-box .p-checkbox-icon.p-icon {
+  width: 12px;
+  height: 12px;
+}
+.p-checkbox:not(.p-checkbox-disabled) .p-checkbox-box.p-focus {
+  outline: 0 none;
+  outline-offset: 0;
+}
+.p-checkbox.p-invalid > .p-checkbox-box {
+  border-color: #d8222f;
+}

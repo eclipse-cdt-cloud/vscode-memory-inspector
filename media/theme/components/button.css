@@ -1,0 +1,56 @@
+/********************************************************************************
+ * Copyright (C) 2024 EclipseSource.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License v. 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0.
+ *
+ * This Source Code may also be made available under the following Secondary
+ * Licenses when the conditions for such availability set forth in the Eclipse
+ * Public License v. 2.0 are satisfied: GNU General Public License, version 2
+ * with the GNU Classpath Exception which is available at
+ * https://www.gnu.org/software/classpath/license.html.
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
+ ********************************************************************************/
+
+:root {
+  --button-icon-background: transparent;
+  --button-icon-corner-radius: 5px;
+  --button-icon-hover-background: rgba(90, 93, 94, 0.31);
+  --button-icon-padding: 3px;
+  --button-padding-horizontal: 11px;
+  --button-padding-vertical: 4px;
+}
+
+.p-button {
+  color: var(--vscode-button-foreground);
+  background: var(--vscode-button-background);
+  border: 1px solid var(--vscode-button-border);
+  padding: var(--button-padding-vertical) var(--button-padding-horizontal);
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s,
+    box-shadow 0.2s;
+}
+.p-button:not(:disabled):hover {
+  background: var(--vscode-button-hoverBackground);
+}
+.p-button:not(:disabled):active {
+  background: var(--vscode-button-background);
+}
+
+.p-button.p-button-rounded {
+  border-radius: 2rem;
+}
+.p-button.p-button-icon-only {
+  color: var(--vscode-icon-foreground);
+  background: var(--button-icon-background);
+  padding: var(--button-icon-padding);
+  outline: none;
+  border: none;
+}
+.p-button.p-button.p-button-icon-only:hover {
+  background: var(--button-icon-hover-background);
+}
+.p-button.p-button-icon-only.p-button-rounded {
+  border-radius: var(--button-icon-corner-radius);
+}

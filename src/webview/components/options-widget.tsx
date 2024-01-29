@@ -93,7 +93,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, {}> {
         } else {
             const address = +values.address;
             if (!isNaN(address) && address < 0) {
-                errors.address = 'Value needs to be larger than 0';
+                errors.address = 'Value needs to be >= 0';
             }
         }
 
@@ -112,8 +112,8 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, {}> {
             const count = +values.count;
             if (isNaN(count)) {
                 errors.count = 'No number provided';
-            } else if (count < 0) {
-                errors.count = 'Value needs to be larger than 0';
+            } else if (count <= 0) {
+                errors.count = 'Value needs to be > 0';
             }
         }
 
@@ -194,6 +194,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, {}> {
                         }
                         type='button'
                         title='Show all data'
+                        rounded
                         aria-label='Show all data'
                         aria-haspopup
                     ></Button>

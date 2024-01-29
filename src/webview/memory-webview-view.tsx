@@ -35,8 +35,7 @@ import { AsciiColumn } from './columns/ascii-column';
 import { AddressColumn } from './columns/address-column';
 import { DataColumn } from './columns/data-column';
 import { PrimeReactProvider } from 'primereact/api';
-import '../../media/primereact-theme/themes/vscode/theme.scss';
-import 'primeflex/primeflex.scss';
+import 'primeflex/primeflex.css';
 
 export interface MemoryAppState extends MemoryState {
     decorations: Decoration[];
@@ -115,21 +114,26 @@ class App extends React.Component<{}, MemoryAppState> {
             count: partialOptions?.count ?? this.state.count
         };
 
-        const response = await messenger.sendRequest(readMemoryType, HOST_EXTENSION, completeOptions);
-        await Promise.all(Array.from(
-            new Set(columnContributionService.getUpdateExecutors().concat(decorationService.getUpdateExecutors())),
-            executor => executor.fetchData(completeOptions)
-        ));
+        try {
+            const response = await messenger.sendRequest(readMemoryType, HOST_EXTENSION, completeOptions);
+            await Promise.all(Array.from(
+                new Set(columnContributionService.getUpdateExecutors().concat(decorationService.getUpdateExecutors())),
+                executor => executor.fetchData(completeOptions)
+            ));
 
-        this.setState({
-            decorations: decorationService.decorations,
-            memory: this.convertMemory(response),
-            memoryReference: completeOptions.memoryReference,
-            offset: completeOptions.offset,
-            count: completeOptions.count,
-            isMemoryFetching: false
-        });
-        messenger.sendRequest(setOptionsType, HOST_EXTENSION, completeOptions);
+            this.setState({
+                decorations: decorationService.decorations,
+                memory: this.convertMemory(response),
+                memoryReference: completeOptions.memoryReference,
+                offset: completeOptions.offset,
+                count: completeOptions.count,
+                isMemoryFetching: false
+            });
+
+            messenger.sendRequest(setOptionsType, HOST_EXTENSION, completeOptions);
+        } finally {
+            this.setState(prev => ({ ...prev, isMemoryFetching: false }));
+        }
 
     }
 

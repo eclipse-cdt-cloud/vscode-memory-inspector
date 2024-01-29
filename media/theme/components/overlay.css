@@ -14,9 +14,14 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-@import "./theme/theme.css";
-
-@import "./root.css";
-@import "./multi-select.css";
-@import "./options-widget.css";
-@import "./memory-table.css";
+.p-overlaypanel {
+  background: var(--vscode-editor-background);
+  color: var(--vscode-foreground);
+  border: 0 none;
+  box-shadow: 0px 11px 15px -7px rgba(0, 0, 0, 0.2),
+    0px 24px 38px 3px rgba(0, 0, 0, 0.14), 0px 9px 46px 8px rgba(0, 0, 0, 0.12);
+  z-index: 99;
+}
+.p-overlaypanel .p-overlaypanel-content {
+  padding: 1rem;
+}

@@ -14,4 +14,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-// Configuration for the font-face of the theme, defaults to the system font so left as blank
+.p-progress-spinner-circle {
+  stroke: var(--vscode-notificationsInfoIcon-foreground);
+  stroke-width: 3;
+  animation: none;
+}
