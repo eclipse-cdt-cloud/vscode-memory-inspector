@@ -14,18 +14,14 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-// Primereact works with null values
-/* eslint-disable no-null/no-null */
-
-import React from 'react';
-import { Decoration, Memory, MemoryDisplayConfiguration, ScrollingBehavior, isTrigger } from '../utils/view-types';
-import { TableRenderOptions } from '../columns/column-contribution-service';
 import { DebugProtocol } from '@vscode/debugprotocol';
-import { DataTable, DataTableCellSelection, DataTableProps, DataTableRowData, DataTableSelectionCellChangeEvent } from 'primereact/datatable';
+import memoize from 'memoize-one';
 import { Column } from 'primereact/column';
-import deepequal from 'fast-deep-equal';
+import { DataTable, DataTableCellSelection, DataTableProps, DataTableRowData, DataTableSelectionCellChangeEvent } from 'primereact/datatable';
 import { ProgressSpinner } from 'primereact/progressspinner';
-import { Nullable } from 'primereact/ts-helpers';
+import React from 'react';
+import { TableRenderOptions } from '../columns/column-contribution-service';
+import { Decoration, Memory, MemoryDisplayConfiguration, ScrollingBehavior, isTrigger } from '../utils/view-types';
 
 export interface MoreMemorySelectProps {
     count: number;
@@ -116,17 +112,27 @@ interface MemoryRowData {
 }
 
 interface MemoryTableState {
-    memory?: Memory;
-    data: MemoryRowData[];
-    selectedData: Nullable<DataTableCellSelection<MemoryRowData[]>>;
+    selection: DataTableCellSelection<MemoryRowData[]> | null;
+}
+
+type MemorySizeOptions = Pick<MemoryTableProps, 'wordSize' | 'wordsPerGroup' | 'groupsPerRow'>;
+namespace MemorySizeOptions {
+    export function create(props: MemoryTableProps): MemorySizeOptions {
+        const { groupsPerRow, wordSize, wordsPerGroup }: MemorySizeOptions = props;
+        return {
+            wordSize,
+            groupsPerRow,
+            wordsPerGroup
+        };
+    }
 }
 
 const itemHeightSingleGroupPerRow = 31;
 const heightGroupsPerRowGain = 14;
 
-export class MemoryTable extends React.Component<MemoryTableProps, MemoryTableState> {
+export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTableState> {
 
-    protected datatableRef;
+    protected datatableRef = React.createRef<DataTable<MemoryRowData[]>>();
 
     protected get isShowMoreEnabled(): boolean {
         return !!this.props.memory?.bytes.length;
@@ -135,56 +141,47 @@ export class MemoryTable extends React.Component<MemoryTableProps, MemoryTableSt
     constructor(props: MemoryTableProps) {
         super(props);
 
-        this.datatableRef = React.createRef<DataTable<MemoryRowData[]>>();
         this.initState();
     }
 
     protected initState(): void {
-        const memory = this.props.memory;
-        const numRows = memory ? this.createMemoryRowListOptions(memory, this.props).numRows : 1;
         this.state = {
-            data: Array.from({ length: numRows }),
-            selectedData: null,
+            // eslint-disable-next-line no-null/no-null
+            selection: null,
         };
     }
 
-    public componentDidUpdate(prevProps: Readonly<MemoryTableProps>): void {
-        this.onMemoryChange(this.props);
-        this.onOptionsChange(prevProps, this.props);
-    }
+    componentDidUpdate(prevProps: Readonly<MemoryTableProps>): void {
+        // Reset selection to new position
+        const selection = this.state.selection;
+        if (selection && (prevProps.memory?.address !== this.props.memory?.address || prevProps.offset !== this.props.offset)) {
+            // eslint-disable-next-line no-null/no-null
+            this.setState(prev => ({ ...prev, selection: null }));
 
-    /**
-     * Updates the internal `state.data` to the new memory changes.
-     */
-    protected onMemoryChange(currentProps: Readonly<MemoryTableProps>): void {
-        const state = this.state;
-        const memory = currentProps.memory;
-
-        if (!deepequal(memory, state.memory)) {
-            this.resetState(currentProps);
-        }
-    }
-
-    /**
-     * Updates the internal `state.data` to respect the new options.
-     *
-     * **Details**
-     *
-     * Changes to the options restructures the whole datatable. We need to replace the old data with new the new memory.
-     */
-    protected onOptionsChange(prevProps: Readonly<MemoryTableProps>, currentProps: Readonly<MemoryTableProps>): void {
-        if ((prevProps.wordsPerGroup !== currentProps.wordsPerGroup || prevProps.groupsPerRow !== currentProps.groupsPerRow)) {
-            this.resetState(currentProps);
+            const cell = this.datatableRef.current?.getTable()
+                .querySelector(
+                    `[${MemoryTable.DATA_START_ADDRESS_ATTRIBUTE}="${selection.rowData.startAddress}"][${MemoryTable.DATA_FIELD_ATTRIBUTE}="${selection.field}"]`
+                ) as HTMLElement | undefined;
+            cell?.click();
         }
     }
 
     public render(): React.ReactNode {
+        const memory = this.props.memory;
+        let rows: MemoryRowData[] = [];
+
+        if (memory) {
+            const memorySizeOptions = MemorySizeOptions.create(this.props);
+            const options = this.createMemoryRowListOptions(memory, memorySizeOptions);
+            rows = this.createTableRows(memory, options);
+        }
+
+        const props = this.createDataTableProperties(rows);
         const columnWidth = 100 / (this.props.columnOptions.length);
-        const props = this.createDataTableProperties();
 
         return (
             <div className='flex-1 overflow-auto px-4'>
-                <DataTable
+                <DataTable<MemoryRowData[]>
                     ref={this.datatableRef}
                     {...props}
                 >
@@ -193,7 +190,13 @@ export class MemoryTable extends React.Component<MemoryTableProps, MemoryTableSt
                         field={contribution.id}
                         header={contribution.label}
                         style={{ width: `${columnWidth}%` }}
-                        body={(row?: MemoryRowData) => row && contribution.render(row, this.props.memory!, this.props)}
+                        body={(row?: MemoryRowData) => row &&
+                            <div {...{
+                                [MemoryTable.DATA_START_ADDRESS_ATTRIBUTE]: row.startAddress,
+                                [MemoryTable.DATA_FIELD_ATTRIBUTE]: contribution.id
+                            }}>
+                                {contribution.render(row, this.props.memory!, this.props)}
+                            </div>}
                     >
                         {contribution.label}
                     </Column>)}
@@ -202,15 +205,13 @@ export class MemoryTable extends React.Component<MemoryTableProps, MemoryTableSt
         );
     }
 
-    protected createDataTableProperties(): DataTableProps<MemoryRowData[]> {
+    protected createDataTableProperties(rows: MemoryRowData[]): DataTableProps<MemoryRowData[]> {
         return {
-            dataKey: 'startAddress',
             cellSelection: true,
             className: MemoryTable.TABLE_CLASS,
             footer: this.renderFooter(),
             header: this.renderHeader(),
             lazy: true,
-            loading: false,
             metaKeySelection: false,
             onSelectionChange: this.onSelectionChanged,
             rowClassName: this.rowClass,
@@ -218,11 +219,11 @@ export class MemoryTable extends React.Component<MemoryTableProps, MemoryTableSt
             scrollable: true,
             scrollHeight: 'flex',
             selectionMode: 'single',
-            selection: this.state.selectedData as DataTableCellSelection<MemoryRowData[]>,
+            selection: this.state.selection,
             tableStyle: { minWidth: '30rem' },
-            value: this.state.data,
+            value: rows,
             virtualScrollerOptions: {
-                items: this.state.data,
+                items: rows,
                 itemSize: itemHeightSingleGroupPerRow + heightGroupsPerRowGain * (this.props.groupsPerRow - 1),
             },
         };
@@ -230,7 +231,7 @@ export class MemoryTable extends React.Component<MemoryTableProps, MemoryTableSt
     }
 
     protected onSelectionChanged = (event: DataTableSelectionCellChangeEvent<MemoryRowData[]>) => {
-        this.setState(prev => ({ ...prev, selectedData: event.value }));
+        this.setState(prev => ({ ...prev, selection: event.value }));
     };
 
     protected renderHeader(): React.ReactNode | undefined {
@@ -306,23 +307,19 @@ export class MemoryTable extends React.Component<MemoryTableProps, MemoryTableSt
         return row.rowIndex % 4 === 3;
     }
 
-    protected createTableRows(options: MemoryRowListOptions, first: number, last: number, memory?: Memory): MemoryRowData[] {
-        if (memory === undefined) {
-            return [];
-        }
-
+    protected createTableRows = memoize((memory: Memory, options: MemoryRowListOptions): MemoryRowData[] => {
         const rows: MemoryRowData[] = [];
-        for (let i = first; i < last && i < options.numRows; i++) {
+        for (let i = 0; i < options.numRows; i++) {
             const startAddress = memory.address + options.bigWordsPerRow * BigInt(i);
             rows.push(this.createMemoryRow(i, startAddress, options));
         }
 
         return rows;
-    }
+    });
 
-    protected createMemoryRowListOptions(memory: Memory, props: MemoryTableProps): MemoryRowListOptions {
-        const wordsPerRow = props.wordsPerGroup * props.groupsPerRow;
-        const numRows = Math.ceil((memory.bytes.length * 8) / (wordsPerRow * props.wordSize));
+    protected createMemoryRowListOptions(memory: Memory, options: MemorySizeOptions): MemoryRowListOptions {
+        const wordsPerRow = options.wordsPerGroup * options.groupsPerRow;
+        const numRows = Math.ceil((memory.bytes.length * 8) / (wordsPerRow * options.wordSize));
         const bigWordsPerRow = BigInt(wordsPerRow);
 
         return {
@@ -330,7 +327,7 @@ export class MemoryTable extends React.Component<MemoryTableProps, MemoryTableSt
             wordsPerRow,
             bigWordsPerRow
         };
-    }
+    };
 
     protected createMemoryRow(rowIndex: number, startAddress: bigint, memoryTableOptions: MemoryRowListOptions): MemoryRowData {
         return {
@@ -339,25 +336,11 @@ export class MemoryTable extends React.Component<MemoryTableProps, MemoryTableSt
             endAddress: startAddress + memoryTableOptions.bigWordsPerRow
         };
     }
-
-    protected resetState(props: MemoryTableProps): void {
-        const memory = props.memory;
-        let data: MemoryRowData[] = [];
-
-        if (memory !== undefined) {
-            const options = this.createMemoryRowListOptions(memory, props);
-            data = this.createTableRows(options, 0, options.numRows, memory);
-        }
-
-        this.setState(({
-            memory,
-            data,
-            selectedData: null
-        }));
-    }
 }
 
 export namespace MemoryTable {
     export const TABLE_CLASS = 'memory-inspector-table';
     export const GROUP_SEPARATOR = 'group-separator';
+    export const DATA_START_ADDRESS_ATTRIBUTE = 'data-m-start-address';
+    export const DATA_FIELD_ATTRIBUTE = 'data-m-field';
 }

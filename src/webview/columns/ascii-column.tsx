@@ -19,7 +19,6 @@ import { ReactNode } from 'react';
 import { BigIntMemoryRange, toOffset } from '../../common/memory-range';
 import { ColumnContribution, TableRenderOptions } from './column-contribution-service';
 import { Memory } from '../utils/view-types';
-import { chunkIntoN } from '../utils/arrays';
 
 function isPrintableAsAscii(input: number): boolean {
     return input >= 32 && input < (128 - 1);
@@ -39,17 +38,16 @@ export class AsciiColumn implements ColumnContribution {
         const startOffset = toOffset(memory.address, range.startAddress, options.wordSize);
         const endOffset = toOffset(memory.address, range.endAddress, options.wordSize);
 
-        const indices = Array.from({ length: endOffset - startOffset }, (_, a) => a + startOffset);
-        const chunks = chunkIntoN(indices, options.groupsPerRow);
-        const groups: ReactNode[] = [];
-
-        for (const chunk of chunks) {
-            let result = '';
-            for (const i of chunk) {
-                result += getASCIIForSingleByte(memory.bytes[i]);
+        const bytesPerGroup = options.wordSize * options.wordsPerGroup / 8;
+        const groups = [];
+        let groupAscii = '';
+        for (let i = startOffset; i < endOffset; i++) {
+            groupAscii += getASCIIForSingleByte(memory.bytes[i]);
+            if (i + 1 === endOffset || groupAscii.length === bytesPerGroup) {
+                // Could do (i - startOffset + 1) % bytesPerGroup === 0 if we want to be agnostic about the length ASCII for each byte.
+                groups.push(<span key={`ascii_${i - bytesPerGroup + 1}-${i}`}>{groupAscii}</span>);
+                groupAscii = '';
             }
-
-            groups.push(<span key={`ascii_${chunk[0]}-${chunk[chunk.length - 1]}`}>{result}</span>);
         }
 
         return (
