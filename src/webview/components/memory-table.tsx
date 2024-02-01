@@ -157,12 +157,6 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
         if (selection && (prevProps.memory?.address !== this.props.memory?.address || prevProps.offset !== this.props.offset)) {
             // eslint-disable-next-line no-null/no-null
             this.setState(prev => ({ ...prev, selection: null }));
-
-            const cell = this.datatableRef.current?.getTable()
-                .querySelector(
-                    `[${MemoryTable.DATA_START_ADDRESS_ATTRIBUTE}="${selection.rowData.startAddress}"][${MemoryTable.DATA_FIELD_ATTRIBUTE}="${selection.field}"]`
-                ) as HTMLElement | undefined;
-            cell?.click();
         }
     }
 
