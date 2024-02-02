@@ -153,11 +153,37 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
     }
 
     componentDidUpdate(prevProps: Readonly<MemoryTableProps>): void {
-        // Reset selection to new position
+        // Reset selection
         const selection = this.state.selection;
         if (selection && (prevProps.memory?.address !== this.props.memory?.address || prevProps.offset !== this.props.offset)) {
             // eslint-disable-next-line no-null/no-null
             this.setState(prev => ({ ...prev, selection: null }));
+        }
+
+        // Groups per row has an influence to the scroll position due to the new height of the items
+        // We approximate the last visible range and move there
+        if (prevProps.groupsPerRow !== this.props.groupsPerRow) {
+            const table = this.datatableRef.current;
+
+            if (table) {
+                table.resetScroll();
+                const scroller = table.getVirtualScroller();
+
+                const diff = this.props.groupsPerRow - prevProps.groupsPerRow;
+                const range = scroller.getRenderedRange();
+
+                if (diff > 0) {
+                    // More groups per row
+                    const newIndex = range.first / (diff + 1);
+                    scroller.scrollToIndex(Math.max(0, newIndex));
+                } else if (diff < 0) {
+                    // Less groups per row
+                    const newIndex = range.first * Math.abs(diff);
+                    scroller.scrollToIndex(Math.max(0, newIndex));
+                }
+
+                table.forceUpdate?.();
+            }
         }
     }
 
@@ -211,7 +237,6 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
             tableStyle: { minWidth: '30rem' },
             value: rows,
             virtualScrollerOptions: {
-                items: rows,
                 itemSize: itemHeightSingleGroupPerRow + heightGroupsPerRowGain * (this.props.groupsPerRow - 1),
             },
         };
