@@ -22,6 +22,7 @@ import { ProgressSpinner } from 'primereact/progressspinner';
 import React from 'react';
 import { TableRenderOptions } from '../columns/column-contribution-service';
 import { Decoration, Memory, MemoryDisplayConfiguration, ScrollingBehavior, isTrigger } from '../utils/view-types';
+import isDeepEqual from 'fast-deep-equal';
 
 export interface MoreMemorySelectProps {
     count: number;
@@ -184,18 +185,11 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
                         field={contribution.id}
                         header={contribution.label}
                         style={{ width: `${columnWidth}%` }}
-                        body={(row?: MemoryRowData) => row &&
-                            <div {...{
-                                [MemoryTable.DATA_START_ADDRESS_ATTRIBUTE]: row.startAddress,
-                                [MemoryTable.DATA_FIELD_ATTRIBUTE]: contribution.id
-                            }}>
-                                {contribution.render(row, this.props.memory!, this.props)}
-                            </div>}
-                    >
+                        body={(row?: MemoryRowData) => row && contribution.render(row, this.props.memory!, this.props)}>
                         {contribution.label}
                     </Column>)}
                 </DataTable>
-            </div>
+            </div >
         );
     }
 
@@ -309,7 +303,7 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
         }
 
         return rows;
-    });
+    }, isDeepEqual);
 
     protected createMemoryRowListOptions(memory: Memory, options: MemorySizeOptions): MemoryRowListOptions {
         const wordsPerRow = options.wordsPerGroup * options.groupsPerRow;
@@ -335,6 +329,4 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
 export namespace MemoryTable {
     export const TABLE_CLASS = 'memory-inspector-table';
     export const GROUP_SEPARATOR = 'group-separator';
-    export const DATA_START_ADDRESS_ATTRIBUTE = 'data-m-start-address';
-    export const DATA_FIELD_ATTRIBUTE = 'data-m-field';
 }
