@@ -41,8 +41,15 @@
   background: var(--vscode-settings-rowHoverBackground);
 }
 .p-datatable .p-datatable-tbody > tr > td {
+  vertical-align: top;
   text-align: left;
   padding: 0.25rem 1rem;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+  white-space: unset;
+}
+.p-datatable .p-datatable-tbody > tr > td.fit {
+  width: 1%;
 }
 .p-datatable .p-datatable-tbody > tr > td.p-highlight {
   background: var(--vscode-editor-selectionHighlightBackground);

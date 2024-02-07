@@ -18,6 +18,11 @@
   border-bottom: 2px solid var(--vscode-editor-lineHighlightBorder);
 }
 
+.memory-inspector-table tr > th,
+.memory-inspector-table tr > td {
+  min-width: 120px;
+}
+
 /* == MoreMemorySelect == */
 
 .bytes-select {

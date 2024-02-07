@@ -23,6 +23,8 @@ import React from 'react';
 import { TableRenderOptions } from '../columns/column-contribution-service';
 import { Decoration, Memory, MemoryDisplayConfiguration, ScrollingBehavior, isTrigger } from '../utils/view-types';
 import isDeepEqual from 'fast-deep-equal';
+import { AddressColumn } from '../columns/address-column';
+import { classNames } from 'primereact/utils';
 
 export interface MoreMemorySelectProps {
     count: number;
@@ -128,9 +130,6 @@ namespace MemorySizeOptions {
     }
 }
 
-const itemHeightSingleGroupPerRow = 31;
-const heightGroupsPerRowGain = 14;
-
 export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTableState> {
 
     protected datatableRef = React.createRef<DataTable<MemoryRowData[]>>();
@@ -153,37 +152,14 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
     }
 
     componentDidUpdate(prevProps: Readonly<MemoryTableProps>): void {
+        const hasMemoryChanged = prevProps.memory?.address !== this.props.memory?.address || prevProps.offset !== this.props.offset || prevProps.count !== this.props.count;
+        const hasOptionsChanged = prevProps.wordsPerGroup !== this.props.wordsPerGroup || prevProps.groupsPerRow !== this.props.groupsPerRow;
+
         // Reset selection
         const selection = this.state.selection;
-        if (selection && (prevProps.memory?.address !== this.props.memory?.address || prevProps.offset !== this.props.offset)) {
+        if (selection && (hasMemoryChanged || hasOptionsChanged)) {
             // eslint-disable-next-line no-null/no-null
             this.setState(prev => ({ ...prev, selection: null }));
-        }
-
-        // Groups per row has an influence to the scroll position due to the new height of the items
-        // We approximate the last visible range and move there
-        if (prevProps.groupsPerRow !== this.props.groupsPerRow) {
-            const table = this.datatableRef.current;
-
-            if (table) {
-                table.resetScroll();
-                const scroller = table.getVirtualScroller();
-
-                const diff = this.props.groupsPerRow - prevProps.groupsPerRow;
-                const range = scroller.getRenderedRange();
-
-                if (diff > 0) {
-                    // More groups per row
-                    const newIndex = range.first / (diff + 1);
-                    scroller.scrollToIndex(Math.max(0, newIndex));
-                } else if (diff < 0) {
-                    // Less groups per row
-                    const newIndex = range.first * Math.abs(diff);
-                    scroller.scrollToIndex(Math.max(0, newIndex));
-                }
-
-                table.forceUpdate?.();
-            }
         }
     }
 
@@ -198,7 +174,8 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
         }
 
         const props = this.createDataTableProperties(rows);
-        const columnWidth = 100 / (this.props.columnOptions.length);
+        const remainingWidth = 99; // Available width in percent without the fit columns
+        const columnWidth = remainingWidth / (this.props.columnOptions.length);
 
         return (
             <div className='flex-1 overflow-auto px-4'>
@@ -206,14 +183,20 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
                     ref={this.datatableRef}
                     {...props}
                 >
-                    {this.props.columnOptions.map(({ contribution }) => <Column
-                        key={contribution.id}
-                        field={contribution.id}
-                        header={contribution.label}
-                        style={{ width: `${columnWidth}%` }}
-                        body={(row?: MemoryRowData) => row && contribution.render(row, this.props.memory!, this.props)}>
-                        {contribution.label}
-                    </Column>)}
+                    {this.props.columnOptions.map(({ contribution }) => {
+                        const fit = contribution.id === AddressColumn.ID;
+
+                        return <Column
+                            key={contribution.id}
+                            field={contribution.id}
+                            header={contribution.label}
+                            className={classNames({ fit })}
+                            headerClassName={classNames({ fit })}
+                            style={{ width: fit ? undefined : `${columnWidth}%` }}
+                            body={(row?: MemoryRowData) => row && contribution.render(row, this.props.memory!, this.props)}>
+                            {contribution.label}
+                        </Column>;
+                    })}
                 </DataTable>
             </div >
         );
@@ -235,10 +218,7 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
             selectionMode: 'single',
             selection: this.state.selection,
             tableStyle: { minWidth: '30rem' },
-            value: rows,
-            virtualScrollerOptions: {
-                itemSize: itemHeightSingleGroupPerRow + heightGroupsPerRowGain * (this.props.groupsPerRow - 1),
-            },
+            value: rows
         };
 
     }

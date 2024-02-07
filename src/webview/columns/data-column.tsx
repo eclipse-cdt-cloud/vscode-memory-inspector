@@ -21,7 +21,9 @@ import { ColumnContribution, TableRenderOptions } from './column-contribution-se
 import { decorationService } from '../decorations/decoration-service';
 
 export class DataColumn implements ColumnContribution {
-    readonly id = 'data';
+    static ID = 'data';
+
+    readonly id = DataColumn.ID;
     readonly label = 'Data';
     readonly priority = 1;
 
@@ -40,11 +42,7 @@ export class DataColumn implements ColumnContribution {
             }
         }
         if (words.length) { groups.push(<span className='byte-group' key={(range.endAddress - BigInt(words.length)).toString(16)}>{words}</span>); }
-        return (
-            <div className="flex flex-column">
-                {groups}
-            </div>
-        );
+        return groups;
     }
 
     protected renderWord(memory: Memory, options: TableRenderOptions, currentAddress: bigint): React.ReactNode {

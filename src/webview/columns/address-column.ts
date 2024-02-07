@@ -19,8 +19,10 @@ import { BigIntMemoryRange, toHexStringWithRadixMarker } from '../../common/memo
 import { ColumnContribution } from './column-contribution-service';
 
 export class AddressColumn implements ColumnContribution {
+    static ID = 'address';
+
+    readonly id = AddressColumn.ID;
     readonly label = 'Address';
-    readonly id = 'address';
     readonly priority = 0;
 
     render(range: BigIntMemoryRange): ReactNode {
