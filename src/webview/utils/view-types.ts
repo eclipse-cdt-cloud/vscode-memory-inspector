@@ -15,9 +15,9 @@
  ********************************************************************************/
 
 import type { DebugProtocol } from '@vscode/debugprotocol';
+import deepequal from 'fast-deep-equal';
 import type * as React from 'react';
 import { areRangesEqual, BigIntMemoryRange } from '../../common/memory-range';
-import deepequal from 'fast-deep-equal';
 
 export enum Endianness {
     Little = 'Little Endian',
@@ -77,16 +77,7 @@ export interface MemoryDisplayConfiguration {
     wordsPerGroup: number;
     groupsPerRow: number;
     scrollingBehavior: ScrollingBehavior;
-}
-
-export interface ColumnVisibilityStatus {
-    id: string;
-    active: boolean;
-}
-
-export interface MemoryDisplayConfigurationChangeRequest {
-    id: 'groupings.wordsPerGroup' | 'groupings.groupsPerRow' | 'scrollingBehavior';
-    value: number;
+    visibleColumns: string[];
 }
 
 export type ReactInteraction<E extends Element = Element> = React.MouseEvent<E> | React.KeyboardEvent<E>;

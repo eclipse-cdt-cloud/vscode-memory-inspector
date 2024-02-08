@@ -69,3 +69,12 @@
   width: 100%;
   font-weight: bold;
 }
+
+.reset-advanced-options-icon {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+}
