@@ -216,7 +216,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, {}> {
                             )}
                             <label
                                 htmlFor={InputId.WordsPerGroup}
-                                className='advanced-options-label'
+                                className='advanced-options-label mt-1'
                             >
                                 Bytes per Group
                             </label>

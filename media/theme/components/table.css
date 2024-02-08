@@ -52,7 +52,9 @@
   width: 1%;
 }
 .p-datatable .p-datatable-tbody > tr > td.p-highlight {
-  background: var(--vscode-editor-selectionHighlightBackground);
+  background: var(--vscode-list-activeSelectionBackground);
+  color: var(--vscode-list-activeSelectionForeground);
+  border: 1px solid var(--vscode-list-focusOutline);
 }
 .p-datatable.p-datatable-selectable
   .p-datatable-tbody

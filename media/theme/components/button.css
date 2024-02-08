@@ -24,9 +24,11 @@
 }
 
 .p-button {
+  font-family: inherit;
   color: var(--vscode-button-foreground);
   background: var(--vscode-button-background);
-  border: 1px solid var(--vscode-button-border);
+  border: 1px solid transparent;
+  border-radius: 2px;
   padding: var(--button-padding-vertical) var(--button-padding-horizontal);
   transition: background-color 0.2s, color 0.2s, border-color 0.2s,
     box-shadow 0.2s;

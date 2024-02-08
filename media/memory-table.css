@@ -23,6 +23,10 @@
   min-width: 120px;
 }
 
+.memory-inspector-table tr > td {
+  font-family: var(--vscode-editor-font-family);
+}
+
 /* == MoreMemorySelect == */
 
 .bytes-select {

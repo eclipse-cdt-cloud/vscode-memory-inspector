@@ -27,6 +27,7 @@
 :root {
   --border-width: 1;
   --disabled-opacity: 0.4;
+  --font-family: system-ui, Ubuntu, "Droid Sans", sans-serif;
 
   --type-ramp-base-font-size: 13px;
   --type-ramp-base-line-height: normal;

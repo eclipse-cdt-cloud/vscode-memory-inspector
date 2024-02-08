@@ -39,7 +39,7 @@ const MultiSelectBar: React.FC<MultiSelectProps> = ({ items, onSelectionChanged,
     }, [onSelectionChanged]);
 
     return (
-        <div className='flex flex-column align-items-start gap-1' id={id}>
+        <div className='flex flex-column align-items-start gap-2' id={id}>
             {items.map(({ label, id: itemId, checked }) => (
                 <div key={`${label}-${id}-checkbox`} className='flex align-items-center'>
                     <Checkbox

@@ -22,4 +22,7 @@
 
 body {
   padding: 0;
+  font-family: var(--font-family);
+  font-size: var(--type-ramp-base-font-size);
+  line-height: var(--type-ramp-base-line-height);
 }

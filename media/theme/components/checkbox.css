@@ -15,14 +15,14 @@
  ********************************************************************************/
 
 .p-checkbox {
-  width: 14px;
-  height: 14px;
+  width: 18px;
+  height: 18px;
 }
 .p-checkbox .p-checkbox-box {
   border: 1px solid var(--vscode-checkbox-border);
   background: var(--vscode-checkbox-background);
-  width: 14px;
-  height: 14px;
+  width: 18px;
+  height: 18px;
   color: var(--vscode-checkbox-foreground);
   transition: background-color 0.2s, color 0.2s, border-color 0.2s,
     box-shadow 0.2s;
