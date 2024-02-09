@@ -32,7 +32,6 @@ export class AsciiColumn implements ColumnContribution {
     readonly id = 'ascii';
     readonly label = 'ASCII';
     readonly priority = 3;
-
     render(range: BigIntMemoryRange, memory: Memory, options: TableRenderOptions): ReactNode {
         const startOffset = toOffset(memory.address, range.startAddress, options.wordSize);
         const endOffset = toOffset(memory.address, range.endAddress, options.wordSize);
