@@ -21,9 +21,7 @@ import { ColumnContribution, TableRenderOptions } from './column-contribution-se
 import { decorationService } from '../decorations/decoration-service';
 
 export class DataColumn implements ColumnContribution {
-    static ID = 'data';
-
-    readonly id = DataColumn.ID;
+    readonly id = 'data';
     readonly label = 'Data';
     readonly priority = 1;
 
