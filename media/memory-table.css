@@ -18,8 +18,8 @@
   border-bottom: 2px solid var(--vscode-editor-lineHighlightBorder);
 }
 
-.memory-inspector-table tr > th,
-.memory-inspector-table tr > td {
+.memory-inspector-table tr > th:not(.fit),
+.memory-inspector-table tr > td:not(.fit) {
   min-width: 120px;
 }
 
