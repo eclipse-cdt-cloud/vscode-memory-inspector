@@ -34,6 +34,8 @@ import { variableDecorator } from './variables/variable-decorations';
 import { AsciiColumn } from './columns/ascii-column';
 import { AddressColumn } from './columns/address-column';
 import { DataColumn } from './columns/data-column';
+import { PrimeReactProvider } from 'primereact/api';
+import 'primeflex/primeflex.css';
 
 export interface MemoryAppState extends MemoryState {
     decorations: Decoration[];
@@ -59,6 +61,7 @@ class App extends React.Component<{}, MemoryAppState> {
             count: 256,
             decorations: [],
             columns: columnContributionService.getColumns(),
+            isMemoryFetching: false
         };
     }
 
@@ -69,18 +72,21 @@ class App extends React.Component<{}, MemoryAppState> {
     }
 
     public render(): React.ReactNode {
-        return <MemoryWidget
-            memory={this.state.memory}
-            decorations={this.state.decorations}
-            columns={this.state.columns}
-            memoryReference={this.state.memoryReference}
-            offset={this.state.offset ?? 0}
-            count={this.state.count}
-            updateMemoryArguments={this.updateMemoryState}
-            refreshMemory={this.refreshMemory}
-            toggleColumn={this.toggleColumn}
-            fetchMemory={this.fetchMemory}
-        />;
+        return <PrimeReactProvider>
+            <MemoryWidget
+                memory={this.state.memory}
+                decorations={this.state.decorations}
+                columns={this.state.columns}
+                memoryReference={this.state.memoryReference}
+                offset={this.state.offset ?? 0}
+                count={this.state.count}
+                updateMemoryArguments={this.updateMemoryState}
+                refreshMemory={this.refreshMemory}
+                toggleColumn={this.toggleColumn}
+                fetchMemory={this.fetchMemory}
+                isMemoryFetching={this.state.isMemoryFetching}
+            />
+        </PrimeReactProvider>;
     }
 
     protected async handleColumnVisibilityChanged(request: ColumnVisibilityStatus): Promise<void> {
@@ -101,23 +107,34 @@ class App extends React.Component<{}, MemoryAppState> {
 
     protected fetchMemory = async (partialOptions?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void> => this.doFetchMemory(partialOptions);
     protected async doFetchMemory(partialOptions?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void> {
+        this.setState(prev => ({ ...prev, isMemoryFetching: true }));
         const completeOptions = {
             memoryReference: partialOptions?.memoryReference || this.state.memoryReference,
             offset: partialOptions?.offset ?? this.state.offset,
             count: partialOptions?.count ?? this.state.count
         };
 
-        const response = await messenger.sendRequest(readMemoryType, HOST_EXTENSION, completeOptions);
-        await Promise.all(Array.from(
-            new Set(columnContributionService.getUpdateExecutors().concat(decorationService.getUpdateExecutors())),
-            executor => executor.fetchData(completeOptions)
-        ));
-        this.setState({
-            decorations: decorationService.decorations,
-            memory: this.convertMemory(response),
-            offset: completeOptions.offset,
-            count: completeOptions.count,
-        });
+        try {
+            const response = await messenger.sendRequest(readMemoryType, HOST_EXTENSION, completeOptions);
+            await Promise.all(Array.from(
+                new Set(columnContributionService.getUpdateExecutors().concat(decorationService.getUpdateExecutors())),
+                executor => executor.fetchData(completeOptions)
+            ));
+
+            this.setState({
+                decorations: decorationService.decorations,
+                memory: this.convertMemory(response),
+                memoryReference: completeOptions.memoryReference,
+                offset: completeOptions.offset,
+                count: completeOptions.count,
+                isMemoryFetching: false
+            });
+
+            messenger.sendRequest(setOptionsType, HOST_EXTENSION, completeOptions);
+        } finally {
+            this.setState(prev => ({ ...prev, isMemoryFetching: false }));
+        }
+
     }
 
     protected convertMemory(result: DebugProtocol.ReadMemoryResponse['body']): Memory {

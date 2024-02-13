@@ -55,6 +55,7 @@ export function areDecorationsEqual(one: Decoration, other: Decoration): boolean
 
 export interface MemoryState extends DebugProtocol.ReadMemoryArguments {
     memory?: Memory;
+    isMemoryFetching: boolean;
 }
 
 export interface UpdateExecutor {

@@ -14,16 +14,17 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-import React from 'react';
-import {
-    VSCodeDataGrid,
-    VSCodeDataGridRow,
-    VSCodeDataGridCell
-} from '@vscode/webview-ui-toolkit/react';
-import { Decoration, Memory, MemoryDisplayConfiguration, ScrollingBehavior, StylableNodeAttributes, isTrigger } from '../utils/view-types';
-import { toHexStringWithRadixMarker } from '../../common/memory-range';
-import { TableRenderOptions } from '../columns/column-contribution-service';
 import { DebugProtocol } from '@vscode/debugprotocol';
+import memoize from 'memoize-one';
+import { Column } from 'primereact/column';
+import { DataTable, DataTableCellSelection, DataTableProps, DataTableRowData, DataTableSelectionCellChangeEvent } from 'primereact/datatable';
+import { ProgressSpinner } from 'primereact/progressspinner';
+import React from 'react';
+import { TableRenderOptions } from '../columns/column-contribution-service';
+import { Decoration, Memory, MemoryDisplayConfiguration, ScrollingBehavior, isTrigger } from '../utils/view-types';
+import isDeepEqual from 'fast-deep-equal';
+import { AddressColumn } from '../columns/address-column';
+import { classNames } from 'primereact/utils';
 
 export interface MoreMemorySelectProps {
     count: number;
@@ -98,103 +99,239 @@ interface MemoryTableProps extends TableRenderOptions, MemoryDisplayConfiguratio
     offset: number;
     count: number;
     fetchMemory(partialOptions?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void>;
+    isMemoryFetching: boolean;
 }
 
-export class MemoryTable extends React.Component<MemoryTableProps> {
+interface MemoryRowListOptions {
+    numRows: number;
+    wordsPerRow: number;
+    bigWordsPerRow: bigint;
+}
+
+interface MemoryRowData {
+    rowIndex: number;
+    startAddress: bigint;
+    endAddress: bigint;
+}
+
+interface MemoryTableState {
+    selection: DataTableCellSelection<MemoryRowData[]> | null;
+}
+
+type MemorySizeOptions = Pick<MemoryTableProps, 'wordSize' | 'wordsPerGroup' | 'groupsPerRow'>;
+namespace MemorySizeOptions {
+    export function create(props: MemoryTableProps): MemorySizeOptions {
+        const { groupsPerRow, wordSize, wordsPerGroup }: MemorySizeOptions = props;
+        return {
+            wordSize,
+            groupsPerRow,
+            wordsPerGroup
+        };
+    }
+}
+
+export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTableState> {
+
+    protected datatableRef = React.createRef<DataTable<MemoryRowData[]>>();
+
+    protected get isShowMoreEnabled(): boolean {
+        return !!this.props.memory?.bytes.length;
+    }
+
+    constructor(props: MemoryTableProps) {
+        super(props);
+
+        this.initState();
+    }
+
+    protected initState(): void {
+        this.state = {
+            // eslint-disable-next-line no-null/no-null
+            selection: null,
+        };
+    }
+
+    componentDidUpdate(prevProps: Readonly<MemoryTableProps>): void {
+        const hasMemoryChanged = prevProps.memory?.address !== this.props.memory?.address || prevProps.offset !== this.props.offset || prevProps.count !== this.props.count;
+        const hasOptionsChanged = prevProps.wordsPerGroup !== this.props.wordsPerGroup || prevProps.groupsPerRow !== this.props.groupsPerRow;
+
+        // Reset selection
+        const selection = this.state.selection;
+        if (selection && (hasMemoryChanged || hasOptionsChanged)) {
+            // eslint-disable-next-line no-null/no-null
+            this.setState(prev => ({ ...prev, selection: null }));
+        }
+    }
+
     public render(): React.ReactNode {
-        const rows = this.getTableRows();
-        const { offset, count, memory, fetchMemory, scrollingBehavior } = this.props;
-        const showMoreMemoryButton = !!memory?.bytes.length;
+        const memory = this.props.memory;
+        let rows: MemoryRowData[] = [];
+
+        if (memory) {
+            const memorySizeOptions = MemorySizeOptions.create(this.props);
+            const options = this.createMemoryRowListOptions(memory, memorySizeOptions);
+            rows = this.createTableRows(memory, options);
+        }
+
+        const props = this.createDataTableProperties(rows);
+        const remainingWidth = 99; // Available width in percent without the fit columns
+        const columnWidth = remainingWidth / (this.props.columnOptions.length);
+
         return (
-            <div>
-                <VSCodeDataGrid>
-                    <VSCodeDataGridRow rowType='header' gridTemplateColumns={new Array(this.props.columnOptions.length).fill('1fr').join(' ')}>
-                        {this.props.columnOptions.map(({ contribution }, index) => <VSCodeDataGridCell
+            <div className='flex-1 overflow-auto px-4'>
+                <DataTable<MemoryRowData[]>
+                    ref={this.datatableRef}
+                    {...props}
+                >
+                    {this.props.columnOptions.map(({ contribution }) => {
+                        const fit = contribution.id === AddressColumn.ID;
+
+                        return <Column
                             key={contribution.id}
-                            cellType='columnheader'
-                            gridColumn={(index + 1).toString()}
-                        >
+                            field={contribution.id}
+                            header={contribution.label}
+                            className={classNames({ fit })}
+                            headerClassName={classNames({ fit })}
+                            style={{ width: fit ? undefined : `${columnWidth}%` }}
+                            body={(row?: MemoryRowData) => row && contribution.render(row, this.props.memory!, this.props)}>
                             {contribution.label}
-                        </VSCodeDataGridCell>)}
-                    </VSCodeDataGridRow>
-                    {showMoreMemoryButton && (<MoreMemorySelect
-                        offset={offset}
-                        count={count}
-                        options={[128, 256, 512]}
-                        direction='above'
-                        scrollingBehavior={scrollingBehavior}
-                        fetchMemory={fetchMemory}
-                    />)}
-                    {rows}
-                    {showMoreMemoryButton && (<MoreMemorySelect
-                        offset={offset}
-                        count={count}
-                        options={[128, 256, 512]}
-                        direction='below'
-                        scrollingBehavior={scrollingBehavior}
-                        fetchMemory={fetchMemory}
-                    />)}
-                </VSCodeDataGrid>
+                        </Column>;
+                    })}
+                </DataTable>
+            </div >
+        );
+    }
+
+    protected createDataTableProperties(rows: MemoryRowData[]): DataTableProps<MemoryRowData[]> {
+        return {
+            cellSelection: true,
+            className: MemoryTable.TABLE_CLASS,
+            footer: this.renderFooter(),
+            header: this.renderHeader(),
+            lazy: true,
+            metaKeySelection: false,
+            onSelectionChange: this.onSelectionChanged,
+            rowClassName: this.rowClass,
+            resizableColumns: true,
+            scrollable: true,
+            scrollHeight: 'flex',
+            selectionMode: 'single',
+            selection: this.state.selection,
+            tableStyle: { minWidth: '30rem' },
+            value: rows
+        };
+
+    }
+
+    protected onSelectionChanged = (event: DataTableSelectionCellChangeEvent<MemoryRowData[]>) => {
+        this.setState(prev => ({ ...prev, selection: event.value }));
+    };
+
+    protected renderHeader(): React.ReactNode | undefined {
+        const { offset, count, fetchMemory, scrollingBehavior } = this.props;
+
+        let memorySelect: React.ReactNode | undefined;
+        let loading: React.ReactNode | undefined;
+
+        if (this.isShowMoreEnabled) {
+            memorySelect = <div className='flex-auto'>
+                <MoreMemorySelect
+                    offset={offset}
+                    count={count}
+                    options={[128, 256, 512]}
+                    direction='above'
+                    scrollingBehavior={scrollingBehavior}
+                    fetchMemory={fetchMemory}
+                />
+            </div>;
+        }
+
+        if (this.props.isMemoryFetching) {
+            loading = <div className='absolute right-0 flex align-items-center'>
+                <ProgressSpinner style={{ width: '16px', height: '16px' }} className='mr-2' />
+                <span>Loading</span>
+            </div>;
+        }
+
+        return (
+            <div className='flex align-items-center'>
+                {memorySelect}
+                {loading}
             </div>
         );
     }
 
-    protected getTableRows(): React.ReactNode {
-        if (!this.props.memory) {
-            return (
-                <VSCodeDataGridRow gridTemplateColumns={new Array(this.props.columnOptions.length).fill('1fr').join(' ')}>
-                    {this.props.columnOptions.map((column, index) =>
-                        column.active
-                        && <VSCodeDataGridCell key={column.contribution.id} gridColumn={(index + 1).toString()}>No Data</VSCodeDataGridCell>
-                    )}
-                </VSCodeDataGridRow>
-            );
+    protected renderFooter(): React.ReactNode | undefined {
+        const { offset, count, fetchMemory, scrollingBehavior } = this.props;
+
+        let memorySelect: React.ReactNode | undefined;
+
+        if (this.isShowMoreEnabled) {
+            memorySelect = <div className='flex-auto'>
+                <MoreMemorySelect
+                    offset={offset}
+                    count={count}
+                    options={[128, 256, 512]}
+                    direction='below'
+                    scrollingBehavior={scrollingBehavior}
+                    fetchMemory={fetchMemory}
+                />
+            </div>;
         }
 
-        return this.renderRows(this.props.memory);
-    }
-
-    protected renderRows(memory: Memory): React.ReactNode {
-        const wordsPerRow = this.props.wordsPerGroup * this.props.groupsPerRow;
-        const numRows = Math.ceil((memory.bytes.length * 8) / (wordsPerRow * this.props.wordSize));
-        const bigWordsPerRow = BigInt(wordsPerRow);
-        const gridTemplateColumns = new Array(this.props.columnOptions.length).fill('1fr').join(' ');
-        const rows = [];
-        let startAddress = memory.address;
-        for (let i = 0; i < numRows; i++) {
-            rows.push(this.renderRow(startAddress, startAddress + bigWordsPerRow, gridTemplateColumns, i % 4 === 3));
-            startAddress += bigWordsPerRow;
-        }
-        return rows;
-    }
-
-    protected renderRow(startAddress: bigint, endAddress: bigint, columnStyle: string, divider?: boolean): React.ReactNode {
-        const addressString = toHexStringWithRadixMarker(startAddress);
-        const range = { startAddress, endAddress };
-        const { title, style, className } = this.getRowAttributes(divider);
         return (
-            <VSCodeDataGridRow
-                // Add a marker to help visual navigation when scrolling
-                className={className}
-                style={style}
-                title={title}
-                key={addressString}
-                gridTemplateColumns={columnStyle}
-            >
-                {this.props.columnOptions.map((column, index) => (
-                    <VSCodeDataGridCell key={column.contribution.id} style={{ fontFamily: 'var(--vscode-editor-font-family)' }} gridColumn={(index + 1).toString()}>
-                        {column.contribution.render(range, this.props.memory!, this.props)}
-                    </VSCodeDataGridCell>
-                ))}
-            </VSCodeDataGridRow>
+            <div className='flex align-items-center'>
+                {memorySelect}
+            </div>
         );
     }
 
-    protected getRowAttributes(divider?: boolean): Partial<StylableNodeAttributes> {
-        const className = 'row';
-        if (divider) {
-            return { style: { borderBottom: '2px solid var(--vscode-editor-lineHighlightBorder)' }, className };
+    protected rowClass = (data?: DataTableRowData<MemoryRowData[]>) => {
+        const css: string[] = [];
+
+        if (data !== undefined && this.isGroupSeparatorRow(data)) {
+            css.push(MemoryTable.GROUP_SEPARATOR);
         }
-        return { className };
+
+        return css;
+    };
+
+    protected isGroupSeparatorRow(row: MemoryRowData): boolean {
+        return row.rowIndex % 4 === 3;
     }
+
+    protected createTableRows = memoize((memory: Memory, options: MemoryRowListOptions): MemoryRowData[] => {
+        const rows: MemoryRowData[] = [];
+        for (let i = 0; i < options.numRows; i++) {
+            const startAddress = memory.address + options.bigWordsPerRow * BigInt(i);
+            rows.push(this.createMemoryRow(i, startAddress, options));
+        }
+
+        return rows;
+    }, isDeepEqual);
+
+    protected createMemoryRowListOptions(memory: Memory, options: MemorySizeOptions): MemoryRowListOptions {
+        const wordsPerRow = options.wordsPerGroup * options.groupsPerRow;
+        const numRows = Math.ceil((memory.bytes.length * 8) / (wordsPerRow * options.wordSize));
+        const bigWordsPerRow = BigInt(wordsPerRow);
+
+        return {
+            numRows,
+            wordsPerRow,
+            bigWordsPerRow
+        };
+    };
+
+    protected createMemoryRow(rowIndex: number, startAddress: bigint, memoryTableOptions: MemoryRowListOptions): MemoryRowData {
+        return {
+            rowIndex,
+            startAddress,
+            endAddress: startAddress + memoryTableOptions.bigWordsPerRow
+        };
+    }
+}
+
+export namespace MemoryTable {
+    export const TABLE_CLASS = 'memory-inspector-table';
+    export const GROUP_SEPARATOR = 'group-separator';
 }

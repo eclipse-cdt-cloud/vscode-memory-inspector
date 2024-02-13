@@ -90,7 +90,7 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
     public openCustomDocument(uri: vscode.Uri): vscode.CustomDocument {
         return {
             uri,
-            dispose: () => {}
+            dispose: () => { }
         };
     }
 
@@ -154,7 +154,7 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
 
         const cspSrc = panel.webview.cspSource;
         const codiconsUri = panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'node_modules', '@vscode/codicons', 'dist', 'codicon.css'));
-        const memoryInspectorCSS = panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'memory-inspector.css'));
+        const memoryInspectorCSS = panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'index.css'));
 
         panel.webview.html = `
             <!DOCTYPE html>
@@ -180,6 +180,9 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
         const disposables = [
             this.messenger.onNotification(readyType, () => {
                 this.refresh(participant, options);
+            }, { sender: participant }),
+            this.messenger.onRequest(setOptionsType, o => {
+                options = { ...options, ...o };
             }, { sender: participant }),
             this.messenger.onRequest(logMessageType, message => outputChannelLogger.info('[webview]:', message), { sender: participant }),
             this.messenger.onRequest(readMemoryType, request => this.readMemory(request), { sender: participant }),
