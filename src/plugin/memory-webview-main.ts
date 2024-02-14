@@ -30,6 +30,7 @@ import {
     getVariables,
     setMemoryViewSettingsType,
     resetMemoryViewSettingsType,
+    setTitleType,
 } from '../common/messaging';
 import { MemoryProvider } from './memory-provider';
 import { outputChannelLogger } from './logger';
@@ -61,6 +62,8 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
 
     protected messenger: Messenger;
     protected refreshOnStop: RefreshEnum;
+
+    protected panelIndices: number = 1;
 
     public constructor(protected extensionUri: vscode.Uri, protected memoryProvider: MemoryProvider) {
         this.messenger = new Messenger();
@@ -125,7 +128,7 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
         };
 
         if (!panel) {
-            panel = vscode.window.createWebviewPanel(MemoryWebview.ViewType, 'Memory Inspector', vscode.ViewColumn.Active, options);
+            panel = vscode.window.createWebviewPanel(MemoryWebview.ViewType, `Memory ${this.panelIndices++}`, vscode.ViewColumn.Active, options);
         } else {
             panel.webview.options = options;
         }
@@ -137,7 +140,8 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
         // and executes code based on the message that is received
         const webviewParticipant = this.setWebviewMessageListener(panel, initialMemory);
 
-        // initialize with configuration
+        // initialize web view content
+        this.setTitle(webviewParticipant, panel.title);
         this.setInitialSettings(webviewParticipant);
     }
 
@@ -191,6 +195,7 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
             this.messenger.onRequest(writeMemoryType, request => this.writeMemory(request), { sender: participant }),
             this.messenger.onRequest(getVariables, request => this.getVariables(request), { sender: participant }),
             this.messenger.onNotification(resetMemoryViewSettingsType, () => this.setInitialSettings(participant), { sender: participant }),
+            this.messenger.onNotification(setTitleType, title => { panel.title = title; }, { sender: participant }),
 
             this.memoryProvider.onDidStopDebug(() => {
                 if (this.refreshOnStop === RefreshEnum.on) {
@@ -206,6 +211,10 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
         panel.onDidDispose(() => disposables.forEach(disposable => disposable.dispose()));
 
         return participant;
+    }
+
+    protected setTitle(webviewParticipant: WebviewIdMessageParticipant, title: string): void {
+        this.messenger.sendNotification(setTitleType, webviewParticipant, title);
     }
 
     protected setInitialSettings(webviewParticipant: WebviewIdMessageParticipant): void {

@@ -22,6 +22,7 @@ import {
     logMessageType,
     setOptionsType,
     readMemoryType,
+    setTitleType,
     setMemoryViewSettingsType,
     resetMemoryViewSettingsType,
 } from '../common/messaging';
@@ -39,6 +40,7 @@ import { PrimeReactProvider } from 'primereact/api';
 import 'primeflex/primeflex.css';
 
 export interface MemoryAppState extends MemoryState, MemoryDisplayConfiguration {
+    initialTitle: string;
     decorations: Decoration[];
     columns: ColumnStatus[];
 }
@@ -59,6 +61,7 @@ class App extends React.Component<{}, MemoryAppState> {
         columnContributionService.register(new AsciiColumn());
         decorationService.register(variableDecorator);
         this.state = {
+            initialTitle: 'Memory',
             memory: undefined,
             memoryReference: '',
             offset: 0,
@@ -80,6 +83,7 @@ class App extends React.Component<{}, MemoryAppState> {
             }
             this.setState({ ...(config as MemoryDisplayConfiguration) });
         });
+        messenger.onNotification(setTitleType, title => this.setState({ initialTitle: title }));
         messenger.sendNotification(readyType, HOST_EXTENSION, undefined);
     }
 
@@ -92,9 +96,11 @@ class App extends React.Component<{}, MemoryAppState> {
                 memoryReference={this.state.memoryReference}
                 offset={this.state.offset ?? 0}
                 count={this.state.count}
+                initialTitle={this.state.initialTitle}
                 updateMemoryArguments={this.updateMemoryState}
                 updateMemoryDisplayConfiguration={this.updateMemoryDisplayConfiguration}
                 resetMemoryDisplayConfiguration={this.resetMemoryDisplayConfiguration}
+                updateTitle={this.updateTitle}
                 refreshMemory={this.refreshMemory}
                 toggleColumn={this.toggleColumn}
                 fetchMemory={this.fetchMemory}
@@ -109,6 +115,7 @@ class App extends React.Component<{}, MemoryAppState> {
     protected updateMemoryState = (newState: Partial<MemoryState>) => this.setState(prevState => ({ ...prevState, ...newState }));
     protected updateMemoryDisplayConfiguration = (newState: Partial<MemoryDisplayConfiguration>) => this.setState(prevState => ({ ...prevState, ...newState }));
     protected resetMemoryDisplayConfiguration = () => messenger.sendNotification(resetMemoryViewSettingsType, HOST_EXTENSION, undefined);
+    protected updateTitle = (title: string) => messenger.sendNotification(setTitleType, HOST_EXTENSION, title);
 
     protected async setOptions(options?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void> {
         messenger.sendRequest(logMessageType, HOST_EXTENSION, `Setting options: ${JSON.stringify(options)}`);

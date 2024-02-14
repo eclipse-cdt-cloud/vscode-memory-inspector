@@ -21,7 +21,7 @@ import { Dropdown, DropdownChangeEvent } from 'primereact/dropdown';
 import { InputText } from 'primereact/inputtext';
 import { OverlayPanel } from 'primereact/overlaypanel';
 import { classNames } from 'primereact/utils';
-import React, { KeyboardEvent, MouseEventHandler } from 'react';
+import React, { ChangeEventHandler, FocusEventHandler, KeyboardEvent, KeyboardEventHandler, MouseEventHandler } from 'react';
 import { TableRenderOptions } from '../columns/column-contribution-service';
 import {
     SerializedTableRenderOptions,
@@ -31,13 +31,21 @@ import { MultiSelectWithLabel } from './multi-select';
 export interface OptionsWidgetProps
     extends Omit<TableRenderOptions, 'scrollingBehavior'>,
     Required<DebugProtocol.ReadMemoryArguments> {
+    initialTitle: string;
     updateRenderOptions: (options: Partial<SerializedTableRenderOptions>) => void;
     resetRenderOptions: () => void;
+    updateTitle: (title: string) => void;
     updateMemoryArguments: (
         memoryArguments: Partial<DebugProtocol.ReadMemoryArguments>
     ) => void;
     refreshMemory: () => void;
     toggleColumn(id: string, isVisible: boolean): void;
+}
+
+interface OptionsWidgetState {
+    title: string;
+    previousTitle?: string;
+    isTitleEditing: boolean;
 }
 
 const enum InputId {
@@ -57,9 +65,10 @@ interface OptionsForm {
 const allowedBytesPerGroup = [1, 2, 4, 8, 16];
 const allowedGroupsPerRow = [1, 2, 4, 8, 16, 32];
 
-export class OptionsWidget extends React.Component<OptionsWidgetProps, {}> {
+export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWidgetState> {
     protected formConfig: FormikConfig<OptionsForm>;
     protected extendedOptions = React.createRef<OverlayPanel>();
+    protected labelEditInput = React.createRef<HTMLInputElement>();
 
     protected get optionsFormValues(): OptionsForm {
         return {
@@ -79,6 +88,10 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, {}> {
             onSubmit: () => {
                 this.props.refreshMemory();
             },
+        };
+        this.state = {
+            title: this.props.initialTitle,
+            isTitleEditing: false,
         };
     }
 
@@ -117,11 +130,48 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, {}> {
         return errors;
     };
 
+    componentDidUpdate(prevProps: Readonly<OptionsWidgetProps>, prevState: Readonly<OptionsWidgetState>): void {
+        if (this.props.initialTitle !== prevProps.initialTitle) {
+            this.setState({ title: this.props.initialTitle });
+        }
+        if (!prevState.isTitleEditing && this.state.isTitleEditing) {
+            this.labelEditInput.current?.focus();
+            this.labelEditInput.current?.select();
+        }
+    }
+
     override render(): React.ReactNode {
         this.formConfig.initialValues = this.optionsFormValues;
+        const isLabelEditing = this.state.isTitleEditing;
 
         return (
             <div className='memory-options-widget px-4'>
+                <div className='title-container'>
+                    <InputText
+                        ref={this.labelEditInput}
+                        type='text'
+                        value={this.state.title}
+                        onChange={this.handleTitleEdit}
+                        onKeyDown={this.handleTitleEditingKeyDown}
+                        onBlur={this.confirmEditedTitle}
+                        style={{ display: isLabelEditing ? 'block' : 'none' }}
+                    />
+                    {!isLabelEditing && (
+                        <h1 onDoubleClick={this.enableTitleEditing}>{this.state.title}</h1>
+                    )}
+                    {!isLabelEditing && (
+                        <Button
+                            type='button'
+                            className='edit-label-toggle'
+                            icon='codicon codicon-edit'
+                            onClick={this.enableTitleEditing}
+                            title='Edit view title'
+                            aria-label='Edit view title'
+                            rounded
+                            aria-haspopup
+                        />
+                    )}
+                </div>
                 <div className='core-options py-2'>
                     <Formik {...this.formConfig}>
                         {formik => (
@@ -326,5 +376,42 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, {}> {
     }
 
     protected handleResetAdvancedOptions: MouseEventHandler<HTMLButtonElement> | undefined = () => this.props.resetRenderOptions();
+
+    protected enableTitleEditing = () => this.doEnableTitleEditing();
+    protected doEnableTitleEditing(): void {
+        this.setState({ isTitleEditing: true, previousTitle: this.state.title });
+    }
+
+    protected disableTitleEditing = () => this.doDisableTitleEditing();
+    protected doDisableTitleEditing(): void {
+        this.setState({ isTitleEditing: false });
+    }
+
+    protected handleTitleEdit: ChangeEventHandler<HTMLInputElement> | undefined = () => this.doHandleTitleEdit();
+    protected doHandleTitleEdit(): void {
+        if (this.labelEditInput.current) {
+            this.setState({ title: this.labelEditInput.current?.value });
+        }
+    }
+
+    protected handleTitleEditingKeyDown: KeyboardEventHandler<HTMLInputElement> | undefined = event => this.doHandleTitleEditingKeyDown(event);
+    protected doHandleTitleEditingKeyDown(event: React.KeyboardEvent<HTMLInputElement>): void {
+        if (event.key === 'Enter' && this.labelEditInput.current) {
+            this.doConfirmEditedTitle();
+        } else if (event.key === 'Escape') {
+            if (this.state.previousTitle) {
+                this.setState({ title: this.state.previousTitle });
+            }
+            this.disableTitleEditing();
+        }
+    }
+
+    protected confirmEditedTitle: FocusEventHandler<HTMLInputElement> | undefined = () => this.doConfirmEditedTitle();
+    protected doConfirmEditedTitle(): void {
+        if (this.state.isTitleEditing && this.state.title) {
+            this.props.updateTitle(this.state.title);
+            this.disableTitleEditing();
+        }
+    }
 
 }
