@@ -17,7 +17,7 @@
 import type { DebugProtocol } from '@vscode/debugprotocol';
 import deepequal from 'fast-deep-equal';
 import type * as React from 'react';
-import { areRangesEqual, BigIntMemoryRange } from '../../common/memory-range';
+import { areRangesEqual, BigIntMemoryRange, Radix } from '../../common/memory-range';
 
 export enum Endianness {
     Little = 'Little Endian',
@@ -80,6 +80,8 @@ export interface MemoryDisplayConfiguration {
     wordsPerGroup: number;
     groupsPerRow: number;
     scrollingBehavior: ScrollingBehavior;
+    addressRadix: Radix;
+    showRadixPrefix: boolean;
 }
 export type ScrollingBehavior = 'Paginate' | 'Infinite';
 

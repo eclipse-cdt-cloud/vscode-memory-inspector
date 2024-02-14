@@ -57,7 +57,7 @@ const MultiSelectBar: React.FC<MultiSelectProps> = ({ items, onSelectionChanged,
 
 export const MultiSelectWithLabel: React.FC<MultiSelectProps> = ({ id, label, items, onSelectionChanged }) => (
     <div className='flex flex-column'>
-        <label className='multi-select-label mb-2'>{label}</label>
+        <h2 className='multi-select-label mb-2 mt-0'>{label}</h2>
         <MultiSelectBar id={id} items={items} onSelectionChanged={onSelectionChanged} label={label} />
     </div>
 );

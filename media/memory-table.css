@@ -75,3 +75,7 @@
 .more-memory-select select:hover {
   background: var(--vscode-dropdown-background);
 }
+
+.radix-prefix {
+  opacity: .6;
+}

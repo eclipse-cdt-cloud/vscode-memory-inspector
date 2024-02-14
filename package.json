@@ -206,6 +206,28 @@
             "Appends new memory to bounds of current request, resulting in a growing list."
           ],
           "description": "Behavior when adding more memory beyond the current view."
+        },
+        "memory-inspector.addressRadix": {
+          "type": "number",
+          "enum": [
+            2,
+            8,
+            10,
+            16
+          ],
+          "default": "16",
+          "enumDescriptions": [
+            "Binary format (base 2)",
+            "Octal format (base 8)",
+            "Decimal format (base 10)",
+            "Hexadecimal format (base 16)"
+          ],
+          "description": "Specifies the numerical base (radix) for displaying memory addresses."
+        },
+        "memory-inspector.showRadixPrefix": {
+          "type": "boolean",
+          "default": true,
+          "description": "Display the radix prefix (e.g., '0x' for hexadecimal, '0b' for binary) before memory addresses."
         }
       }
     }
