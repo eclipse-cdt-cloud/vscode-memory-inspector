@@ -14,27 +14,27 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-import type { DebugProtocol } from '@vscode/debugprotocol';
 import * as vscode from 'vscode';
+import type { DebugProtocol } from '@vscode/debugprotocol';
+import * as manifest from './manifest';
 import { Messenger } from 'vscode-messenger';
 import { WebviewIdMessageParticipant } from 'vscode-messenger-common';
-import { VariableRange } from '../common/memory-range';
 import {
+    readyType,
+    logMessageType,
+    setOptionsType,
+    readMemoryType,
+    writeMemoryType,
     MemoryReadResult,
     MemoryWriteResult,
     getVariables,
-    logMessageType,
-    readMemoryType,
-    readyType,
-    resetMemoryDisplayConfigurationType,
     setMemoryDisplayConfigurationType,
-    setOptionsType,
-    writeMemoryType
+    resetMemoryDisplayConfigurationType,
 } from '../common/messaging';
-import { MemoryDisplayConfiguration, ScrollingBehavior } from '../webview/utils/view-types';
-import { outputChannelLogger } from './logger';
-import * as manifest from './manifest';
 import { MemoryProvider } from './memory-provider';
+import { outputChannelLogger } from './logger';
+import { VariableRange } from '../common/memory-range';
+import { MemoryDisplayConfiguration as MemoryDisplayConfiguration, ScrollingBehavior } from '../webview/utils/view-types';
 
 interface Variable {
     name: string;

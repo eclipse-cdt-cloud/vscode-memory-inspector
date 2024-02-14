@@ -242,7 +242,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, {}> {
                                 value={this.props.groupsPerRow}
                                 onChange={this.handleAdvancedOptionsDropdownChange}
                                 options={allowedGroupsPerRow}
-                                className='advanced-options-dropdown' />
+                                className="advanced-options-dropdown" />
                         </div>
                     </OverlayPanel>
                 </div>
@@ -316,13 +316,13 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, {}> {
     }
 
     protected handleColumnActivationChange: (labelSelected: string, newSelectionState: boolean) => void = (label, state) => this.doHandleColumnActivationChange(label, state);
-    doHandleColumnActivationChange(label: string, state: boolean): void {
+    doHandleColumnActivationChange(label: string, shouldRender: boolean): void {
         const columnState = this.props.columnOptions.find(columnStatus => columnStatus.contribution.label.toLowerCase() === label.toLowerCase());
         const columnId = columnState?.contribution.id;
         if (columnId) {
-            if (state && !this.props.visibleColumns.includes(columnId)) {
+            if (shouldRender && !this.props.visibleColumns.includes(columnId)) {
                 this.props.updateRenderOptions({ visibleColumns: [...this.props.visibleColumns, columnId] });
-            } else if (!state && this.props.visibleColumns.includes(columnId)) {
+            } else if (!shouldRender && this.props.visibleColumns.includes(columnId)) {
                 this.props.updateRenderOptions({ visibleColumns: this.props.visibleColumns.filter(column => column !== columnId) });
             }
         }
