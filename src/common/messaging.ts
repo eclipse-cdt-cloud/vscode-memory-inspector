@@ -16,7 +16,7 @@
 
 import type { DebugProtocol } from '@vscode/debugprotocol';
 import type { NotificationType, RequestType } from 'vscode-messenger-common';
-import { MemoryDisplayConfiguration } from '../webview/utils/view-types';
+import { MemoryViewSettings } from '../webview/utils/view-types';
 import type { VariableRange } from './memory-range';
 
 export type MemoryReadResult = DebugProtocol.ReadMemoryResponse['body'];
@@ -24,8 +24,8 @@ export type MemoryWriteResult = DebugProtocol.WriteMemoryResponse['body'];
 
 export const readyType: NotificationType<void> = { method: 'ready' };
 export const logMessageType: RequestType<string, void> = { method: 'logMessage' };
-export const setMemoryDisplayConfigurationType: NotificationType<Partial<MemoryDisplayConfiguration>> = { method: 'setMemoryDisplayConfiguration' };
-export const resetMemoryDisplayConfigurationType: NotificationType<void> = { method: 'resetMemoryDisplayConfiguration' };
+export const setMemoryViewSettingsType: NotificationType<Partial<MemoryViewSettings>> = { method: 'setMemoryViewSettings' };
+export const resetMemoryViewSettingsType: NotificationType<void> = { method: 'resetMemoryViewSettings' };
 export const setOptionsType: RequestType<Partial<DebugProtocol.ReadMemoryArguments | undefined>, void> = { method: 'setOptions' };
 export const readMemoryType: RequestType<DebugProtocol.ReadMemoryArguments, MemoryReadResult> = { method: 'readMemory' };
 export const writeMemoryType: RequestType<DebugProtocol.WriteMemoryArguments, MemoryWriteResult> = { method: 'writeMemory' };

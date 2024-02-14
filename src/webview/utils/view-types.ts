@@ -72,11 +72,18 @@ export interface FullNodeAttributes extends StylableNodeAttributes {
     content: string;
 }
 
-export type ScrollingBehavior = 'Paginate' | 'Infinite';
+/** All settings related to memory view that can be specified for the webview from the extension "main". */
+export interface MemoryViewSettings extends ColumnVisibilityStatus, MemoryDisplayConfiguration { }
+
+/** The memory display configuration that can be specified for the memory widget. */
 export interface MemoryDisplayConfiguration {
     wordsPerGroup: number;
     groupsPerRow: number;
     scrollingBehavior: ScrollingBehavior;
+}
+export type ScrollingBehavior = 'Paginate' | 'Infinite';
+
+export interface ColumnVisibilityStatus {
     visibleColumns: string[];
 }
 

@@ -28,13 +28,13 @@ import {
     MemoryReadResult,
     MemoryWriteResult,
     getVariables,
-    setMemoryDisplayConfigurationType,
-    resetMemoryDisplayConfigurationType,
+    setMemoryViewSettingsType,
+    resetMemoryViewSettingsType,
 } from '../common/messaging';
 import { MemoryProvider } from './memory-provider';
 import { outputChannelLogger } from './logger';
 import { VariableRange } from '../common/memory-range';
-import { MemoryDisplayConfiguration as MemoryDisplayConfiguration, ScrollingBehavior } from '../webview/utils/view-types';
+import { MemoryViewSettings, ScrollingBehavior } from '../webview/utils/view-types';
 
 interface Variable {
     name: string;
@@ -138,7 +138,7 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
         const webviewParticipant = this.setWebviewMessageListener(panel, initialMemory);
 
         // initialize with configuration
-        this.setInitialConfiguration(webviewParticipant);
+        this.setInitialSettings(webviewParticipant);
     }
 
     protected getRefresh(): RefreshEnum {
@@ -190,7 +190,7 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
             this.messenger.onRequest(readMemoryType, request => this.readMemory(request), { sender: participant }),
             this.messenger.onRequest(writeMemoryType, request => this.writeMemory(request), { sender: participant }),
             this.messenger.onRequest(getVariables, request => this.getVariables(request), { sender: participant }),
-            this.messenger.onNotification(resetMemoryDisplayConfigurationType, () => this.setInitialConfiguration(participant), { sender: participant }),
+            this.messenger.onNotification(resetMemoryViewSettingsType, () => this.setInitialSettings(participant), { sender: participant }),
 
             this.memoryProvider.onDidStopDebug(() => {
                 if (this.refreshOnStop === RefreshEnum.on) {
@@ -208,20 +208,21 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
         return participant;
     }
 
-    protected setInitialConfiguration(webviewParticipant: WebviewIdMessageParticipant): void {
-        this.messenger.sendNotification(setMemoryDisplayConfigurationType, webviewParticipant, this.getMemoryDisplayConfiguration());
+    protected setInitialSettings(webviewParticipant: WebviewIdMessageParticipant): void {
+        this.messenger.sendNotification(setMemoryViewSettingsType, webviewParticipant, this.getMemoryViewSettings());
     }
 
     protected async refresh(participant: WebviewIdMessageParticipant, options?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void> {
         this.messenger.sendRequest(setOptionsType, participant, options);
     }
 
-    protected getMemoryDisplayConfiguration(): MemoryDisplayConfiguration {
+    protected getMemoryViewSettings(): MemoryViewSettings {
         const memoryInspectorConfiguration = vscode.workspace.getConfiguration(manifest.PACKAGE_NAME);
         const wordsPerGroup = memoryInspectorConfiguration.get<number>(manifest.CONFIG_WORDS_PER_GROUP, manifest.DEFAULT_WORDS_PER_GROUP);
         const groupsPerRow = memoryInspectorConfiguration.get<number>(manifest.CONFIG_GROUPS_PER_ROW, manifest.DEFAULT_GROUPS_PER_ROW);
         const scrollingBehavior = memoryInspectorConfiguration.get<ScrollingBehavior>(manifest.CONFIG_SCROLLING_BEHAVIOR, manifest.DEFAULT_SCROLLING_BEHAVIOR);
-        const visibleColumns = CONFIGURABLE_COLUMNS.filter(column => vscode.workspace.getConfiguration(manifest.PACKAGE_NAME).get<boolean>(column, true))
+        const visibleColumns = CONFIGURABLE_COLUMNS
+            .filter(column => vscode.workspace.getConfiguration(manifest.PACKAGE_NAME).get<boolean>(column, false))
             .map(columnId => columnId.replace('columns.', ''));
         return { wordsPerGroup, groupsPerRow, scrollingBehavior, visibleColumns };
     }

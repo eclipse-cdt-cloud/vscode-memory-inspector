@@ -31,6 +31,7 @@ interface MemoryWidgetProps extends MemoryDisplayConfiguration {
     isMemoryFetching: boolean;
     refreshMemory: () => void;
     updateMemoryArguments: (memoryArguments: Partial<DebugProtocol.ReadMemoryArguments>) => void;
+    toggleColumn(id: string, active: boolean): void;
     updateMemoryDisplayConfiguration: (memoryArguments: Partial<MemoryDisplayConfiguration>) => void;
     resetMemoryDisplayConfiguration: () => void;
     fetchMemory(partialOptions?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void>
@@ -67,11 +68,11 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 updateRenderOptions={this.props.updateMemoryDisplayConfiguration}
                 resetRenderOptions={this.props.resetMemoryDisplayConfiguration}
                 refreshMemory={this.props.refreshMemory}
-                visibleColumns={this.props.visibleColumns}
+                toggleColumn={this.props.toggleColumn}
             />
             <MemoryTable
                 decorations={this.props.decorations}
-                columnOptions={this.props.columns.filter(candidate => candidate.active || this.props.visibleColumns.includes(candidate.contribution.id))}
+                columnOptions={this.props.columns.filter(candidate => candidate.active)}
                 memory={this.props.memory}
                 endianness={this.state.endianness}
                 wordSize={this.state.wordSize}
@@ -82,7 +83,6 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 fetchMemory={this.props.fetchMemory}
                 isMemoryFetching={this.props.isMemoryFetching}
                 scrollingBehavior={this.props.scrollingBehavior}
-                visibleColumns={this.props.visibleColumns}
             />
         </div>);
     }
