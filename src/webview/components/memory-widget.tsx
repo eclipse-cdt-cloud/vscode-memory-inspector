@@ -16,14 +16,12 @@
 
 import { DebugProtocol } from '@vscode/debugprotocol';
 import React from 'react';
+import { ColumnStatus } from '../columns/column-contribution-service';
+import { Decoration, Endianness, Memory, MemoryDisplayConfiguration } from '../utils/view-types';
 import { MemoryTable } from './memory-table';
 import { OptionsWidget } from './options-widget';
-import { Decoration, Endianness, Memory, MemoryDisplayConfiguration } from '../utils/view-types';
-import { messenger } from '../view-messenger';
-import { memoryDisplayConfigurationChangedType } from '../../common/messaging';
-import { ColumnStatus } from '../columns/column-contribution-service';
 
-interface MemoryWidgetProps {
+interface MemoryWidgetProps extends MemoryDisplayConfiguration {
     memory?: Memory;
     decorations: Decoration[];
     columns: ColumnStatus[];
@@ -34,30 +32,25 @@ interface MemoryWidgetProps {
     refreshMemory: () => void;
     updateMemoryArguments: (memoryArguments: Partial<DebugProtocol.ReadMemoryArguments>) => void;
     toggleColumn(id: string, active: boolean): void;
+    updateMemoryDisplayConfiguration: (memoryArguments: Partial<MemoryDisplayConfiguration>) => void;
+    resetMemoryDisplayConfiguration: () => void;
     fetchMemory(partialOptions?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void>
 }
 
-interface MemoryWidgetState extends MemoryDisplayConfiguration {
+interface MemoryWidgetState {
     endianness: Endianness;
     wordSize: number;
 }
 
 const defaultOptions: MemoryWidgetState = {
     endianness: Endianness.Little,
-    wordSize: 8,
-    wordsPerGroup: 1,
-    groupsPerRow: 4,
-    scrollingBehavior: 'Paginate',
+    wordSize: 8
 };
 
 export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidgetState> {
     constructor(props: MemoryWidgetProps) {
         super(props);
         this.state = { ...defaultOptions };
-    }
-
-    public componentDidMount(): void {
-        messenger.onNotification(memoryDisplayConfigurationChangedType, configuration => this.setState(configuration));
     }
 
     override render(): React.ReactNode {
@@ -69,10 +62,11 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 count={this.props.count}
                 endianness={this.state.endianness}
                 wordSize={this.state.wordSize}
-                wordsPerGroup={this.state.wordsPerGroup}
-                groupsPerRow={this.state.groupsPerRow}
+                wordsPerGroup={this.props.wordsPerGroup}
+                groupsPerRow={this.props.groupsPerRow}
                 updateMemoryArguments={this.props.updateMemoryArguments}
-                updateRenderOptions={this.updateRenderOptions}
+                updateRenderOptions={this.props.updateMemoryDisplayConfiguration}
+                resetRenderOptions={this.props.resetMemoryDisplayConfiguration}
                 refreshMemory={this.props.refreshMemory}
                 toggleColumn={this.props.toggleColumn}
             />
@@ -82,16 +76,15 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 memory={this.props.memory}
                 endianness={this.state.endianness}
                 wordSize={this.state.wordSize}
-                wordsPerGroup={this.state.wordsPerGroup}
-                groupsPerRow={this.state.groupsPerRow}
+                wordsPerGroup={this.props.wordsPerGroup}
+                groupsPerRow={this.props.groupsPerRow}
                 offset={this.props.offset}
                 count={this.props.count}
                 fetchMemory={this.props.fetchMemory}
                 isMemoryFetching={this.props.isMemoryFetching}
-                scrollingBehavior={this.state.scrollingBehavior}
+                scrollingBehavior={this.props.scrollingBehavior}
             />
         </div>);
     }
 
-    protected updateRenderOptions = (newState: Partial<MemoryWidgetState>) => this.setState(prevState => ({ ...prevState, ...newState }));
 }

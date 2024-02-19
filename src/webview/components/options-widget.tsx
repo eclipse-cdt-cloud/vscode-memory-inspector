@@ -20,27 +20,24 @@ import { Button } from 'primereact/button';
 import { Dropdown, DropdownChangeEvent } from 'primereact/dropdown';
 import { InputText } from 'primereact/inputtext';
 import { OverlayPanel } from 'primereact/overlaypanel';
-import React, { KeyboardEvent } from 'react';
-import { HOST_EXTENSION } from 'vscode-messenger-common';
-import { setMemoryDisplayConfigurationType } from '../../common/messaging';
+import { classNames } from 'primereact/utils';
+import React, { KeyboardEvent, MouseEventHandler } from 'react';
 import { TableRenderOptions } from '../columns/column-contribution-service';
 import {
-    MemoryDisplayConfigurationChangeRequest,
     SerializedTableRenderOptions,
 } from '../utils/view-types';
-import { messenger } from '../view-messenger';
 import { MultiSelectWithLabel } from './multi-select';
-import { classNames } from 'primereact/utils';
 
 export interface OptionsWidgetProps
     extends Omit<TableRenderOptions, 'scrollingBehavior'>,
     Required<DebugProtocol.ReadMemoryArguments> {
     updateRenderOptions: (options: Partial<SerializedTableRenderOptions>) => void;
+    resetRenderOptions: () => void;
     updateMemoryArguments: (
         memoryArguments: Partial<DebugProtocol.ReadMemoryArguments>
     ) => void;
     refreshMemory: () => void;
-    toggleColumn(id: string, active: boolean): void;
+    toggleColumn(id: string, isVisible: boolean): void;
 }
 
 const enum InputId {
@@ -193,12 +190,21 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, {}> {
                             this.extendedOptions?.current?.toggle(event)
                         }
                         type='button'
-                        title='Show all data'
+                        title='Advanced Display Options'
                         rounded
-                        aria-label='Show all data'
+                        aria-label='Advanced Display Options'
                         aria-haspopup
                     ></Button>
                     <OverlayPanel ref={this.extendedOptions}>
+                        <Button
+                            icon='codicon codicon-discard'
+                            className='reset-advanced-options-icon'
+                            onClick={this.handleResetAdvancedOptions}
+                            title='Reset to Defaults'
+                            rounded
+                            aria-label='Reset to Defaults'
+                            aria-haspopup
+                        />
                         <div className='advanced-options-content'>
                             {!!this.props.columnOptions.length && (
                                 <MultiSelectWithLabel
@@ -211,7 +217,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, {}> {
                                             label: column.contribution.label,
                                             checked: column.active,
                                         }))}
-                                    onSelectionChanged={this.props.toggleColumn}
+                                    onSelectionChanged={this.handleColumnActivationChange}
                                 />
                             )}
                             <label
@@ -225,7 +231,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, {}> {
                                 value={this.props.wordsPerGroup}
                                 onChange={this.handleAdvancedOptionsDropdownChange}
                                 options={allowedBytesPerGroup}
-                                className="advanced-options-dropdown" />
+                                className='advanced-options-dropdown' />
                             <label
                                 htmlFor={InputId.GroupsPerRow}
                                 className='advanced-options-label'
@@ -297,19 +303,12 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, {}> {
     protected doHandleAdvancedOptionsDropdownChange(event: DropdownChangeEvent): void {
         const id = event.target.id as InputId;
         const value = event.target.value;
-
         switch (id) {
             case InputId.WordsPerGroup:
-                this.updateConfiguration({
-                    id: 'groupings.wordsPerGroup',
-                    value: Number(value),
-                });
+                this.props.updateRenderOptions({ wordsPerGroup: Number(value) });
                 break;
             case InputId.GroupsPerRow:
-                this.updateConfiguration({
-                    id: 'groupings.groupsPerRow',
-                    value: Number(value),
-                });
+                this.props.updateRenderOptions({ groupsPerRow: Number(value) });
                 break;
             default: {
                 throw new Error(`${id} can not be handled. Did you call the correct method?`);
@@ -317,13 +316,15 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, {}> {
         }
     }
 
-    protected updateConfiguration(
-        viewConfigurationChangeRequest: MemoryDisplayConfigurationChangeRequest
-    ): void {
-        return messenger.sendNotification(
-            setMemoryDisplayConfigurationType,
-            HOST_EXTENSION,
-            viewConfigurationChangeRequest
-        );
+    protected handleColumnActivationChange: (labelSelected: string, newSelectionState: boolean) => void = (label, state) => this.doHandleColumnActivationChange(label, state);
+    doHandleColumnActivationChange(label: string, isVisible: boolean): void {
+        const columnState = this.props.columnOptions.find(columnStatus => columnStatus.contribution.label.toLowerCase() === label.toLowerCase());
+        const columnId = columnState?.contribution.id;
+        if (columnId) {
+            this.props.toggleColumn(columnId, isVisible);
+        }
     }
+
+    protected handleResetAdvancedOptions: MouseEventHandler<HTMLButtonElement> | undefined = () => this.props.resetRenderOptions();
+
 }

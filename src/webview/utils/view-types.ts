@@ -15,9 +15,9 @@
  ********************************************************************************/
 
 import type { DebugProtocol } from '@vscode/debugprotocol';
+import deepequal from 'fast-deep-equal';
 import type * as React from 'react';
 import { areRangesEqual, BigIntMemoryRange } from '../../common/memory-range';
-import deepequal from 'fast-deep-equal';
 
 export enum Endianness {
     Little = 'Little Endian',
@@ -72,21 +72,19 @@ export interface FullNodeAttributes extends StylableNodeAttributes {
     content: string;
 }
 
-export type ScrollingBehavior = 'Paginate' | 'Infinite';
+/** All settings related to memory view that can be specified for the webview from the extension "main". */
+export interface MemoryViewSettings extends ColumnVisibilityStatus, MemoryDisplayConfiguration { }
+
+/** The memory display configuration that can be specified for the memory widget. */
 export interface MemoryDisplayConfiguration {
     wordsPerGroup: number;
     groupsPerRow: number;
     scrollingBehavior: ScrollingBehavior;
 }
+export type ScrollingBehavior = 'Paginate' | 'Infinite';
 
 export interface ColumnVisibilityStatus {
-    id: string;
-    active: boolean;
-}
-
-export interface MemoryDisplayConfigurationChangeRequest {
-    id: 'groupings.wordsPerGroup' | 'groupings.groupsPerRow' | 'scrollingBehavior';
-    value: number;
+    visibleColumns: string[];
 }
 
 export type ReactInteraction<E extends Element = Element> = React.MouseEvent<E> | React.KeyboardEvent<E>;

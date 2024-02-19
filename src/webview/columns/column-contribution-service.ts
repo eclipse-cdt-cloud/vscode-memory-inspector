@@ -66,10 +66,12 @@ class ColumnContributionService {
             }
         };
     }
-    async show(id: string, memoryState: MemoryState): Promise<ColumnStatus[]> {
+    async show(id: string, memoryState?: MemoryState): Promise<ColumnStatus[]> {
         const wrapper = this.registeredColumns.get(id);
         if (wrapper) {
-            await wrapper.contribution.activate?.(memoryState);
+            if (memoryState) {
+                await wrapper.contribution.activate?.(memoryState);
+            }
             wrapper.active = true;
         }
         return this.columnArray.slice();

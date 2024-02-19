@@ -22,10 +22,11 @@ import {
     logMessageType,
     setOptionsType,
     readMemoryType,
-    columnVisibilityType,
+    setMemoryViewSettingsType,
+    resetMemoryViewSettingsType,
 } from '../common/messaging';
 import type { DebugProtocol } from '@vscode/debugprotocol';
-import { ColumnVisibilityStatus, Decoration, Memory, MemoryState } from './utils/view-types';
+import { Decoration, Memory, MemoryDisplayConfiguration, MemoryState } from './utils/view-types';
 import { MemoryWidget } from './components/memory-widget';
 import { messenger } from './view-messenger';
 import { ColumnStatus, columnContributionService } from './columns/column-contribution-service';
@@ -37,13 +38,16 @@ import { DataColumn } from './columns/data-column';
 import { PrimeReactProvider } from 'primereact/api';
 import 'primeflex/primeflex.css';
 
-export interface MemoryAppState extends MemoryState {
+export interface MemoryAppState extends MemoryState, MemoryDisplayConfiguration {
     decorations: Decoration[];
     columns: ColumnStatus[];
 }
 
-export const DEFAULT_WORDS_PER_GROUP = 1;
-export const DEFAULT_GROUPS_PER_ROW = 4;
+const MEMORY_DISPLAY_CONFIGURATION_DEFAULTS: MemoryDisplayConfiguration = {
+    wordsPerGroup: 1,
+    groupsPerRow: 4,
+    scrollingBehavior: 'Paginate'
+};
 
 class App extends React.Component<{}, MemoryAppState> {
 
@@ -61,14 +65,22 @@ class App extends React.Component<{}, MemoryAppState> {
             count: 256,
             decorations: [],
             columns: columnContributionService.getColumns(),
-            isMemoryFetching: false
+            isMemoryFetching: false,
+            ...MEMORY_DISPLAY_CONFIGURATION_DEFAULTS
         };
     }
 
     public componentDidMount(): void {
         messenger.onRequest(setOptionsType, options => this.setOptions(options));
+        messenger.onNotification(setMemoryViewSettingsType, config => {
+            for (const column of columnContributionService.getColumns()) {
+                const id = column.contribution.id;
+                const configurable = column.configurable;
+                this.setColumnVisibility(id, !configurable || !!config.visibleColumns?.includes(id));
+            }
+            this.setState({ ...(config as MemoryDisplayConfiguration) });
+        });
         messenger.sendNotification(readyType, HOST_EXTENSION, undefined);
-        messenger.onNotification(columnVisibilityType, request => this.handleColumnVisibilityChanged(request));
     }
 
     public render(): React.ReactNode {
@@ -81,21 +93,22 @@ class App extends React.Component<{}, MemoryAppState> {
                 offset={this.state.offset ?? 0}
                 count={this.state.count}
                 updateMemoryArguments={this.updateMemoryState}
+                updateMemoryDisplayConfiguration={this.updateMemoryDisplayConfiguration}
+                resetMemoryDisplayConfiguration={this.resetMemoryDisplayConfiguration}
                 refreshMemory={this.refreshMemory}
                 toggleColumn={this.toggleColumn}
                 fetchMemory={this.fetchMemory}
                 isMemoryFetching={this.state.isMemoryFetching}
+                groupsPerRow={this.state.groupsPerRow}
+                wordsPerGroup={this.state.wordsPerGroup}
+                scrollingBehavior={this.state.scrollingBehavior}
             />
         </PrimeReactProvider>;
     }
 
-    protected async handleColumnVisibilityChanged(request: ColumnVisibilityStatus): Promise<void> {
-        const { active, id } = request;
-        const columns = active ? await columnContributionService.show(id, this.state) : columnContributionService.hide(id);
-        this.setState({ columns });
-    }
-
     protected updateMemoryState = (newState: Partial<MemoryState>) => this.setState(prevState => ({ ...prevState, ...newState }));
+    protected updateMemoryDisplayConfiguration = (newState: Partial<MemoryDisplayConfiguration>) => this.setState(prevState => ({ ...prevState, ...newState }));
+    protected resetMemoryDisplayConfiguration = () => messenger.sendNotification(resetMemoryViewSettingsType, HOST_EXTENSION, undefined);
 
     protected async setOptions(options?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void> {
         messenger.sendRequest(logMessageType, HOST_EXTENSION, `Setting options: ${JSON.stringify(options)}`);
@@ -145,10 +158,19 @@ class App extends React.Component<{}, MemoryAppState> {
     }
 
     protected toggleColumn = (id: string, active: boolean): void => { this.doToggleColumn(id, active); };
-
-    protected doToggleColumn(id: string, active: boolean): void {
-        messenger.sendNotification(columnVisibilityType, HOST_EXTENSION, { id, active });
+    protected doToggleColumn(id: string, isVisible: boolean): void {
+        this.setColumnVisibility(id, isVisible);
+        this.setState({ columns: columnContributionService.getColumns() });
     }
+
+    protected setColumnVisibility(columnId: string, isVisible: boolean): void {
+        if (isVisible) {
+            columnContributionService.show(columnId);
+        } else {
+            columnContributionService.hide(columnId);
+        }
+    }
+
 }
 
 const container = document.getElementById('root') as Element;
