@@ -37,6 +37,12 @@
   background: var(--vscode-editor-background);
   transition: box-shadow 0.2s;
 }
+.p-datatable .p-datatable-tbody > tr:nth-child(odd) {
+  background: var(--vscode-tree-tableOddRowsBackground);
+}
+.p-datatable .p-datatable-tbody > tr:nth-child(4n) > td {
+  border-bottom: 2px solid var(--vscode-editor-lineHighlightBorder);
+}
 .p-datatable .p-datatable-tbody > tr:hover {
   background: var(--vscode-settings-rowHoverBackground);
 }
@@ -44,14 +50,16 @@
   vertical-align: top;
   text-align: left;
   padding: 4px 12px;
-  word-break: break-all;
-  overflow-wrap: anywhere;
+  word-break: break-word;
+  overflow-wrap: break-word;
   white-space: unset;
 }
 .p-datatable .p-datatable-tbody > tr > td.fit {
   width: 1%;
   word-wrap: break-word;
   word-break: unset;
+  background: var(--vscode-debugView-stateLabelBackground);
+  color: var(--vscode-debugView-stateLabelForeground);
 }
 .p-datatable .p-datatable-thead > tr > th.fit {
   min-width: 80px;
