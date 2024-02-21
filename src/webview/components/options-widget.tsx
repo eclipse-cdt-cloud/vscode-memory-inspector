@@ -21,7 +21,7 @@ import { Dropdown, DropdownChangeEvent } from 'primereact/dropdown';
 import { InputText } from 'primereact/inputtext';
 import { OverlayPanel } from 'primereact/overlaypanel';
 import { classNames } from 'primereact/utils';
-import React, { ChangeEventHandler, FocusEventHandler, KeyboardEvent, KeyboardEventHandler, MouseEventHandler } from 'react';
+import React, { FocusEventHandler, KeyboardEvent, KeyboardEventHandler, MouseEventHandler } from 'react';
 import { TableRenderOptions } from '../columns/column-contribution-service';
 import {
     SerializedTableRenderOptions,
@@ -31,7 +31,7 @@ import { MultiSelectWithLabel } from './multi-select';
 export interface OptionsWidgetProps
     extends Omit<TableRenderOptions, 'scrollingBehavior'>,
     Required<DebugProtocol.ReadMemoryArguments> {
-    initialTitle: string;
+    title: string;
     updateRenderOptions: (options: Partial<SerializedTableRenderOptions>) => void;
     resetRenderOptions: () => void;
     updateTitle: (title: string) => void;
@@ -43,8 +43,6 @@ export interface OptionsWidgetProps
 }
 
 interface OptionsWidgetState {
-    title: string;
-    previousTitle?: string;
     isTitleEditing: boolean;
 }
 
@@ -89,10 +87,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                 this.props.refreshMemory();
             },
         };
-        this.state = {
-            title: this.props.initialTitle,
-            isTitleEditing: false,
-        };
+        this.state = { isTitleEditing: false };
     }
 
     protected validate = (values: OptionsForm) => {
@@ -130,10 +125,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
         return errors;
     };
 
-    componentDidUpdate(prevProps: Readonly<OptionsWidgetProps>, prevState: Readonly<OptionsWidgetState>): void {
-        if (this.props.initialTitle !== prevProps.initialTitle) {
-            this.setState({ title: this.props.initialTitle });
-        }
+    componentDidUpdate(_: Readonly<OptionsWidgetProps>, prevState: Readonly<OptionsWidgetState>): void {
         if (!prevState.isTitleEditing && this.state.isTitleEditing) {
             this.labelEditInput.current?.focus();
             this.labelEditInput.current?.select();
@@ -150,14 +142,12 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                     <InputText
                         ref={this.labelEditInput}
                         type='text'
-                        value={this.state.title}
-                        onChange={this.handleTitleEdit}
                         onKeyDown={this.handleTitleEditingKeyDown}
                         onBlur={this.confirmEditedTitle}
                         style={{ display: isLabelEditing ? 'block' : 'none' }}
                     />
                     {!isLabelEditing && (
-                        <h1 onDoubleClick={this.enableTitleEditing}>{this.state.title}</h1>
+                        <h1 onDoubleClick={this.enableTitleEditing}>{this.props.title}</h1>
                     )}
                     {!isLabelEditing && (
                         <Button
@@ -379,7 +369,10 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
 
     protected enableTitleEditing = () => this.doEnableTitleEditing();
     protected doEnableTitleEditing(): void {
-        this.setState({ isTitleEditing: true, previousTitle: this.state.title });
+        if (this.labelEditInput.current) {
+            this.labelEditInput.current.value = this.props.title;
+        }
+        this.setState({ isTitleEditing: true });
     }
 
     protected disableTitleEditing = () => this.doDisableTitleEditing();
@@ -387,29 +380,19 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
         this.setState({ isTitleEditing: false });
     }
 
-    protected handleTitleEdit: ChangeEventHandler<HTMLInputElement> | undefined = () => this.doHandleTitleEdit();
-    protected doHandleTitleEdit(): void {
-        if (this.labelEditInput.current) {
-            this.setState({ title: this.labelEditInput.current?.value });
-        }
-    }
-
     protected handleTitleEditingKeyDown: KeyboardEventHandler<HTMLInputElement> | undefined = event => this.doHandleTitleEditingKeyDown(event);
     protected doHandleTitleEditingKeyDown(event: React.KeyboardEvent<HTMLInputElement>): void {
         if (event.key === 'Enter' && this.labelEditInput.current) {
             this.doConfirmEditedTitle();
         } else if (event.key === 'Escape') {
-            if (this.state.previousTitle) {
-                this.setState({ title: this.state.previousTitle });
-            }
             this.disableTitleEditing();
         }
     }
 
     protected confirmEditedTitle: FocusEventHandler<HTMLInputElement> | undefined = () => this.doConfirmEditedTitle();
     protected doConfirmEditedTitle(): void {
-        if (this.state.isTitleEditing && this.state.title) {
-            this.props.updateTitle(this.state.title);
+        if (this.state.isTitleEditing && this.labelEditInput.current) {
+            this.props.updateTitle(this.labelEditInput.current.value.trim());
             this.disableTitleEditing();
         }
     }

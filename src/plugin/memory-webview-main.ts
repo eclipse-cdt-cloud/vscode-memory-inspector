@@ -138,11 +138,7 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
 
         // Sets up an event listener to listen for messages passed from the webview view context
         // and executes code based on the message that is received
-        const webviewParticipant = this.setWebviewMessageListener(panel, initialMemory);
-
-        // initialize web view content
-        this.setTitle(webviewParticipant, panel.title);
-        this.setInitialSettings(webviewParticipant);
+        this.setWebviewMessageListener(panel, initialMemory);
     }
 
     protected getRefresh(): RefreshEnum {
@@ -180,11 +176,12 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
         `;
     }
 
-    protected setWebviewMessageListener(panel: vscode.WebviewPanel, options?: Partial<DebugProtocol.ReadMemoryArguments>): WebviewIdMessageParticipant {
+    protected setWebviewMessageListener(panel: vscode.WebviewPanel, options?: Partial<DebugProtocol.ReadMemoryArguments>): void {
         const participant = this.messenger.registerWebviewPanel(panel);
 
         const disposables = [
             this.messenger.onNotification(readyType, () => {
+                this.setInitialSettings(participant, panel.title);
                 this.refresh(participant, options);
             }, { sender: participant }),
             this.messenger.onRequest(setOptionsType, o => {
@@ -194,7 +191,7 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
             this.messenger.onRequest(readMemoryType, request => this.readMemory(request), { sender: participant }),
             this.messenger.onRequest(writeMemoryType, request => this.writeMemory(request), { sender: participant }),
             this.messenger.onRequest(getVariables, request => this.getVariables(request), { sender: participant }),
-            this.messenger.onNotification(resetMemoryViewSettingsType, () => this.setInitialSettings(participant), { sender: participant }),
+            this.messenger.onNotification(resetMemoryViewSettingsType, () => this.setInitialSettings(participant, panel.title), { sender: participant }),
             this.messenger.onNotification(setTitleType, title => { panel.title = title; }, { sender: participant }),
 
             this.memoryProvider.onDidStopDebug(() => {
@@ -209,23 +206,17 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
             }
         });
         panel.onDidDispose(() => disposables.forEach(disposable => disposable.dispose()));
-
-        return participant;
-    }
-
-    protected setTitle(webviewParticipant: WebviewIdMessageParticipant, title: string): void {
-        this.messenger.sendNotification(setTitleType, webviewParticipant, title);
-    }
-
-    protected setInitialSettings(webviewParticipant: WebviewIdMessageParticipant): void {
-        this.messenger.sendNotification(setMemoryViewSettingsType, webviewParticipant, this.getMemoryViewSettings());
     }
 
     protected async refresh(participant: WebviewIdMessageParticipant, options?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void> {
         this.messenger.sendRequest(setOptionsType, participant, options);
     }
 
-    protected getMemoryViewSettings(): MemoryViewSettings {
+    protected setInitialSettings(webviewParticipant: WebviewIdMessageParticipant, title: string): void {
+        this.messenger.sendNotification(setMemoryViewSettingsType, webviewParticipant, this.getMemoryViewSettings(title));
+    }
+
+    protected getMemoryViewSettings(title: string): MemoryViewSettings {
         const memoryInspectorConfiguration = vscode.workspace.getConfiguration(manifest.PACKAGE_NAME);
         const wordsPerGroup = memoryInspectorConfiguration.get<number>(manifest.CONFIG_WORDS_PER_GROUP, manifest.DEFAULT_WORDS_PER_GROUP);
         const groupsPerRow = memoryInspectorConfiguration.get<number>(manifest.CONFIG_GROUPS_PER_ROW, manifest.DEFAULT_GROUPS_PER_ROW);
@@ -233,7 +224,7 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
         const visibleColumns = CONFIGURABLE_COLUMNS
             .filter(column => vscode.workspace.getConfiguration(manifest.PACKAGE_NAME).get<boolean>(column, false))
             .map(columnId => columnId.replace('columns.', ''));
-        return { wordsPerGroup, groupsPerRow, scrollingBehavior, visibleColumns };
+        return { title, wordsPerGroup, groupsPerRow, scrollingBehavior, visibleColumns };
     }
 
     protected async readMemory(request: DebugProtocol.ReadMemoryArguments): Promise<MemoryReadResult> {
