@@ -76,9 +76,9 @@ class App extends React.Component<{}, MemoryAppState> {
             for (const column of columnContributionService.getColumns()) {
                 const id = column.contribution.id;
                 const configurable = column.configurable;
-                this.setColumnVisibility(id, !configurable || !!config.visibleColumns?.includes(id));
+                this.toggleColumn(id, !configurable || !!config.visibleColumns?.includes(id));
             }
-            this.setState({ ...(config as MemoryDisplayConfiguration) });
+            this.setState(prevState => ({ ...prevState, ...(config as MemoryDisplayConfiguration) }));
         });
         messenger.sendNotification(readyType, HOST_EXTENSION, undefined);
     }
@@ -158,19 +158,10 @@ class App extends React.Component<{}, MemoryAppState> {
     }
 
     protected toggleColumn = (id: string, active: boolean): void => { this.doToggleColumn(id, active); };
-    protected doToggleColumn(id: string, isVisible: boolean): void {
-        this.setColumnVisibility(id, isVisible);
-        this.setState({ columns: columnContributionService.getColumns() });
+    protected async doToggleColumn(id: string, isVisible: boolean): Promise<void> {
+        const columns = isVisible ? await columnContributionService.show(id, this.state) : columnContributionService.hide(id);
+        this.setState(prevState => ({ ...prevState, columns }));
     }
-
-    protected setColumnVisibility(columnId: string, isVisible: boolean): void {
-        if (isVisible) {
-            columnContributionService.show(columnId);
-        } else {
-            columnContributionService.hide(columnId);
-        }
-    }
-
 }
 
 const container = document.getElementById('root') as Element;
