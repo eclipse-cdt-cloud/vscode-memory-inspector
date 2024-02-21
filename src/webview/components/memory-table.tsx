@@ -118,12 +118,12 @@ interface MemoryTableState {
     selection: DataTableCellSelection<MemoryRowData[]> | null;
 }
 
-type MemorySizeOptions = Pick<MemoryTableProps, 'wordSize' | 'wordsPerGroup' | 'groupsPerRow'>;
+type MemorySizeOptions = Pick<MemoryTableProps, 'bytesPerWord' | 'wordsPerGroup' | 'groupsPerRow'>;
 namespace MemorySizeOptions {
     export function create(props: MemoryTableProps): MemorySizeOptions {
-        const { groupsPerRow, wordSize, wordsPerGroup }: MemorySizeOptions = props;
+        const { groupsPerRow, bytesPerWord, wordsPerGroup }: MemorySizeOptions = props;
         return {
-            wordSize,
+            bytesPerWord,
             groupsPerRow,
             wordsPerGroup
         };
@@ -312,7 +312,7 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
 
     protected createMemoryRowListOptions(memory: Memory, options: MemorySizeOptions): MemoryRowListOptions {
         const wordsPerRow = options.wordsPerGroup * options.groupsPerRow;
-        const numRows = Math.ceil((memory.bytes.length * 8) / (wordsPerRow * options.wordSize));
+        const numRows = Math.ceil((memory.bytes.length * 8) / (wordsPerRow * options.bytesPerWord * 8));
         const bigWordsPerRow = BigInt(wordsPerRow);
 
         return {

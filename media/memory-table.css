@@ -30,7 +30,7 @@
 /* == MoreMemorySelect == */
 
 .bytes-select {
-  color: var(--vscode-dropdown-forground);
+  color: var(--vscode-dropdown-foreground);
   border-radius: 2px;
   font-size: var(--vscode-font-size);
   border: 1px solid var(--vscode-dropdown-border);
@@ -74,4 +74,8 @@
 
 .more-memory-select select:hover {
   background: var(--vscode-dropdown-background);
+}
+
+.byte-group {
+  margin-right: 0.2em;
 }

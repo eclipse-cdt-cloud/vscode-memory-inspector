@@ -39,12 +39,10 @@ interface MemoryWidgetProps extends MemoryDisplayConfiguration {
 
 interface MemoryWidgetState {
     endianness: Endianness;
-    wordSize: number;
 }
 
 const defaultOptions: MemoryWidgetState = {
     endianness: Endianness.Little,
-    wordSize: 8
 };
 
 export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidgetState> {
@@ -61,7 +59,7 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 offset={this.props.offset}
                 count={this.props.count}
                 endianness={this.state.endianness}
-                wordSize={this.state.wordSize}
+                bytesPerWord={this.props.bytesPerWord}
                 wordsPerGroup={this.props.wordsPerGroup}
                 groupsPerRow={this.props.groupsPerRow}
                 updateMemoryArguments={this.props.updateMemoryArguments}
@@ -75,7 +73,7 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 columnOptions={this.props.columns.filter(candidate => candidate.active)}
                 memory={this.props.memory}
                 endianness={this.state.endianness}
-                wordSize={this.state.wordSize}
+                bytesPerWord={this.props.bytesPerWord}
                 wordsPerGroup={this.props.wordsPerGroup}
                 groupsPerRow={this.props.groupsPerRow}
                 offset={this.props.offset}

@@ -44,6 +44,7 @@ export interface MemoryAppState extends MemoryState, MemoryDisplayConfiguration 
 }
 
 const MEMORY_DISPLAY_CONFIGURATION_DEFAULTS: MemoryDisplayConfiguration = {
+    bytesPerWord: 1,
     wordsPerGroup: 1,
     groupsPerRow: 4,
     scrollingBehavior: 'Paginate'
@@ -99,6 +100,7 @@ class App extends React.Component<{}, MemoryAppState> {
                 toggleColumn={this.toggleColumn}
                 fetchMemory={this.fetchMemory}
                 isMemoryFetching={this.state.isMemoryFetching}
+                bytesPerWord={this.state.bytesPerWord}
                 groupsPerRow={this.state.groupsPerRow}
                 wordsPerGroup={this.state.wordsPerGroup}
                 scrollingBehavior={this.state.scrollingBehavior}
