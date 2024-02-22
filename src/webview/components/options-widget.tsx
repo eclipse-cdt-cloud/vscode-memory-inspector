@@ -27,6 +27,7 @@ import {
     SerializedTableRenderOptions,
 } from '../utils/view-types';
 import { MultiSelectWithLabel } from './multi-select';
+import { Checkbox } from 'primereact/checkbox';
 
 export interface OptionsWidgetProps
     extends Omit<TableRenderOptions, 'scrollingBehavior'>,
@@ -52,6 +53,8 @@ const enum InputId {
     Length = 'length',
     WordsPerGroup = 'words-per-group',
     GroupsPerRow = 'groups-per-row',
+    AddressRadix = 'address-radix',
+    ShowRadixPrefix = 'show-radix-prefix',
 }
 
 interface OptionsForm {
@@ -260,6 +263,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                     onSelectionChanged={this.handleColumnActivationChange}
                                 />
                             )}
+                            <h2>Memory Format</h2>
                             <label
                                 htmlFor={InputId.WordsPerGroup}
                                 className='advanced-options-label mt-1'
@@ -283,7 +287,35 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                 value={this.props.groupsPerRow}
                                 onChange={this.handleAdvancedOptionsDropdownChange}
                                 options={allowedGroupsPerRow}
+                                className='advanced-options-dropdown' />
+
+                            <h2>Address Format</h2>
+                            <label
+                                htmlFor={InputId.AddressRadix}
+                                className='advanced-options-label'
+                            >
+                                Format (Radix)
+                            </label>
+                            <Dropdown
+                                id={InputId.AddressRadix}
+                                value={Number(this.props.addressRadix)}
+                                onChange={this.handleAdvancedOptionsDropdownChange}
+                                options={[
+                                    { label: '2 - Binary', value: 2 },
+                                    { label: '8 - Octal', value: 8 },
+                                    { label: '10 - Decimal', value: 10 },
+                                    { label: '16 - Hexadecimal', value: 16 }
+                                ]}
                                 className="advanced-options-dropdown" />
+
+                            <div className='flex align-items-center'>
+                                <Checkbox
+                                    id={InputId.ShowRadixPrefix}
+                                    onChange={this.handleAdvancedOptionsDropdownChange}
+                                    checked={!!this.props.showRadixPrefix}
+                                />
+                                <label htmlFor={InputId.ShowRadixPrefix} className='ml-2'>Display Radix Prefix</label>
+                            </div>
                         </div>
                     </OverlayPanel>
                 </div>
@@ -349,6 +381,12 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                 break;
             case InputId.GroupsPerRow:
                 this.props.updateRenderOptions({ groupsPerRow: Number(value) });
+                break;
+            case InputId.AddressRadix:
+                this.props.updateRenderOptions({ addressRadix: Number(value) });
+                break;
+            case InputId.ShowRadixPrefix:
+                this.props.updateRenderOptions({ showRadixPrefix: !!event.target.checked });
                 break;
             default: {
                 throw new Error(`${id} can not be handled. Did you call the correct method?`);

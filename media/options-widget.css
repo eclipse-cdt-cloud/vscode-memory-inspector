@@ -81,6 +81,11 @@
   align-self: start;
 }
 
+.advanced-options-content h2 {
+  font-size: 120%;
+  margin: 0.5rem 0 0 0;
+}
+
 .advanced-options-toggle {
   margin-left: auto;
   align-self: start;
@@ -88,7 +93,7 @@
 }
 
 .advanced-options-content {
-  width: 160px;
+  width: 180px;
   text-align: left;
   display: flex;
   flex-direction: column;

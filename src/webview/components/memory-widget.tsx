@@ -72,6 +72,8 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 updateRenderOptions={this.props.updateMemoryDisplayConfiguration}
                 resetRenderOptions={this.props.resetMemoryDisplayConfiguration}
                 refreshMemory={this.props.refreshMemory}
+                addressRadix={this.props.addressRadix}
+                showRadixPrefix={this.props.showRadixPrefix}
                 toggleColumn={this.props.toggleColumn}
             />
             <MemoryTable
@@ -87,6 +89,8 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 fetchMemory={this.props.fetchMemory}
                 isMemoryFetching={this.props.isMemoryFetching}
                 scrollingBehavior={this.props.scrollingBehavior}
+                addressRadix={this.props.addressRadix}
+                showRadixPrefix={this.props.showRadixPrefix}
             />
         </div>);
     }

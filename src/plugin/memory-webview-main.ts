@@ -224,7 +224,9 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
         const visibleColumns = CONFIGURABLE_COLUMNS
             .filter(column => vscode.workspace.getConfiguration(manifest.PACKAGE_NAME).get<boolean>(column, false))
             .map(columnId => columnId.replace('columns.', ''));
-        return { title, wordsPerGroup, groupsPerRow, scrollingBehavior, visibleColumns };
+        const addressRadix = memoryInspectorConfiguration.get<number>(manifest.CONFIG_ADDRESS_RADIX, manifest.DEFAULT_ADDRESS_RADIX);
+        const showRadixPrefix = memoryInspectorConfiguration.get<boolean>(manifest.CONFIG_SHOW_RADIX_PREFIX, manifest.DEFAULT_SHOW_RADIX_PREFIX);
+        return { title, wordsPerGroup, groupsPerRow, scrollingBehavior, visibleColumns, addressRadix, showRadixPrefix };
     }
 
     protected async readMemory(request: DebugProtocol.ReadMemoryArguments): Promise<MemoryReadResult> {

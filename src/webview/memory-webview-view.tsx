@@ -48,7 +48,9 @@ export interface MemoryAppState extends MemoryState, MemoryDisplayConfiguration 
 const MEMORY_DISPLAY_CONFIGURATION_DEFAULTS: MemoryDisplayConfiguration = {
     wordsPerGroup: 1,
     groupsPerRow: 4,
-    scrollingBehavior: 'Paginate'
+    scrollingBehavior: 'Paginate',
+    addressRadix: 16,
+    showRadixPrefix: true,
 };
 
 class App extends React.Component<{}, MemoryAppState> {
@@ -107,6 +109,8 @@ class App extends React.Component<{}, MemoryAppState> {
                 groupsPerRow={this.state.groupsPerRow}
                 wordsPerGroup={this.state.wordsPerGroup}
                 scrollingBehavior={this.state.scrollingBehavior}
+                addressRadix={this.state.addressRadix}
+                showRadixPrefix={this.state.showRadixPrefix}
             />
         </PrimeReactProvider>;
     }

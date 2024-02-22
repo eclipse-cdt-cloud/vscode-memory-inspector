@@ -21,7 +21,7 @@ export const EDITOR_NAME = `${PACKAGE_NAME}.inspect`;
 export const CONFIG_LOGGING_VERBOSITY = 'loggingVerbosity';
 export const DEFAULT_LOGGING_VERBOSITY = 'warn';
 export const CONFIG_DEBUG_TYPES = 'debugTypes';
-export const DEFAULT_DEBUG_TYPES = [ 'gdb', 'embedded-debug', 'arm-debugger' ];
+export const DEFAULT_DEBUG_TYPES = ['gdb', 'embedded-debug', 'arm-debugger'];
 export const CONFIG_REFRESH_ON_STOP = 'refreshOnStop';
 export const DEFAULT_REFRESH_ON_STOP = 'on';
 
@@ -31,6 +31,10 @@ export const CONFIG_GROUPS_PER_ROW = 'groupings.groupsPerRow';
 export const DEFAULT_GROUPS_PER_ROW = 4;
 export const CONFIG_SCROLLING_BEHAVIOR = 'scrollingBehavior';
 export const DEFAULT_SCROLLING_BEHAVIOR = 'Paginate';
+export const CONFIG_ADDRESS_RADIX = 'addressRadix';
+export const DEFAULT_ADDRESS_RADIX = 16;
+export const CONFIG_SHOW_RADIX_PREFIX = 'showRadixPrefix';
+export const DEFAULT_SHOW_RADIX_PREFIX = true;
 
 export const CONFIG_SHOW_VARIABLES_COLUMN = 'columns.variables';
 export const CONFIG_SHOW_ASCII_COLUMN = 'columns.ascii';
