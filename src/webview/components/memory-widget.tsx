@@ -23,6 +23,7 @@ import { OptionsWidget } from './options-widget';
 
 interface MemoryWidgetProps extends MemoryDisplayConfiguration {
     memory?: Memory;
+    title: string;
     decorations: Decoration[];
     columns: ColumnStatus[];
     memoryReference: string;
@@ -34,6 +35,7 @@ interface MemoryWidgetProps extends MemoryDisplayConfiguration {
     toggleColumn(id: string, active: boolean): void;
     updateMemoryDisplayConfiguration: (memoryArguments: Partial<MemoryDisplayConfiguration>) => void;
     resetMemoryDisplayConfiguration: () => void;
+    updateTitle: (title: string) => void;
     fetchMemory(partialOptions?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void>
 }
 
@@ -56,6 +58,8 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
     override render(): React.ReactNode {
         return (<div className='flex flex-column h-full'>
             <OptionsWidget
+                title={this.props.title}
+                updateTitle={this.props.updateTitle}
                 columnOptions={this.props.columns}
                 memoryReference={this.props.memoryReference}
                 offset={this.props.offset}

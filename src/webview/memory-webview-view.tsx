@@ -22,6 +22,7 @@ import {
     logMessageType,
     setOptionsType,
     readMemoryType,
+    setTitleType,
     setMemoryViewSettingsType,
     resetMemoryViewSettingsType,
 } from '../common/messaging';
@@ -39,6 +40,7 @@ import { PrimeReactProvider } from 'primereact/api';
 import 'primeflex/primeflex.css';
 
 export interface MemoryAppState extends MemoryState, MemoryDisplayConfiguration {
+    title: string;
     decorations: Decoration[];
     columns: ColumnStatus[];
 }
@@ -61,6 +63,7 @@ class App extends React.Component<{}, MemoryAppState> {
         columnContributionService.register(new AsciiColumn());
         decorationService.register(variableDecorator);
         this.state = {
+            title: 'Memory',
             memory: undefined,
             memoryReference: '',
             offset: 0,
@@ -80,7 +83,7 @@ class App extends React.Component<{}, MemoryAppState> {
                 const configurable = column.configurable;
                 this.toggleColumn(id, !configurable || !!config.visibleColumns?.includes(id));
             }
-            this.setState(prevState => ({ ...prevState, ...(config as MemoryDisplayConfiguration) }));
+            this.setState(prevState => ({ ...prevState, ...config, title: config.title ?? prevState.title, }));
         });
         messenger.sendNotification(readyType, HOST_EXTENSION, undefined);
     }
@@ -94,9 +97,11 @@ class App extends React.Component<{}, MemoryAppState> {
                 memoryReference={this.state.memoryReference}
                 offset={this.state.offset ?? 0}
                 count={this.state.count}
+                title={this.state.title}
                 updateMemoryArguments={this.updateMemoryState}
                 updateMemoryDisplayConfiguration={this.updateMemoryDisplayConfiguration}
                 resetMemoryDisplayConfiguration={this.resetMemoryDisplayConfiguration}
+                updateTitle={this.updateTitle}
                 refreshMemory={this.refreshMemory}
                 toggleColumn={this.toggleColumn}
                 fetchMemory={this.fetchMemory}
@@ -113,6 +118,10 @@ class App extends React.Component<{}, MemoryAppState> {
     protected updateMemoryState = (newState: Partial<MemoryState>) => this.setState(prevState => ({ ...prevState, ...newState }));
     protected updateMemoryDisplayConfiguration = (newState: Partial<MemoryDisplayConfiguration>) => this.setState(prevState => ({ ...prevState, ...newState }));
     protected resetMemoryDisplayConfiguration = () => messenger.sendNotification(resetMemoryViewSettingsType, HOST_EXTENSION, undefined);
+    protected updateTitle = (title: string) => {
+        this.setState({ title });
+        messenger.sendNotification(setTitleType, HOST_EXTENSION, title);
+    };
 
     protected async setOptions(options?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void> {
         messenger.sendRequest(logMessageType, HOST_EXTENSION, `Setting options: ${JSON.stringify(options)}`);

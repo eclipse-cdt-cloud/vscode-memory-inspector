@@ -14,6 +14,39 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
+.memory-options-widget {
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+}
+
+.memory-options-widget .title-container {
+  display: flex;
+  align-items: center;
+}
+
+.memory-options-widget .title-container h1 {
+  flex-grow: 1;
+  font-size: 1.3em;
+  margin: 8px 0 4px;
+}
+
+.memory-options-widget .title-container input {
+  margin: 5px 0 0;
+  flex-grow: 1;
+}
+
+.memory-options-widget .edit-label-toggle {
+  position: absolute;
+  right: 24px;
+  top: 8px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.memory-options-widget .title-container:hover .edit-label-toggle {
+  opacity: 1;
+}
+
 .core-options {
   display: flex;
   flex-direction: row;
@@ -21,6 +54,7 @@
   margin: 6px 0;
   flex-wrap: wrap;
   border-bottom: 1px solid var(--vscode-widget-border);
+  border-top: 1px solid var(--vscode-widget-border);
 }
 
 .form-options {

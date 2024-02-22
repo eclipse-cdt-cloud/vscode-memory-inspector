@@ -73,7 +73,9 @@ export interface FullNodeAttributes extends StylableNodeAttributes {
 }
 
 /** All settings related to memory view that can be specified for the webview from the extension "main". */
-export interface MemoryViewSettings extends ColumnVisibilityStatus, MemoryDisplayConfiguration { }
+export interface MemoryViewSettings extends ColumnVisibilityStatus, MemoryDisplayConfiguration {
+    title: string
+}
 
 /** The memory display configuration that can be specified for the memory widget. */
 export interface MemoryDisplayConfiguration {
