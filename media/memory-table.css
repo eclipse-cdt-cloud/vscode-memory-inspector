@@ -76,6 +76,6 @@
   background: var(--vscode-dropdown-background);
 }
 
-.byte-group {
+.byte-group:not(:last-of-type) {
   margin-right: 0.2em;
 }
