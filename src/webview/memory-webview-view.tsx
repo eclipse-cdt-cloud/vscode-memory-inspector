@@ -81,11 +81,7 @@ class App extends React.Component<{}, MemoryAppState> {
                 const configurable = column.configurable;
                 this.toggleColumn(id, !configurable || !!config.visibleColumns?.includes(id));
             }
-            this.setState(prevState => ({
-                ...prevState,
-                ...(config as MemoryDisplayConfiguration),
-                title: config.title ?? prevState.title,
-            }));
+            this.setState(prevState => ({ ...prevState, ...config, title: config.title ?? prevState.title, }));
         });
         messenger.sendNotification(readyType, HOST_EXTENSION, undefined);
     }
