@@ -215,7 +215,7 @@
             10,
             16
           ],
-          "default": "16",
+          "default": 16,
           "enumDescriptions": [
             "Binary format (base 2)",
             "Octal format (base 8)",
