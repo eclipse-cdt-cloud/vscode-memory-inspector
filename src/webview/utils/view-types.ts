@@ -32,7 +32,7 @@ export interface Memory {
 export interface SerializedTableRenderOptions extends MemoryDisplayConfiguration {
     columnOptions: Array<{ label: string, doRender: boolean }>;
     endianness: Endianness;
-    wordSize: number;
+    bytesPerWord: number;
 }
 
 export interface Event<T> {
@@ -79,6 +79,7 @@ export interface MemoryViewSettings extends ColumnVisibilityStatus, MemoryDispla
 
 /** The memory display configuration that can be specified for the memory widget. */
 export interface MemoryDisplayConfiguration {
+    bytesPerWord: number;
     wordsPerGroup: number;
     groupsPerRow: number;
     scrollingBehavior: ScrollingBehavior;

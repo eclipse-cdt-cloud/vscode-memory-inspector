@@ -25,6 +25,8 @@ export const DEFAULT_DEBUG_TYPES = ['gdb', 'embedded-debug', 'arm-debugger'];
 export const CONFIG_REFRESH_ON_STOP = 'refreshOnStop';
 export const DEFAULT_REFRESH_ON_STOP = 'on';
 
+export const CONFIG_BYTES_PER_WORD = 'groupings.bytesPerWord';
+export const DEFAULT_BYTES_PER_WORD = 1;
 export const CONFIG_WORDS_PER_GROUP = 'groupings.wordsPerGroup';
 export const DEFAULT_WORDS_PER_GROUP = 1;
 export const CONFIG_GROUPS_PER_ROW = 'groupings.groupsPerRow';

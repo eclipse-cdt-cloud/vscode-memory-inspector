@@ -33,8 +33,9 @@ export class AsciiColumn implements ColumnContribution {
     readonly label = 'ASCII';
     readonly priority = 3;
     render(range: BigIntMemoryRange, memory: Memory, options: TableRenderOptions): ReactNode {
-        const startOffset = toOffset(memory.address, range.startAddress, options.wordSize);
-        const endOffset = toOffset(memory.address, range.endAddress, options.wordSize);
+        const wordSize = options.bytesPerWord * 8;
+        const startOffset = toOffset(memory.address, range.startAddress, wordSize);
+        const endOffset = toOffset(memory.address, range.endAddress, wordSize);
         let result = '';
         for (let i = startOffset; i < endOffset; i++) {
             result += getASCIIForSingleByte(memory.bytes[i]);

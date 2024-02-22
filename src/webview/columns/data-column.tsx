@@ -44,9 +44,8 @@ export class DataColumn implements ColumnContribution {
     }
 
     protected renderWord(memory: Memory, options: TableRenderOptions, currentAddress: bigint): React.ReactNode {
-        const itemsPerByte = options.wordSize / 8;
-        const initialOffset = toOffset(memory.address, currentAddress, options.wordSize);
-        const finalOffset = initialOffset + itemsPerByte;
+        const initialOffset = toOffset(memory.address, currentAddress, options.bytesPerWord * 8);
+        const finalOffset = initialOffset + options.bytesPerWord;
         const bytes = [];
         for (let i = initialOffset; i < finalOffset; i++) {
             bytes.push(this.renderEightBits(memory, currentAddress, i));
