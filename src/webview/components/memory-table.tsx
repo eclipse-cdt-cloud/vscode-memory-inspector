@@ -312,7 +312,7 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
 
     protected createMemoryRowListOptions(memory: Memory, options: MemorySizeOptions): MemoryRowListOptions {
         const wordsPerRow = options.wordsPerGroup * options.groupsPerRow;
-        const numRows = Math.ceil((memory.bytes.length * 8) / (wordsPerRow * options.bytesPerWord * 8));
+        const numRows = Math.ceil((memory.bytes.length) / (wordsPerRow * options.bytesPerWord));
         const bigWordsPerRow = BigInt(wordsPerRow);
 
         return {
