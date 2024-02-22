@@ -21,23 +21,30 @@ import { Dropdown, DropdownChangeEvent } from 'primereact/dropdown';
 import { InputText } from 'primereact/inputtext';
 import { OverlayPanel } from 'primereact/overlaypanel';
 import { classNames } from 'primereact/utils';
-import React, { KeyboardEvent, MouseEventHandler } from 'react';
+import React, { FocusEventHandler, KeyboardEvent, KeyboardEventHandler, MouseEventHandler } from 'react';
 import { TableRenderOptions } from '../columns/column-contribution-service';
 import {
     SerializedTableRenderOptions,
 } from '../utils/view-types';
 import { MultiSelectWithLabel } from './multi-select';
+import { Checkbox } from 'primereact/checkbox';
 
 export interface OptionsWidgetProps
     extends Omit<TableRenderOptions, 'scrollingBehavior'>,
     Required<DebugProtocol.ReadMemoryArguments> {
+    title: string;
     updateRenderOptions: (options: Partial<SerializedTableRenderOptions>) => void;
     resetRenderOptions: () => void;
+    updateTitle: (title: string) => void;
     updateMemoryArguments: (
         memoryArguments: Partial<DebugProtocol.ReadMemoryArguments>
     ) => void;
     refreshMemory: () => void;
     toggleColumn(id: string, isVisible: boolean): void;
+}
+
+interface OptionsWidgetState {
+    isTitleEditing: boolean;
 }
 
 const enum InputId {
@@ -47,6 +54,8 @@ const enum InputId {
     BytesPerWord = 'word-size',
     WordsPerGroup = 'words-per-group',
     GroupsPerRow = 'groups-per-row',
+    AddressRadix = 'address-radix',
+    ShowRadixPrefix = 'show-radix-prefix',
 }
 
 interface OptionsForm {
@@ -59,9 +68,10 @@ const allowedBytesPerWord = [1, 2, 4, 8, 16];
 const allowedWordsPerGroup = [1, 2, 4, 8, 16];
 const allowedGroupsPerRow = [1, 2, 4, 8, 16, 32];
 
-export class OptionsWidget extends React.Component<OptionsWidgetProps, {}> {
+export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWidgetState> {
     protected formConfig: FormikConfig<OptionsForm>;
     protected extendedOptions = React.createRef<OverlayPanel>();
+    protected labelEditInput = React.createRef<HTMLInputElement>();
 
     protected get optionsFormValues(): OptionsForm {
         return {
@@ -82,6 +92,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, {}> {
                 this.props.refreshMemory();
             },
         };
+        this.state = { isTitleEditing: false };
     }
 
     protected validate = (values: OptionsForm) => {
@@ -119,11 +130,43 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, {}> {
         return errors;
     };
 
+    componentDidUpdate(_: Readonly<OptionsWidgetProps>, prevState: Readonly<OptionsWidgetState>): void {
+        if (!prevState.isTitleEditing && this.state.isTitleEditing) {
+            this.labelEditInput.current?.focus();
+            this.labelEditInput.current?.select();
+        }
+    }
+
     override render(): React.ReactNode {
         this.formConfig.initialValues = this.optionsFormValues;
+        const isLabelEditing = this.state.isTitleEditing;
 
         return (
             <div className='memory-options-widget px-4'>
+                <div className='title-container'>
+                    <InputText
+                        ref={this.labelEditInput}
+                        type='text'
+                        onKeyDown={this.handleTitleEditingKeyDown}
+                        onBlur={this.confirmEditedTitle}
+                        style={{ display: isLabelEditing ? 'block' : 'none' }}
+                    />
+                    {!isLabelEditing && (
+                        <h1 onDoubleClick={this.enableTitleEditing}>{this.props.title}</h1>
+                    )}
+                    {!isLabelEditing && (
+                        <Button
+                            type='button'
+                            className='edit-label-toggle'
+                            icon='codicon codicon-edit'
+                            onClick={this.enableTitleEditing}
+                            title='Edit view title'
+                            aria-label='Edit view title'
+                            rounded
+                            aria-haspopup
+                        />
+                    )}
+                </div>
                 <div className='core-options py-2'>
                     <Formik {...this.formConfig}>
                         {formik => (
@@ -222,8 +265,8 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, {}> {
                                     onSelectionChanged={this.handleColumnActivationChange}
                                 />
                             )}
-                            <h2>Memory Format</h2>
 
+                            <h2>Memory Format</h2>
                             <label
                                 htmlFor={InputId.BytesPerWord}
                                 className='advanced-options-label mt-1'
@@ -260,7 +303,35 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, {}> {
                                 value={this.props.groupsPerRow}
                                 onChange={this.handleAdvancedOptionsDropdownChange}
                                 options={allowedGroupsPerRow}
+                                className='advanced-options-dropdown' />
+
+                            <h2>Address Format</h2>
+                            <label
+                                htmlFor={InputId.AddressRadix}
+                                className='advanced-options-label'
+                            >
+                                Format (Radix)
+                            </label>
+                            <Dropdown
+                                id={InputId.AddressRadix}
+                                value={Number(this.props.addressRadix)}
+                                onChange={this.handleAdvancedOptionsDropdownChange}
+                                options={[
+                                    { label: '2 - Binary', value: 2 },
+                                    { label: '8 - Octal', value: 8 },
+                                    { label: '10 - Decimal', value: 10 },
+                                    { label: '16 - Hexadecimal', value: 16 }
+                                ]}
                                 className="advanced-options-dropdown" />
+
+                            <div className='flex align-items-center'>
+                                <Checkbox
+                                    id={InputId.ShowRadixPrefix}
+                                    onChange={this.handleAdvancedOptionsDropdownChange}
+                                    checked={!!this.props.showRadixPrefix}
+                                />
+                                <label htmlFor={InputId.ShowRadixPrefix} className='ml-2'>Display Radix Prefix</label>
+                            </div>
                         </div>
                     </OverlayPanel>
                 </div>
@@ -330,6 +401,12 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, {}> {
             case InputId.GroupsPerRow:
                 this.props.updateRenderOptions({ groupsPerRow: Number(value) });
                 break;
+            case InputId.AddressRadix:
+                this.props.updateRenderOptions({ addressRadix: Number(value) });
+                break;
+            case InputId.ShowRadixPrefix:
+                this.props.updateRenderOptions({ showRadixPrefix: !!event.target.checked });
+                break;
             default: {
                 throw new Error(`${id} can not be handled. Did you call the correct method?`);
             }
@@ -346,5 +423,35 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, {}> {
     }
 
     protected handleResetAdvancedOptions: MouseEventHandler<HTMLButtonElement> | undefined = () => this.props.resetRenderOptions();
+
+    protected enableTitleEditing = () => this.doEnableTitleEditing();
+    protected doEnableTitleEditing(): void {
+        if (this.labelEditInput.current) {
+            this.labelEditInput.current.value = this.props.title;
+        }
+        this.setState({ isTitleEditing: true });
+    }
+
+    protected disableTitleEditing = () => this.doDisableTitleEditing();
+    protected doDisableTitleEditing(): void {
+        this.setState({ isTitleEditing: false });
+    }
+
+    protected handleTitleEditingKeyDown: KeyboardEventHandler<HTMLInputElement> | undefined = event => this.doHandleTitleEditingKeyDown(event);
+    protected doHandleTitleEditingKeyDown(event: React.KeyboardEvent<HTMLInputElement>): void {
+        if (event.key === 'Enter' && this.labelEditInput.current) {
+            this.doConfirmEditedTitle();
+        } else if (event.key === 'Escape') {
+            this.disableTitleEditing();
+        }
+    }
+
+    protected confirmEditedTitle: FocusEventHandler<HTMLInputElement> | undefined = () => this.doConfirmEditedTitle();
+    protected doConfirmEditedTitle(): void {
+        if (this.state.isTitleEditing && this.labelEditInput.current) {
+            this.props.updateTitle(this.labelEditInput.current.value.trim());
+            this.disableTitleEditing();
+        }
+    }
 
 }

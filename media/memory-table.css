@@ -79,3 +79,7 @@
 .byte-group {
   margin-right: 0.2em;
 }
+
+.radix-prefix {
+  opacity: .6;
+}

@@ -26,6 +26,7 @@ export const readyType: NotificationType<void> = { method: 'ready' };
 export const logMessageType: RequestType<string, void> = { method: 'logMessage' };
 export const setMemoryViewSettingsType: NotificationType<Partial<MemoryViewSettings>> = { method: 'setMemoryViewSettings' };
 export const resetMemoryViewSettingsType: NotificationType<void> = { method: 'resetMemoryViewSettings' };
+export const setTitleType: NotificationType<string> = { method: 'setTitle' };
 export const setOptionsType: RequestType<Partial<DebugProtocol.ReadMemoryArguments | undefined>, void> = { method: 'setOptions' };
 export const readMemoryType: RequestType<DebugProtocol.ReadMemoryArguments, MemoryReadResult> = { method: 'readMemory' };
 export const writeMemoryType: RequestType<DebugProtocol.WriteMemoryArguments, MemoryWriteResult> = { method: 'writeMemory' };

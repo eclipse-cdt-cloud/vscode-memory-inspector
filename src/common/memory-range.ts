@@ -65,8 +65,33 @@ export function determineRelationship(candidate: bigint, range?: BigIntMemoryRan
     return RangeRelationship.Within;
 }
 
+export enum Radix {
+    Binary = 2,
+    Octal = 8,
+    Decimal = 10,
+    Hexadecimal = 16,
+}
+
+export type Architecture = 32 | 64;
+
+const radixPrefixMap: { [key: number]: string } = {
+    [Radix.Binary]: '0b',
+    [Radix.Octal]: '0o',
+    [Radix.Decimal]: '0d',
+    [Radix.Hexadecimal]: '0x',
+};
+
+export function getRadixMarker(radix: Radix): string {
+    return radixPrefixMap[radix];
+}
+
+export function getAddressString(address: bigint, radix: Radix, architecture: Architecture = 32, addPadding = false): string {
+    const paddedLength = addPadding ? Math.ceil(architecture / Math.log2(radix)) : 0;
+    return address.toString(radix).padStart(paddedLength, '0');
+}
+
 export function toHexStringWithRadixMarker(target: bigint): string {
-    return `0x${target.toString(16)}`;
+    return `${getRadixMarker(Radix.Hexadecimal)}${getAddressString(target, Radix.Hexadecimal)}`;
 }
 
 export interface VariableMetadata {
