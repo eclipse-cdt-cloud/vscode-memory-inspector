@@ -56,10 +56,14 @@
   border-color: transparent;
 }
 
-.more-memory-select:hover .more-memory-select-top {
+.more-memory-select:hover:not(.disabled) .more-memory-select-top {
   border-bottom: 1px solid;
   padding-bottom: 0;
   border-color: var(--vscode-sideBar-foreground);
+}
+
+.more-memory-select.disabled .more-memory-select-top {
+  color: var(--vscode-disabledForeground);
 }
 
 .more-memory-select select {
@@ -72,7 +76,7 @@
   font-style: italic;
 }
 
-.more-memory-select select:hover {
+.more-memory-select select:hover:not(:disabled) {
   background: var(--vscode-dropdown-background);
 }
 

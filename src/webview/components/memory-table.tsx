@@ -33,9 +33,10 @@ export interface MoreMemorySelectProps {
     direction: 'above' | 'below';
     scrollingBehavior: ScrollingBehavior;
     fetchMemory(partialOptions?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void>;
+    disabled: boolean
 }
 
-export const MoreMemorySelect: React.FC<MoreMemorySelectProps> = ({ count, offset, options, fetchMemory, direction, scrollingBehavior }) => {
+export const MoreMemorySelect: React.FC<MoreMemorySelectProps> = ({ count, offset, options, fetchMemory, direction, scrollingBehavior, disabled }) => {
     const [numBytes, setNumBytes] = React.useState<number>(options[0]);
     const containerRef = React.createRef<HTMLDivElement>();
     const onSelectChange = (e: React.ChangeEvent<HTMLSelectElement>): void => {
@@ -65,7 +66,7 @@ export const MoreMemorySelect: React.FC<MoreMemorySelectProps> = ({ count, offse
 
     return (
         <div
-            className='more-memory-select'
+            className={`more-memory-select ${disabled ? 'disabled' : ''}`}
             tabIndex={0}
             role='button'
             onClick={loadMoreMemory}
@@ -78,6 +79,7 @@ export const MoreMemorySelect: React.FC<MoreMemorySelectProps> = ({ count, offse
                     className='bytes-select'
                     onChange={onSelectChange}
                     tabIndex={0}
+                    disabled={disabled}
                 >
                     {options.map(option => (
                         <option
@@ -100,6 +102,7 @@ interface MemoryTableProps extends TableRenderOptions, MemoryDisplayConfiguratio
     count: number;
     fetchMemory(partialOptions?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void>;
     isMemoryFetching: boolean;
+    isFrozen: boolean;
 }
 
 interface MemoryRowListOptions {
@@ -242,6 +245,7 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
                     direction='above'
                     scrollingBehavior={scrollingBehavior}
                     fetchMemory={fetchMemory}
+                    disabled={this.props.isFrozen}
                 />
             </div>;
         }
@@ -275,6 +279,7 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
                     direction='below'
                     scrollingBehavior={scrollingBehavior}
                     fetchMemory={fetchMemory}
+                    disabled={this.props.isFrozen}
                 />
             </div>;
         }

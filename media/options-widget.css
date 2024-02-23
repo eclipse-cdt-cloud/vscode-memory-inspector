@@ -27,7 +27,7 @@
 .memory-options-widget .title-container h1 {
   flex-grow: 1;
   font-size: 1.3em;
-  margin: 8px 0 4px;
+  margin: 8px 5px 4px;
 }
 
 .memory-options-widget .title-container input {
@@ -47,6 +47,14 @@
   opacity: 1;
 }
 
+.memory-options-widget .freeze-content-toggle {
+  margin-top: 4px;
+}
+
+.memory-options-widget .freeze-content-toggle.toggled {
+  background-color: var(--vscode-button-secondaryBackground);
+}
+
 .core-options {
   display: flex;
   flex-direction: row;
@@ -55,6 +63,11 @@
   flex-wrap: wrap;
   border-bottom: 1px solid var(--vscode-widget-border);
   border-top: 1px solid var(--vscode-widget-border);
+}
+
+.core-options input:disabled,
+.core-options .disabled {
+  color: var(--vscode-disabledForeground);
 }
 
 .form-options {

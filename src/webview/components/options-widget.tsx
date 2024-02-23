@@ -41,6 +41,8 @@ export interface OptionsWidgetProps
     ) => void;
     refreshMemory: () => void;
     toggleColumn(id: string, isVisible: boolean): void;
+    toggleFreezeButton: () => void;
+    isFrozen: boolean;
 }
 
 interface OptionsWidgetState {
@@ -140,10 +142,22 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
     override render(): React.ReactNode {
         this.formConfig.initialValues = this.optionsFormValues;
         const isLabelEditing = this.state.isTitleEditing;
+        const isFrozen = this.props.isFrozen;
+        const freezeContentToggleTitle = isFrozen ? 'Unfreeze Memory View' : 'Freeze Memory View';
 
         return (
             <div className='memory-options-widget px-4'>
                 <div className='title-container'>
+                    <Button
+                        type='button'
+                        className={`freeze-content-toggle ${isFrozen ? 'toggled' : ''}`}
+                        icon={'codicon codicon-' + (isFrozen ? 'lock' : 'unlock')}
+                        onClick={this.props.toggleFreezeButton}
+                        title={freezeContentToggleTitle}
+                        aria-label={freezeContentToggleTitle}
+                        rounded
+                        aria-haspopup
+                    />
                     <InputText
                         ref={this.labelEditInput}
                         type='text'
@@ -168,11 +182,11 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                     )}
                 </div>
                 <div className='core-options py-2'>
-                    <Formik {...this.formConfig}>
+                    <Formik {...this.formConfig} >
                         {formik => (
-                            <form onSubmit={formik.handleSubmit} className='form-options'>
+                            <form onSubmit={formik.handleSubmit} className='form-options' >
                                 <span className='pm-top-label form-texfield-long'>
-                                    <label htmlFor={InputId.Address} className='p-inputtext-label'>
+                                    <label htmlFor={InputId.Address} className={`p-inputtext-label ${isFrozen ? 'disabled' : ''}`} >
                                         Address
                                     </label>
                                     <InputText
@@ -181,6 +195,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                         {...formik.getFieldProps('address')}
                                         onKeyDown={this.handleKeyDown}
                                         onBlur={ev => this.doHandleBlur(ev, formik)}
+                                        disabled={isFrozen}
                                     />
                                     {formik.errors.address ?
                                         (<small className='p-invalid'>
@@ -189,7 +204,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                         : undefined}
                                 </span>
                                 <span className='pm-top-label form-textfield'>
-                                    <label htmlFor={InputId.Offset} className='p-inputtext-label'>
+                                    <label htmlFor={InputId.Offset} className={`p-inputtext-label ${isFrozen ? 'disabled' : ''}`}>
                                         Offset
                                     </label>
                                     <InputText
@@ -198,6 +213,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                         {...formik.getFieldProps('offset')}
                                         onKeyDown={this.handleKeyDown}
                                         onBlur={ev => this.doHandleBlur(ev, formik)}
+                                        disabled={isFrozen}
                                     />
                                     {formik.errors.offset ?
                                         (<small className='p-invalid'>
@@ -206,7 +222,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                         : undefined}
                                 </span>
                                 <span className='pm-top-label form-textfield'>
-                                    <label htmlFor={InputId.Length} className='p-inputtext-label'>
+                                    <label htmlFor={InputId.Length} className={`p-inputtext-label ${isFrozen ? 'disabled' : ''}`}>
                                         Length
                                     </label>
                                     <InputText
@@ -215,6 +231,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                         {...formik.getFieldProps('count')}
                                         onKeyDown={this.handleKeyDown}
                                         onBlur={ev => this.doHandleBlur(ev, formik)}
+                                        disabled={isFrozen}
                                     />
                                     {formik.errors.count ?
                                         (<small className='p-invalid'>
@@ -222,7 +239,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                         </small>)
                                         : undefined}
                                 </span>
-                                <Button type='submit' disabled={!formik.isValid}>
+                                <Button type='submit' disabled={!formik.isValid || isFrozen}>
                                     Go
                                 </Button>
                             </form>
