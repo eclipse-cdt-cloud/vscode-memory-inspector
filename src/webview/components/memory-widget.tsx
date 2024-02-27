@@ -14,30 +14,11 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-import { DebugProtocol } from '@vscode/debugprotocol';
 import React from 'react';
-import { ColumnStatus } from '../columns/column-contribution-service';
-import { Decoration, Endianness, Memory, MemoryDisplayConfiguration } from '../utils/view-types';
+import { Endianness } from '../utils/view-types';
+import { MemoryAppContext } from './memory-app-provider';
 import { MemoryTable } from './memory-table';
 import { OptionsWidget } from './options-widget';
-
-interface MemoryWidgetProps extends MemoryDisplayConfiguration {
-    memory?: Memory;
-    title: string;
-    decorations: Decoration[];
-    columns: ColumnStatus[];
-    memoryReference: string;
-    offset: number;
-    count: number;
-    isMemoryFetching: boolean;
-    refreshMemory: () => void;
-    updateMemoryArguments: (memoryArguments: Partial<DebugProtocol.ReadMemoryArguments>) => void;
-    toggleColumn(id: string, active: boolean): void;
-    updateMemoryDisplayConfiguration: (memoryArguments: Partial<MemoryDisplayConfiguration>) => void;
-    resetMemoryDisplayConfiguration: () => void;
-    updateTitle: (title: string) => void;
-    fetchMemory(partialOptions?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void>
-}
 
 interface MemoryWidgetState {
     endianness: Endianness;
@@ -47,48 +28,21 @@ const defaultOptions: MemoryWidgetState = {
     endianness: Endianness.Little,
 };
 
-export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidgetState> {
-    constructor(props: MemoryWidgetProps) {
+export class MemoryWidget extends React.Component<{}, MemoryWidgetState> {
+    static contextType = MemoryAppContext;
+    declare context: MemoryAppContext;
+
+    constructor(props: {}) {
         super(props);
         this.state = { ...defaultOptions };
     }
 
     override render(): React.ReactNode {
         return (<div className='flex flex-column h-full'>
-            <OptionsWidget
-                title={this.props.title}
-                updateTitle={this.props.updateTitle}
-                columnOptions={this.props.columns}
-                memoryReference={this.props.memoryReference}
-                offset={this.props.offset}
-                count={this.props.count}
-                endianness={this.state.endianness}
-                bytesPerWord={this.props.bytesPerWord}
-                wordsPerGroup={this.props.wordsPerGroup}
-                groupsPerRow={this.props.groupsPerRow}
-                updateMemoryArguments={this.props.updateMemoryArguments}
-                updateRenderOptions={this.props.updateMemoryDisplayConfiguration}
-                resetRenderOptions={this.props.resetMemoryDisplayConfiguration}
-                refreshMemory={this.props.refreshMemory}
-                addressRadix={this.props.addressRadix}
-                showRadixPrefix={this.props.showRadixPrefix}
-                toggleColumn={this.props.toggleColumn}
-            />
+            <OptionsWidget endianness={this.state.endianness} />
             <MemoryTable
-                decorations={this.props.decorations}
-                columnOptions={this.props.columns.filter(candidate => candidate.active)}
-                memory={this.props.memory}
                 endianness={this.state.endianness}
-                bytesPerWord={this.props.bytesPerWord}
-                wordsPerGroup={this.props.wordsPerGroup}
-                groupsPerRow={this.props.groupsPerRow}
-                offset={this.props.offset}
-                count={this.props.count}
-                fetchMemory={this.props.fetchMemory}
-                isMemoryFetching={this.props.isMemoryFetching}
-                scrollingBehavior={this.props.scrollingBehavior}
-                addressRadix={this.props.addressRadix}
-                showRadixPrefix={this.props.showRadixPrefix}
+                columnOptions={this.context.columns.filter(candidate => candidate.active)}
             />
         </div>);
     }

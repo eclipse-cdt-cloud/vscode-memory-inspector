@@ -15,16 +15,17 @@
  ********************************************************************************/
 
 import { DebugProtocol } from '@vscode/debugprotocol';
+import isDeepEqual from 'fast-deep-equal';
 import memoize from 'memoize-one';
 import { Column } from 'primereact/column';
 import { DataTable, DataTableCellSelection, DataTableProps, DataTableRowData, DataTableSelectionCellChangeEvent } from 'primereact/datatable';
 import { ProgressSpinner } from 'primereact/progressspinner';
-import React from 'react';
-import { TableRenderOptions } from '../columns/column-contribution-service';
-import { Decoration, Memory, MemoryDisplayConfiguration, ScrollingBehavior, isTrigger } from '../utils/view-types';
-import isDeepEqual from 'fast-deep-equal';
-import { AddressColumn } from '../columns/address-column';
 import { classNames } from 'primereact/utils';
+import React from 'react';
+import { AddressColumn } from '../columns/address-column';
+import { ColumnStatus, TableRenderOptions } from '../columns/column-contribution-service';
+import { Endianness, Memory, MemoryDisplayConfiguration, ScrollingBehavior, isTrigger } from '../utils/view-types';
+import { MemoryAppContext } from './memory-app-provider';
 
 export interface MoreMemorySelectProps {
     count: number;
@@ -93,13 +94,9 @@ export const MoreMemorySelect: React.FC<MoreMemorySelectProps> = ({ count, offse
     );
 };
 
-interface MemoryTableProps extends TableRenderOptions, MemoryDisplayConfiguration {
-    memory?: Memory;
-    decorations: Decoration[];
-    offset: number;
-    count: number;
-    fetchMemory(partialOptions?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void>;
-    isMemoryFetching: boolean;
+interface MemoryTableProps {
+    endianness: Endianness;
+    columnOptions: ColumnStatus[];
 }
 
 interface MemoryRowListOptions {
@@ -118,10 +115,10 @@ interface MemoryTableState {
     selection: DataTableCellSelection<MemoryRowData[]> | null;
 }
 
-type MemorySizeOptions = Pick<MemoryTableProps, 'bytesPerWord' | 'wordsPerGroup' | 'groupsPerRow'>;
+type MemorySizeOptions = Pick<MemoryDisplayConfiguration, 'bytesPerWord' | 'wordsPerGroup' | 'groupsPerRow'>;
 namespace MemorySizeOptions {
-    export function create(props: MemoryTableProps): MemorySizeOptions {
-        const { groupsPerRow, bytesPerWord, wordsPerGroup }: MemorySizeOptions = props;
+    export function create(context: MemoryAppContext): MemorySizeOptions {
+        const { groupsPerRow, bytesPerWord, wordsPerGroup }: MemorySizeOptions = context;
         return {
             bytesPerWord,
             groupsPerRow,
@@ -131,11 +128,15 @@ namespace MemorySizeOptions {
 }
 
 export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTableState> {
+    static contextType = MemoryAppContext;
+    declare context: MemoryAppContext;
+
+    protected prevContext?: MemoryAppContext;
 
     protected datatableRef = React.createRef<DataTable<MemoryRowData[]>>();
 
     protected get isShowMoreEnabled(): boolean {
-        return !!this.props.memory?.bytes.length;
+        return !!this.context.memory?.bytes.length;
     }
 
     constructor(props: MemoryTableProps) {
@@ -151,24 +152,28 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
         };
     }
 
-    componentDidUpdate(prevProps: Readonly<MemoryTableProps>): void {
-        const hasMemoryChanged = prevProps.memory?.address !== this.props.memory?.address || prevProps.offset !== this.props.offset || prevProps.count !== this.props.count;
-        const hasOptionsChanged = prevProps.wordsPerGroup !== this.props.wordsPerGroup || prevProps.groupsPerRow !== this.props.groupsPerRow;
+    componentDidUpdate(): void {
+        if (this.prevContext && this.prevContext !== this.context) {
+            const hasMemoryChanged = this.prevContext.memory?.address !== this.context.memory?.address
+                || this.prevContext.offset !== this.context.offset || this.prevContext.count !== this.context.count;
+            const hasOptionsChanged = this.prevContext.wordsPerGroup !== this.context.wordsPerGroup || this.prevContext.groupsPerRow !== this.context.groupsPerRow;
 
-        // Reset selection
-        const selection = this.state.selection;
-        if (selection && (hasMemoryChanged || hasOptionsChanged)) {
-            // eslint-disable-next-line no-null/no-null
-            this.setState(prev => ({ ...prev, selection: null }));
+            // Reset selection
+            const selection = this.state.selection;
+            if (selection && (hasMemoryChanged || hasOptionsChanged)) {
+                // eslint-disable-next-line no-null/no-null
+                this.setState(prev => ({ ...prev, selection: null }));
+            }
         }
+        this.prevContext = this.context;
     }
 
     public render(): React.ReactNode {
-        const memory = this.props.memory;
+        const memory = this.context.memory;
         let rows: MemoryRowData[] = [];
 
         if (memory) {
-            const memorySizeOptions = MemorySizeOptions.create(this.props);
+            const memorySizeOptions = MemorySizeOptions.create(this.context);
             const options = this.createMemoryRowListOptions(memory, memorySizeOptions);
             rows = this.createTableRows(memory, options);
         }
@@ -185,7 +190,7 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
                 >
                     {this.props.columnOptions.map(({ contribution }) => {
                         const fit = contribution.id === AddressColumn.ID;
-
+                        const renderOptions: TableRenderOptions = { columnOptions: this.props.columnOptions, endianness: this.props.endianness, ...this.context };
                         return <Column
                             key={contribution.id}
                             field={contribution.id}
@@ -193,7 +198,7 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
                             className={classNames({ fit })}
                             headerClassName={classNames({ fit })}
                             style={{ width: fit ? undefined : `${columnWidth}%` }}
-                            body={(row?: MemoryRowData) => row && contribution.render(row, this.props.memory!, this.props)}>
+                            body={(row?: MemoryRowData) => row && contribution.render(row, this.context.memory!, renderOptions)}>
                             {contribution.label}
                         </Column>;
                     })}
@@ -228,7 +233,7 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
     };
 
     protected renderHeader(): React.ReactNode | undefined {
-        const { offset, count, fetchMemory, scrollingBehavior } = this.props;
+        const { offset, count, fetchMemory, scrollingBehavior } = this.context;
 
         let memorySelect: React.ReactNode | undefined;
         let loading: React.ReactNode | undefined;
@@ -246,7 +251,7 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
             </div>;
         }
 
-        if (this.props.isMemoryFetching) {
+        if (this.context.isMemoryFetching) {
             loading = <div className='absolute right-0 flex align-items-center'>
                 <ProgressSpinner style={{ width: '16px', height: '16px' }} className='mr-2' />
                 <span>Loading</span>
@@ -262,7 +267,7 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
     }
 
     protected renderFooter(): React.ReactNode | undefined {
-        const { offset, count, fetchMemory, scrollingBehavior } = this.props;
+        const { offset, count, fetchMemory, scrollingBehavior } = this.context;
 
         let memorySelect: React.ReactNode | undefined;
 

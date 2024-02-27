@@ -14,33 +14,22 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-import type { DebugProtocol } from '@vscode/debugprotocol';
 import { Formik, FormikConfig, FormikErrors, FormikProps } from 'formik';
 import { Button } from 'primereact/button';
+import { Checkbox } from 'primereact/checkbox';
 import { Dropdown, DropdownChangeEvent } from 'primereact/dropdown';
 import { InputText } from 'primereact/inputtext';
 import { OverlayPanel } from 'primereact/overlaypanel';
 import { classNames } from 'primereact/utils';
 import React, { FocusEventHandler, KeyboardEvent, KeyboardEventHandler, MouseEventHandler } from 'react';
-import { TableRenderOptions } from '../columns/column-contribution-service';
 import {
-    SerializedTableRenderOptions,
+    Endianness
 } from '../utils/view-types';
+import { MemoryAppContext } from './memory-app-provider';
 import { MultiSelectWithLabel } from './multi-select';
-import { Checkbox } from 'primereact/checkbox';
 
-export interface OptionsWidgetProps
-    extends Omit<TableRenderOptions, 'scrollingBehavior'>,
-    Required<DebugProtocol.ReadMemoryArguments> {
-    title: string;
-    updateRenderOptions: (options: Partial<SerializedTableRenderOptions>) => void;
-    resetRenderOptions: () => void;
-    updateTitle: (title: string) => void;
-    updateMemoryArguments: (
-        memoryArguments: Partial<DebugProtocol.ReadMemoryArguments>
-    ) => void;
-    refreshMemory: () => void;
-    toggleColumn(id: string, isVisible: boolean): void;
+export interface OptionsWidgetProps {
+    endianness: Endianness;
 }
 
 interface OptionsWidgetState {
@@ -69,30 +58,36 @@ const allowedWordsPerGroup = [1, 2, 4, 8, 16];
 const allowedGroupsPerRow = [1, 2, 4, 8, 16, 32];
 
 export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWidgetState> {
+    static contextType = MemoryAppContext;
+    declare context: MemoryAppContext;
+
     protected formConfig: FormikConfig<OptionsForm>;
     protected extendedOptions = React.createRef<OverlayPanel>();
     protected labelEditInput = React.createRef<HTMLInputElement>();
 
     protected get optionsFormValues(): OptionsForm {
         return {
-            address: this.props.memoryReference,
-            offset: this.props.offset.toString(),
-            count: this.props.count.toString(),
+            address: this.context.memoryReference,
+            offset: this.context.offset.toString(),
+            count: this.context.count.toString(),
         };
     }
 
     constructor(props: OptionsWidgetProps) {
         super(props);
-
+        this.state = { isTitleEditing: false };
         this.formConfig = {
-            initialValues: this.optionsFormValues,
+            initialValues: {
+                address: '',
+                offset: '',
+                count: '',
+            },
             enableReinitialize: true,
             validate: this.validate,
             onSubmit: () => {
-                this.props.refreshMemory();
+                this.context.refreshMemory();
             },
         };
-        this.state = { isTitleEditing: false };
     }
 
     protected validate = (values: OptionsForm) => {
@@ -152,7 +147,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                         style={{ display: isLabelEditing ? 'block' : 'none' }}
                     />
                     {!isLabelEditing && (
-                        <h1 onDoubleClick={this.enableTitleEditing}>{this.props.title}</h1>
+                        <h1 onDoubleClick={this.enableTitleEditing}>{this.context.title}</h1>
                     )}
                     {!isLabelEditing && (
                         <Button
@@ -251,11 +246,11 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                             aria-haspopup
                         />
                         <div className='advanced-options-content'>
-                            {!!this.props.columnOptions.length && (
+                            {!!this.context.columns.length && (
                                 <MultiSelectWithLabel
                                     id='column-select'
                                     label='Columns'
-                                    items={this.props.columnOptions
+                                    items={this.context.columns
                                         .filter(({ configurable }) => configurable)
                                         .map(column => ({
                                             id: column.contribution.id,
@@ -275,7 +270,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                             </label>
                             <Dropdown
                                 id={InputId.BytesPerWord}
-                                value={this.props.bytesPerWord}
+                                value={this.context.bytesPerWord}
                                 onChange={this.handleAdvancedOptionsDropdownChange}
                                 options={allowedBytesPerWord}
                                 className='advanced-options-dropdown' />
@@ -288,7 +283,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                             </label>
                             <Dropdown
                                 id={InputId.WordsPerGroup}
-                                value={this.props.wordsPerGroup}
+                                value={this.context.wordsPerGroup}
                                 onChange={this.handleAdvancedOptionsDropdownChange}
                                 options={allowedWordsPerGroup}
                                 className='advanced-options-dropdown' />
@@ -300,7 +295,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                             </label>
                             <Dropdown
                                 id={InputId.GroupsPerRow}
-                                value={this.props.groupsPerRow}
+                                value={this.context.groupsPerRow}
                                 onChange={this.handleAdvancedOptionsDropdownChange}
                                 options={allowedGroupsPerRow}
                                 className='advanced-options-dropdown' />
@@ -314,7 +309,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                             </label>
                             <Dropdown
                                 id={InputId.AddressRadix}
-                                value={Number(this.props.addressRadix)}
+                                value={Number(this.context.addressRadix)}
                                 onChange={this.handleAdvancedOptionsDropdownChange}
                                 options={[
                                     { label: '2 - Binary', value: 2 },
@@ -328,7 +323,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                 <Checkbox
                                     id={InputId.ShowRadixPrefix}
                                     onChange={this.handleAdvancedOptionsDropdownChange}
-                                    checked={!!this.props.showRadixPrefix}
+                                    checked={!!this.context.showRadixPrefix}
                                 />
                                 <label htmlFor={InputId.ShowRadixPrefix} className='ml-2'>Display Radix Prefix</label>
                             </div>
@@ -363,20 +358,20 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
     protected updateOptions(id: InputId, value: string): void {
         switch (id) {
             case InputId.Address:
-                this.props.updateMemoryArguments({
+                this.context.updateMemoryState({
                     memoryReference: value,
                 });
                 break;
             case InputId.Offset:
                 if (!Number.isNaN(value)) {
-                    this.props.updateMemoryArguments({
+                    this.context.updateMemoryState({
                         offset: Number(value),
                     });
                 }
                 break;
             case InputId.Length:
                 if (!Number.isNaN(value)) {
-                    this.props.updateMemoryArguments({
+                    this.context.updateMemoryState({
                         count: Number(value),
                     });
                 }
@@ -393,19 +388,19 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
         const value = event.target.value;
         switch (id) {
             case InputId.BytesPerWord:
-                this.props.updateRenderOptions({ bytesPerWord: Number(value) });
+                this.context.updateMemoryDisplayConfiguration({ bytesPerWord: Number(value) });
                 break;
             case InputId.WordsPerGroup:
-                this.props.updateRenderOptions({ wordsPerGroup: Number(value) });
+                this.context.updateMemoryDisplayConfiguration({ wordsPerGroup: Number(value) });
                 break;
             case InputId.GroupsPerRow:
-                this.props.updateRenderOptions({ groupsPerRow: Number(value) });
+                this.context.updateMemoryDisplayConfiguration({ groupsPerRow: Number(value) });
                 break;
             case InputId.AddressRadix:
-                this.props.updateRenderOptions({ addressRadix: Number(value) });
+                this.context.updateMemoryDisplayConfiguration({ addressRadix: Number(value) });
                 break;
             case InputId.ShowRadixPrefix:
-                this.props.updateRenderOptions({ showRadixPrefix: !!event.target.checked });
+                this.context.updateMemoryDisplayConfiguration({ showRadixPrefix: !!event.target.checked });
                 break;
             default: {
                 throw new Error(`${id} can not be handled. Did you call the correct method?`);
@@ -415,19 +410,19 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
 
     protected handleColumnActivationChange: (labelSelected: string, newSelectionState: boolean) => void = (label, state) => this.doHandleColumnActivationChange(label, state);
     doHandleColumnActivationChange(label: string, isVisible: boolean): void {
-        const columnState = this.props.columnOptions.find(columnStatus => columnStatus.contribution.label.toLowerCase() === label.toLowerCase());
+        const columnState = this.context.columns.find(columnStatus => columnStatus.contribution.label.toLowerCase() === label.toLowerCase());
         const columnId = columnState?.contribution.id;
         if (columnId) {
-            this.props.toggleColumn(columnId, isVisible);
+            this.context.toggleColumn(columnId, isVisible);
         }
     }
 
-    protected handleResetAdvancedOptions: MouseEventHandler<HTMLButtonElement> | undefined = () => this.props.resetRenderOptions();
+    protected handleResetAdvancedOptions: MouseEventHandler<HTMLButtonElement> | undefined = () => this.context.resetMemoryDisplayConfiguration();
 
     protected enableTitleEditing = () => this.doEnableTitleEditing();
     protected doEnableTitleEditing(): void {
         if (this.labelEditInput.current) {
-            this.labelEditInput.current.value = this.props.title;
+            this.labelEditInput.current.value = this.context.title;
         }
         this.setState({ isTitleEditing: true });
     }
@@ -449,7 +444,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
     protected confirmEditedTitle: FocusEventHandler<HTMLInputElement> | undefined = () => this.doConfirmEditedTitle();
     protected doConfirmEditedTitle(): void {
         if (this.state.isTitleEditing && this.labelEditInput.current) {
-            this.props.updateTitle(this.labelEditInput.current.value.trim());
+            this.context.updateTitle(this.labelEditInput.current.value.trim());
             this.disableTitleEditing();
         }
     }
