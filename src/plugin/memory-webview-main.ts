@@ -35,7 +35,7 @@ import {
 import { MemoryProvider } from './memory-provider';
 import { outputChannelLogger } from './logger';
 import { VariableRange } from '../common/memory-range';
-import { MemoryViewSettings, ScrollingBehavior } from '../webview/utils/view-types';
+import { AddressPaddingOptions, MemoryViewSettings, ScrollingBehavior } from '../webview/utils/view-types';
 
 interface Variable {
     name: string;
@@ -225,9 +225,10 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
         const visibleColumns = CONFIGURABLE_COLUMNS
             .filter(column => vscode.workspace.getConfiguration(manifest.PACKAGE_NAME).get<boolean>(column, false))
             .map(columnId => columnId.replace('columns.', ''));
+        const addressPadding = AddressPaddingOptions[memoryInspectorConfiguration.get(manifest.CONFIG_ADDRESS_PADDING, manifest.DEFAULT_ADDRESS_PADDING)];
         const addressRadix = memoryInspectorConfiguration.get<number>(manifest.CONFIG_ADDRESS_RADIX, manifest.DEFAULT_ADDRESS_RADIX);
         const showRadixPrefix = memoryInspectorConfiguration.get<boolean>(manifest.CONFIG_SHOW_RADIX_PREFIX, manifest.DEFAULT_SHOW_RADIX_PREFIX);
-        return { title, bytesPerWord, wordsPerGroup, groupsPerRow, scrollingBehavior, visibleColumns, addressRadix, showRadixPrefix };
+        return { title, bytesPerWord, wordsPerGroup, groupsPerRow, scrollingBehavior, visibleColumns, addressPadding, addressRadix, showRadixPrefix };
     }
 
     protected async readMemory(request: DebugProtocol.ReadMemoryArguments): Promise<MemoryReadResult> {

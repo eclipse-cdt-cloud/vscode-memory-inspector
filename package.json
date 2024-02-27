@@ -220,6 +220,23 @@
           ],
           "description": "Behavior when adding more memory beyond the current view."
         },
+        "memory-inspector.addressPadding": {
+          "type": "string",
+          "enum": [
+            "Minimal",
+            "Unpadded",
+            "32bit",
+            "64bit"
+          ],
+          "default": "Minimal",
+          "enumDescriptions": [
+            "Minimal padding based on the longest address in range.",
+            "Disables padding, presenting addresses as-is.",
+            "Pads addresses to fit within a 32-bit address space.",
+            "Pads addresses to fit within a 64-bit address space."
+          ],
+          "description": "Controls the padding with 0s for memory addresses, enhancing readability by aligning them within a specified bit-width context."
+        },
         "memory-inspector.addressRadix": {
           "type": "number",
           "enum": [

@@ -38,9 +38,11 @@ import { AddressColumn } from './columns/address-column';
 import { DataColumn } from './columns/data-column';
 import { PrimeReactProvider } from 'primereact/api';
 import 'primeflex/primeflex.css';
+import { getAddressLength, getAddressString } from '../common/memory-range';
 
 export interface MemoryAppState extends MemoryState, MemoryDisplayConfiguration {
     title: string;
+    effectiveAddressLength: number;
     decorations: Decoration[];
     columns: ColumnStatus[];
     isFrozen: boolean;
@@ -51,6 +53,7 @@ const MEMORY_DISPLAY_CONFIGURATION_DEFAULTS: MemoryDisplayConfiguration = {
     wordsPerGroup: 1,
     groupsPerRow: 4,
     scrollingBehavior: 'Paginate',
+    addressPadding: 'Min',
     addressRadix: 16,
     showRadixPrefix: true,
 };
@@ -70,6 +73,7 @@ class App extends React.Component<{}, MemoryAppState> {
             memoryReference: '',
             offset: 0,
             count: 256,
+            effectiveAddressLength: 0,
             decorations: [],
             columns: columnContributionService.getColumns(),
             isMemoryFetching: false,
@@ -91,6 +95,15 @@ class App extends React.Component<{}, MemoryAppState> {
         messenger.sendNotification(readyType, HOST_EXTENSION, undefined);
     }
 
+    public componentDidUpdate(_: {}, prevState: MemoryAppState): void {
+        const addressPaddingNeedsUpdate =
+            (this.state.addressPadding === 'Min' && this.state.memory !== prevState.memory)
+            || this.state.addressPadding !== prevState.addressPadding;
+        if (addressPaddingNeedsUpdate) {
+            this.setState({ effectiveAddressLength: this.getEffectiveAddressLength(this.state.memory), });
+        }
+    }
+
     public render(): React.ReactNode {
         return <PrimeReactProvider>
             <MemoryWidget
@@ -101,6 +114,7 @@ class App extends React.Component<{}, MemoryAppState> {
                 offset={this.state.offset ?? 0}
                 count={this.state.count}
                 title={this.state.title}
+                effectiveAddressLength={this.state.effectiveAddressLength}
                 updateMemoryArguments={this.updateMemoryState}
                 updateMemoryDisplayConfiguration={this.updateMemoryDisplayConfiguration}
                 resetMemoryDisplayConfiguration={this.resetMemoryDisplayConfiguration}
@@ -115,6 +129,7 @@ class App extends React.Component<{}, MemoryAppState> {
                 groupsPerRow={this.state.groupsPerRow}
                 wordsPerGroup={this.state.wordsPerGroup}
                 scrollingBehavior={this.state.scrollingBehavior}
+                addressPadding={this.state.addressPadding}
                 addressRadix={this.state.addressRadix}
                 showRadixPrefix={this.state.showRadixPrefix}
             />
@@ -156,9 +171,11 @@ class App extends React.Component<{}, MemoryAppState> {
                 executor => executor.fetchData(completeOptions)
             ));
 
+            const memory = this.convertMemory(response);
+
             this.setState({
                 decorations: decorationService.decorations,
-                memory: this.convertMemory(response),
+                memory,
                 memoryReference: completeOptions.memoryReference,
                 offset: completeOptions.offset,
                 count: completeOptions.count,
@@ -177,6 +194,21 @@ class App extends React.Component<{}, MemoryAppState> {
         const address = BigInt(result.address);
         const bytes = Uint8Array.from(Buffer.from(result.data, 'base64'));
         return { bytes, address };
+    }
+
+    protected getEffectiveAddressLength(memory?: Memory): number {
+        const { addressRadix, addressPadding } = this.state;
+        return addressPadding === 'Min' ? this.getLastAddressLength(memory) : getAddressLength(addressPadding, addressRadix);
+    }
+
+    protected getLastAddressLength(memory?: Memory): number {
+        if (memory === undefined) {
+            return 0;
+        }
+        const rowLength = this.state.bytesPerWord * this.state.wordsPerGroup * this.state.groupsPerRow;
+        const rows = Math.ceil(memory.bytes.length / rowLength);
+        const finalAddress = memory.address + BigInt(((rows - 1) * rowLength));
+        return getAddressString(finalAddress, this.state.addressRadix).length;
     }
 
     protected toggleColumn = (id: string, active: boolean): void => { this.doToggleColumn(id, active); };

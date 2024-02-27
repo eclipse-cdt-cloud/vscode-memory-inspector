@@ -101,6 +101,7 @@ interface MemoryTableProps extends TableRenderOptions, MemoryDisplayConfiguratio
     decorations: Decoration[];
     offset: number;
     count: number;
+    effectiveAddressLength: number;
     fetchMemory(partialOptions?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void>;
     isMemoryFetching: boolean;
     isFrozen: boolean;

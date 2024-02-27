@@ -16,8 +16,8 @@
 
 import React, { ReactNode } from 'react';
 import { BigIntMemoryRange, getAddressString, getRadixMarker } from '../../common/memory-range';
-import { ColumnContribution, ColumnFittingType } from './column-contribution-service';
-import { Memory, MemoryDisplayConfiguration } from '../utils/view-types';
+import { ColumnContribution, ColumnFittingType, TableRenderOptions } from './column-contribution-service';
+import { Memory } from '../utils/view-types';
 
 export class AddressColumn implements ColumnContribution {
     static ID = 'address';
@@ -28,10 +28,10 @@ export class AddressColumn implements ColumnContribution {
 
     fittingType: ColumnFittingType = 'content-width';
 
-    render(range: BigIntMemoryRange, _: Memory, options: MemoryDisplayConfiguration): ReactNode {
+    render(range: BigIntMemoryRange, _: Memory, options: TableRenderOptions): ReactNode {
         return <span className='memory-start-address'>
             {options.showRadixPrefix && <span className='radix-prefix'>{getRadixMarker(options.addressRadix)}</span>}
-            <span className='address'>{getAddressString(range.startAddress, options.addressRadix)}</span>
+            <span className='address'>{getAddressString(range.startAddress, options.addressRadix, options.effectiveAddressLength)}</span>
         </span>;
     }
 }
