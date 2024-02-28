@@ -30,11 +30,13 @@ import { tryToNumber } from '../../common/typescript';
 import { Checkbox } from 'primereact/checkbox';
 import { Endianness } from '../../common/memory-range';
 import { createSectionVscodeContext } from '../utils/vscode-contexts';
+import { ReadMemoryArguments } from '../../common/messaging';
+import { validateMemoryReference, validateOffset, validateCount } from '../../common/memory';
 
 export interface OptionsWidgetProps
     extends Omit<TableRenderOptions, 'scrollingBehavior' | 'effectiveAddressLength'> {
-    configuredReadArguments: Required<DebugProtocol.ReadMemoryArguments>;
-    activeReadArguments: Required<DebugProtocol.ReadMemoryArguments>;
+    configuredReadArguments: Required<ReadMemoryArguments>;
+    activeReadArguments: Required<ReadMemoryArguments>;
     title: string;
     updateRenderOptions: (options: Partial<SerializedTableRenderOptions>) => void;
     resetRenderOptions: () => void;
@@ -44,6 +46,8 @@ export interface OptionsWidgetProps
     toggleColumn(id: string, isVisible: boolean): void;
     toggleFrozen: () => void;
     isFrozen: boolean;
+    triggerStoreMemory(): void;
+    triggerApplyMemory(): void;
 }
 
 interface OptionsWidgetState {
@@ -101,36 +105,18 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
 
     protected validate = (values: OptionsForm) => {
         const errors: FormikErrors<OptionsForm> = {};
-
-        if (values.address.trim().length === 0) {
-            errors.address = 'Required';
-        } else {
-            const address = +values.address;
-            if (!isNaN(address) && address < 0) {
-                errors.address = 'Value needs to be >= 0';
-            }
+        const addressError = values.address.trim().length === 0 ? 'Required' : validateMemoryReference(values.address);
+        if (addressError) {
+            errors.address = addressError;
         }
-
-        if (values.offset.trim().length === 0) {
-            errors.offset = 'Required';
-        } else {
-            const offset = +values.offset;
-            if (isNaN(offset)) {
-                errors.offset = 'No number provided';
-            }
+        const offsetError = values.offset.trim().length === 0 ? 'Required' : validateOffset(values.offset);
+        if (offsetError) {
+            errors.offset = offsetError;
         }
-
-        if (values.count.trim().length === 0) {
-            errors.count = 'Required';
-        } else {
-            const count = +values.count;
-            if (isNaN(count)) {
-                errors.count = 'No number provided';
-            } else if (count <= 0) {
-                errors.count = 'Value needs to be > 0';
-            }
+        const countError = values.count.trim().length === 0 ? 'Required' : validateCount(values.count);
+        if (countError) {
+            errors.count = countError;
         }
-
         return errors;
     };
 
@@ -176,16 +162,38 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                         <h1 onDoubleClick={this.enableTitleEditing}>{this.props.title}</h1>
                     )}
                     {!isLabelEditing && (
-                        <Button
-                            type='button'
-                            className='edit-label-toggle'
-                            icon='codicon codicon-edit'
-                            onClick={this.enableTitleEditing}
-                            title='Edit view title'
-                            aria-label='Edit view title'
-                            rounded
-                            aria-haspopup
-                        />
+                        <>
+                            <Button
+                                type='button'
+                                className='edit-label-toggle'
+                                icon='codicon codicon-edit'
+                                onClick={this.enableTitleEditing}
+                                title='Edit view title'
+                                aria-label='Edit view title'
+                                rounded
+                                aria-haspopup
+                            />
+                            <Button
+                                type='button'
+                                className='store-file-button'
+                                icon='codicon codicon-save'
+                                onClick={this.props.triggerStoreMemory}
+                                title='Store Memory as File'
+                                aria-label='Store Memory as File'
+                                rounded
+                                aria-haspopup
+                            />
+                            <Button
+                                type='button'
+                                className='apply-file-button'
+                                icon='codicon codicon-folder-opened'
+                                onClick={this.props.triggerApplyMemory}
+                                title='Apply Memory from File'
+                                aria-label='Apply Memory from File'
+                                rounded
+                                aria-haspopup
+                            />
+                        </>
                     )}
                 </div>
                 <div className='core-options py-2' ref={this.coreOptionsDiv}>

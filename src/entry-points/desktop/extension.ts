@@ -19,16 +19,19 @@ import { AdapterRegistry } from '../../plugin/adapter-registry/adapter-registry'
 import { MemoryProvider } from '../../plugin/memory-provider';
 import { MemoryWebview } from '../../plugin/memory-webview-main';
 import { CAdapter } from '../../plugin/adapter-registry/c-adapter';
+import { MemoryStorage } from '../../plugin/memory-storage';
 
 export const activate = async (context: vscode.ExtensionContext): Promise<AdapterRegistry> => {
     const registry = new AdapterRegistry();
     const memoryProvider = new MemoryProvider(registry);
     const memoryView = new MemoryWebview(context.extensionUri, memoryProvider);
+    const memoryStorage = new MemoryStorage(memoryProvider);
     const cAdapter = new CAdapter(registry);
 
     memoryProvider.activate(context);
     registry.activate(context);
     memoryView.activate(context);
+    memoryStorage.activate(context);
     cAdapter.activate(context);
 
     return registry;

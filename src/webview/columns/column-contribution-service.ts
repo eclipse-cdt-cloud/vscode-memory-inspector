@@ -14,10 +14,11 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-import { DebugProtocol } from '@vscode/debugprotocol';
 import type * as React from 'react';
 import { BigIntMemoryRange } from '../../common/memory-range';
-import type { Disposable, Memory, MemoryState, SerializedTableRenderOptions, UpdateExecutor } from '../utils/view-types';
+import type { Disposable, MemoryState, SerializedTableRenderOptions, UpdateExecutor } from '../utils/view-types';
+import { Memory } from '../../common/memory';
+import { ReadMemoryArguments } from '../../common/messaging';
 
 export type ColumnFittingType = 'content-width';
 
@@ -31,7 +32,7 @@ export interface ColumnContribution {
     priority?: number;
     render(range: BigIntMemoryRange, memory: Memory, options: TableRenderOptions): React.ReactNode
     /** Called when fetching new memory or when activating the column. */
-    fetchData?(currentViewParameters: DebugProtocol.ReadMemoryArguments): Promise<void>;
+    fetchData?(currentViewParameters: ReadMemoryArguments): Promise<void>;
     /** Called when the user reveals the column */
     activate?(memory: MemoryState): Promise<void>;
     /** Called when the user hides the column */

@@ -17,12 +17,13 @@
 import { DebugProtocol } from '@vscode/debugprotocol';
 import React from 'react';
 import { ColumnStatus } from '../columns/column-contribution-service';
-import { Decoration, Memory, MemoryDisplayConfiguration, MemoryState } from '../utils/view-types';
+import { Decoration, MemoryDisplayConfiguration, MemoryState } from '../utils/view-types';
 import { MemoryTable } from './memory-table';
 import { OptionsWidget } from './options-widget';
 import { WebviewIdMessageParticipant } from 'vscode-messenger-common';
 import { VscodeContext, createAppVscodeContext } from '../utils/vscode-contexts';
-import { WebviewSelection } from '../../common/messaging';
+import { WebviewSelection, MemoryOptions } from '../../common/messaging';
+import { Memory } from '../../common/memory';
 import { HoverService } from '../hovers/hover-service';
 
 interface MemoryWidgetProps extends MemoryDisplayConfiguration {
@@ -43,7 +44,9 @@ interface MemoryWidgetProps extends MemoryDisplayConfiguration {
     updateMemoryDisplayConfiguration: (memoryArguments: Partial<MemoryDisplayConfiguration>) => void;
     resetMemoryDisplayConfiguration: () => void;
     updateTitle: (title: string) => void;
-    fetchMemory(partialOptions?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void>
+    fetchMemory(partialOptions?: MemoryOptions): Promise<void>;
+    triggerStoreMemory(): void;
+    triggerApplyMemory(): void;
 }
 
 interface MemoryWidgetState {
@@ -94,6 +97,8 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 toggleColumn={this.props.toggleColumn}
                 toggleFrozen={this.props.toggleFrozen}
                 isFrozen={this.props.isFrozen}
+                triggerStoreMemory={this.props.triggerStoreMemory}
+                triggerApplyMemory={this.props.triggerApplyMemory}
             />
             <MemoryTable
                 ref={this.memoryTable}

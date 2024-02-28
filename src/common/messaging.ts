@@ -17,20 +17,41 @@
 import type { DebugProtocol } from '@vscode/debugprotocol';
 import type { NotificationType, RequestType } from 'vscode-messenger-common';
 import { MemoryViewSettings } from '../webview/utils/view-types';
-import type { VariableRange } from './memory-range';
+import type { VariableRange, WrittenMemory } from './memory-range';
+import { DebugRequestTypes } from './debug-requests';
+import { MemoryVariableNode } from './memory';
+import { URI } from 'vscode-uri';
 
-export type MemoryReadResult = DebugProtocol.ReadMemoryResponse['body'];
-export type MemoryWriteResult = DebugProtocol.WriteMemoryResponse['body'];
+// convenience types for easier readability and better semantics
+export type MemoryOptions = Partial<DebugProtocol.ReadMemoryArguments>;
 
+export type ReadMemoryArguments = DebugRequestTypes['readMemory'][0];
+export type ReadMemoryResult = DebugRequestTypes['readMemory'][1];
+
+export type WriteMemoryArguments = DebugRequestTypes['writeMemory'][0] & { count?: number };
+export type WriteMemoryResult = DebugRequestTypes['writeMemory'][1];
+
+export type StoreMemoryArguments = MemoryOptions | MemoryVariableNode;
+export type StoreMemoryResult = void;
+
+export type ApplyMemoryArguments = URI | undefined;
+export type ApplyMemoryResult = MemoryOptions;
+
+// Notifications
 export const readyType: NotificationType<void> = { method: 'ready' };
-export const logMessageType: RequestType<string, void> = { method: 'logMessage' };
 export const setMemoryViewSettingsType: NotificationType<Partial<MemoryViewSettings>> = { method: 'setMemoryViewSettings' };
 export const resetMemoryViewSettingsType: NotificationType<void> = { method: 'resetMemoryViewSettings' };
 export const setTitleType: NotificationType<string> = { method: 'setTitle' };
-export const setOptionsType: RequestType<Partial<DebugProtocol.ReadMemoryArguments | undefined>, void> = { method: 'setOptions' };
-export const readMemoryType: RequestType<DebugProtocol.ReadMemoryArguments, MemoryReadResult> = { method: 'readMemory' };
-export const writeMemoryType: RequestType<DebugProtocol.WriteMemoryArguments, MemoryWriteResult> = { method: 'writeMemory' };
-export const getVariables: RequestType<DebugProtocol.ReadMemoryArguments, VariableRange[]> = { method: 'getVariables' };
+export const memoryWrittenType: NotificationType<WrittenMemory> = { method: 'memoryWritten' };
+
+// Requests
+export const setOptionsType: RequestType<MemoryOptions, void> = { method: 'setOptions' };
+export const logMessageType: RequestType<string, void> = { method: 'logMessage' };
+export const readMemoryType: RequestType<ReadMemoryArguments, ReadMemoryResult> = { method: 'readMemory' };
+export const writeMemoryType: RequestType<WriteMemoryArguments, WriteMemoryResult> = { method: 'writeMemory' };
+export const getVariablesType: RequestType<ReadMemoryArguments, VariableRange[]> = { method: 'getVariables' };
+export const storeMemoryType: RequestType<StoreMemoryArguments, void> = { method: 'storeMemory' };
+export const applyMemoryType: RequestType<ApplyMemoryArguments, ApplyMemoryResult> = { method: 'applyMemory' };
 
 export const showAdvancedOptionsType: NotificationType<void> = { method: 'showAdvancedOptions' };
 export const getWebviewSelectionType: RequestType<void, WebviewSelection> = { method: 'getWebviewSelection' };

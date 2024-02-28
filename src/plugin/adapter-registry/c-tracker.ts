@@ -18,6 +18,7 @@ import * as vscode from 'vscode';
 import { DebugProtocol } from '@vscode/debugprotocol';
 import { AdapterVariableTracker, hexAddress, notADigit } from './adapter-capabilities';
 import { toHexStringWithRadixMarker, VariableRange } from '../../common/memory-range';
+import { sendRequest, EvaluateExpression } from '../../common/debug-requests';
 
 export class CTracker extends AdapterVariableTracker {
     /**
@@ -32,9 +33,9 @@ export class CTracker extends AdapterVariableTracker {
         }
         try {
             const [addressResponse, sizeResponse] = await Promise.all([
-                session.customRequest('evaluate', <DebugProtocol.EvaluateArguments>{ expression: `&(${variable.name})`, context: 'watch', frameId: this.currentFrame }),
-                session.customRequest('evaluate', <DebugProtocol.EvaluateArguments>{ expression: `sizeof(${variable.name})`, context: 'watch', frameId: this.currentFrame }),
-            ]) as DebugProtocol.EvaluateResponse['body'][];
+                sendRequest(session, 'evaluate', { expression: EvaluateExpression.addressOf(variable.name), context: 'watch', frameId: this.currentFrame }),
+                sendRequest(session, 'evaluate', { expression: EvaluateExpression.sizeOf(variable.name), context: 'watch', frameId: this.currentFrame })
+            ]);
             const addressPart = hexAddress.exec(addressResponse.result);
             if (!addressPart) { return undefined; }
             const startAddress = BigInt(addressPart[0]);

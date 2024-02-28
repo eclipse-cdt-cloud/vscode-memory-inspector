@@ -14,12 +14,14 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-import * as vscode from 'vscode';
-import * as manifest from './manifest';
 import { DebugProtocol } from '@vscode/debugprotocol';
-import { MemoryReadResult, MemoryWriteResult } from '../common/messaging';
+import * as vscode from 'vscode';
+import { VariableRange, WrittenMemory } from '../common/memory-range';
+import { ReadMemoryResult, WriteMemoryResult } from '../common/messaging';
 import { AdapterRegistry } from './adapter-registry/adapter-registry';
-import { VariableRange } from '../common/memory-range';
+import * as manifest from './manifest';
+import { sendRequest } from '../common/debug-requests';
+import { stringToBytesMemory } from '../common/memory';
 
 export interface LabeledUint8Array extends Uint8Array {
     label?: string;
@@ -34,8 +36,11 @@ export class MemoryProvider {
     public static ReadKey = `${manifest.PACKAGE_NAME}.canRead`;
     public static WriteKey = `${manifest.PACKAGE_NAME}.canWrite`;
 
-    private _onDidStopDebug: vscode.EventEmitter<vscode.DebugSession> = new vscode.EventEmitter<vscode.DebugSession>();
-    public readonly onDidStopDebug: vscode.Event<vscode.DebugSession> = this._onDidStopDebug.event;
+    private _onDidStopDebug = new vscode.EventEmitter<vscode.DebugSession>();
+    public readonly onDidStopDebug = this._onDidStopDebug.event;
+
+    private _onDidWriteMemory = new vscode.EventEmitter<WrittenMemory>();
+    public readonly onDidWriteMemory = this._onDidWriteMemory.event;
 
     protected readonly sessions = new Map<string, DebugProtocol.Capabilities | undefined>();
 
@@ -113,12 +118,22 @@ export class MemoryProvider {
         return vscode.debug.activeDebugSession;
     }
 
-    public async readMemory(readMemoryArguments: DebugProtocol.ReadMemoryArguments): Promise<MemoryReadResult> {
-        return this.assertCapability('supportsReadMemoryRequest', 'read memory').customRequest('readMemory', readMemoryArguments);
+    public async readMemory(args: DebugProtocol.ReadMemoryArguments): Promise<ReadMemoryResult> {
+        return sendRequest(this.assertCapability('supportsReadMemoryRequest', 'read memory'), 'readMemory', args);
     }
 
-    public async writeMemory(writeMemoryArguments: DebugProtocol.WriteMemoryArguments): Promise<MemoryWriteResult> {
-        return this.assertCapability('supportsWriteMemoryRequest', 'write memory').customRequest('writeMemory', writeMemoryArguments);
+    public async writeMemory(args: DebugProtocol.WriteMemoryArguments & { count?: number }): Promise<WriteMemoryResult> {
+        return sendRequest(this.assertCapability('supportsWriteMemoryRequest', 'write memory'), 'writeMemory', args).then(response => {
+            const offset = response?.offset ? (args.offset ?? 0) + response.offset : args.offset;
+            // we accept count as an additional argument so we can skip the memory length calculation
+            const count = response?.bytesWritten ?? args.count ?? stringToBytesMemory(args.data).length;
+            this._onDidWriteMemory.fire({ memoryReference: args.memoryReference, offset, count });
+            return response;
+        });
+    }
+
+    public async evaluate(args: DebugProtocol.EvaluateArguments): Promise<DebugProtocol.EvaluateResponse['body']> {
+        return sendRequest(this.assertActiveSession('evaluate'), 'evaluate', args);
     }
 
     public async getVariables(variableArguments: DebugProtocol.ReadMemoryArguments): Promise<VariableRange[]> {

@@ -27,6 +27,12 @@ export interface MemoryRange {
     endAddress?: string;
 }
 
+export interface WrittenMemory {
+    memoryReference: string;
+    offset?: number;
+    count?: number
+}
+
 /** Suitable for arithemetic */
 export interface BigIntMemoryRange {
     startAddress: bigint;
@@ -93,8 +99,8 @@ export function getAddressLength(padding: number, radix: Radix): number {
     return Math.ceil(padding / Math.log2(radix));
 }
 
-export function toHexStringWithRadixMarker(target: bigint): string {
-    return `${getRadixMarker(Radix.Hexadecimal)}${getAddressString(target, Radix.Hexadecimal)}`;
+export function toHexStringWithRadixMarker(target: bigint, paddedLength: number = 0): string {
+    return `${getRadixMarker(Radix.Hexadecimal)}${getAddressString(target, Radix.Hexadecimal, paddedLength)}`;
 }
 
 export interface VariableMetadata {

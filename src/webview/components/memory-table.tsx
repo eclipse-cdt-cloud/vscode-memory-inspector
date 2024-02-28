@@ -22,13 +22,15 @@ import { ProgressSpinner } from 'primereact/progressspinner';
 import { Tooltip } from 'primereact/tooltip';
 import React from 'react';
 import { TableRenderOptions } from '../columns/column-contribution-service';
-import { Decoration, Memory, MemoryDisplayConfiguration, ScrollingBehavior, isTrigger } from '../utils/view-types';
+import { Decoration, MemoryDisplayConfiguration, ScrollingBehavior, isTrigger } from '../utils/view-types';
 import isDeepEqual from 'fast-deep-equal';
 import { classNames } from 'primereact/utils';
 import { tryToNumber } from '../../common/typescript';
 import { DataColumn } from '../columns/data-column';
 import { createColumnVscodeContext, createSectionVscodeContext } from '../utils/vscode-contexts';
 import { WebviewSelection } from '../../common/messaging';
+import { ReadMemoryArguments } from '../../common/messaging';
+import { Memory } from '../../common/memory';
 import { debounce } from 'lodash';
 import type { HoverService } from '../hovers/hover-service';
 import { TooltipEvent } from 'primereact/tooltip/tooltipoptions';
@@ -37,7 +39,7 @@ export interface MoreMemorySelectProps {
     activeReadArguments: Required<DebugProtocol.ReadMemoryArguments>;
     options: number[];
     direction: 'above' | 'below';
-    fetchMemory(partialOptions?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void>;
+    fetchMemory(partialOptions?: Partial<ReadMemoryArguments>): Promise<void>;
     disabled: boolean
 }
 
@@ -134,7 +136,7 @@ interface MemoryTableProps extends TableRenderOptions, MemoryDisplayConfiguratio
     decorations: Decoration[];
     effectiveAddressLength: number;
     hoverService: HoverService;
-    fetchMemory(partialOptions?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void>;
+    fetchMemory(partialOptions?: Partial<ReadMemoryArguments>): Promise<void>;
     isMemoryFetching: boolean;
     isFrozen: boolean;
 }
