@@ -16,7 +16,7 @@
 
 import React, { ReactNode } from 'react';
 import { BigIntMemoryRange, getAddressString, getRadixMarker } from '../../common/memory-range';
-import { ColumnContribution } from './column-contribution-service';
+import { ColumnContribution, ColumnFittingType } from './column-contribution-service';
 import { Memory, MemoryDisplayConfiguration } from '../utils/view-types';
 
 export class AddressColumn implements ColumnContribution {
@@ -25,6 +25,8 @@ export class AddressColumn implements ColumnContribution {
     readonly id = AddressColumn.ID;
     readonly label = 'Address';
     readonly priority = 0;
+
+    fittingType: ColumnFittingType = 'content-width';
 
     render(range: BigIntMemoryRange, _: Memory, options: MemoryDisplayConfiguration): ReactNode {
         return <span className='memory-start-address'>

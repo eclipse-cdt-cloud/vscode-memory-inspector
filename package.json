@@ -184,8 +184,9 @@
           "description": "Default words per group"
         },
         "memory-inspector.groupings.groupsPerRow": {
-          "type": "number",
+          "type": ["string", "number"],
           "enum": [
+            "Autofit",
             1,
             2,
             4,

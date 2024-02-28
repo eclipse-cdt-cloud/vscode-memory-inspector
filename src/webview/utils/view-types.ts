@@ -18,6 +18,8 @@ import type { DebugProtocol } from '@vscode/debugprotocol';
 import deepequal from 'fast-deep-equal';
 import type * as React from 'react';
 import { areRangesEqual, BigIntMemoryRange, Radix } from '../../common/memory-range';
+import { GroupsPerRowChoices } from '../../plugin/manifest';
+import { TypeOfArrayElement } from '../../common/typescript';
 
 export enum Endianness {
     Little = 'Little Endian',
@@ -81,7 +83,7 @@ export interface MemoryViewSettings extends ColumnVisibilityStatus, MemoryDispla
 export interface MemoryDisplayConfiguration {
     bytesPerWord: number;
     wordsPerGroup: number;
-    groupsPerRow: number;
+    groupsPerRow: TypeOfArrayElement<GroupsPerRowChoices>;
     scrollingBehavior: ScrollingBehavior;
     addressRadix: Radix;
     showRadixPrefix: boolean;

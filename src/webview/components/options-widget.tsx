@@ -27,6 +27,8 @@ import {
     SerializedTableRenderOptions,
 } from '../utils/view-types';
 import { MultiSelectWithLabel } from './multi-select';
+import { CONFIG_BYTES_PER_WORD_CHOICES, CONFIG_GROUPS_PER_ROW_CHOICES, CONFIG_WORDS_PER_GROUP_CHOICES } from '../../plugin/manifest';
+import { tryToNumber } from '../../common/typescript';
 import { Checkbox } from 'primereact/checkbox';
 
 export interface OptionsWidgetProps
@@ -65,10 +67,6 @@ interface OptionsForm {
     offset: string;
     count: string;
 }
-
-const allowedBytesPerWord = [1, 2, 4, 8, 16];
-const allowedWordsPerGroup = [1, 2, 4, 8, 16];
-const allowedGroupsPerRow = [1, 2, 4, 8, 16, 32];
 
 export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWidgetState> {
     protected formConfig: FormikConfig<OptionsForm>;
@@ -294,7 +292,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                 id={InputId.BytesPerWord}
                                 value={this.props.bytesPerWord}
                                 onChange={this.handleAdvancedOptionsDropdownChange}
-                                options={allowedBytesPerWord}
+                                options={CONFIG_BYTES_PER_WORD_CHOICES}
                                 className='advanced-options-dropdown' />
 
                             <label
@@ -307,7 +305,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                 id={InputId.WordsPerGroup}
                                 value={this.props.wordsPerGroup}
                                 onChange={this.handleAdvancedOptionsDropdownChange}
-                                options={allowedWordsPerGroup}
+                                options={CONFIG_WORDS_PER_GROUP_CHOICES}
                                 className='advanced-options-dropdown' />
                             <label
                                 htmlFor={InputId.GroupsPerRow}
@@ -319,7 +317,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                 id={InputId.GroupsPerRow}
                                 value={this.props.groupsPerRow}
                                 onChange={this.handleAdvancedOptionsDropdownChange}
-                                options={allowedGroupsPerRow}
+                                options={CONFIG_GROUPS_PER_ROW_CHOICES}
                                 className='advanced-options-dropdown' />
 
                             <h2>Address Format</h2>
@@ -416,7 +414,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                 this.props.updateRenderOptions({ wordsPerGroup: Number(value) });
                 break;
             case InputId.GroupsPerRow:
-                this.props.updateRenderOptions({ groupsPerRow: Number(value) });
+                this.props.updateRenderOptions({ groupsPerRow: tryToNumber(value) ?? value });
                 break;
             case InputId.AddressRadix:
                 this.props.updateRenderOptions({ addressRadix: Number(value) });

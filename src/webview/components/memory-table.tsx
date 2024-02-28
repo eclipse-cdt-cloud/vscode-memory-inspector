@@ -23,8 +23,9 @@ import React from 'react';
 import { TableRenderOptions } from '../columns/column-contribution-service';
 import { Decoration, Memory, MemoryDisplayConfiguration, ScrollingBehavior, isTrigger } from '../utils/view-types';
 import isDeepEqual from 'fast-deep-equal';
-import { AddressColumn } from '../columns/address-column';
 import { classNames } from 'primereact/utils';
+import { tryToNumber } from '../../common/typescript';
+import { DataColumn } from '../columns/data-column';
 
 export interface MoreMemorySelectProps {
     count: number;
@@ -118,16 +119,21 @@ interface MemoryRowData {
 }
 
 interface MemoryTableState {
+    /**
+     * The value coming from {@link MemoryTableProps.groupsPerRow} can have non-numeric values such as `Autofit`.
+     * For this reason, we need to transform the provided value to a numeric one to render correctly.
+     */
+    groupsPerRowToRender: number;
     selection: DataTableCellSelection<MemoryRowData[]> | null;
 }
 
-type MemorySizeOptions = Pick<MemoryTableProps, 'bytesPerWord' | 'wordsPerGroup' | 'groupsPerRow'>;
-namespace MemorySizeOptions {
-    export function create(props: MemoryTableProps): MemorySizeOptions {
-        const { groupsPerRow, bytesPerWord, wordsPerGroup }: MemorySizeOptions = props;
+export type MemorySizeOptions = Pick<MemoryTableProps, 'bytesPerWord' | 'wordsPerGroup'> & { groupsPerRow: number };
+export namespace MemorySizeOptions {
+    export function create(props: MemoryTableProps, state: MemoryTableState): MemorySizeOptions {
+        const { bytesPerWord, wordsPerGroup } = props;
         return {
             bytesPerWord,
-            groupsPerRow,
+            groupsPerRow: tryToNumber(props.groupsPerRow) ?? state.groupsPerRowToRender,
             wordsPerGroup
         };
     }
@@ -136,6 +142,7 @@ namespace MemorySizeOptions {
 export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTableState> {
 
     protected datatableRef = React.createRef<DataTable<MemoryRowData[]>>();
+    protected resizeObserver?: ResizeObserver;
 
     protected get isShowMoreEnabled(): boolean {
         return !!this.props.memory?.bytes.length;
@@ -149,9 +156,23 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
 
     protected initState(): void {
         this.state = {
+            groupsPerRowToRender: 1,
             // eslint-disable-next-line no-null/no-null
             selection: null,
         };
+    }
+
+    componentDidMount(): void {
+        this.resizeObserver = new ResizeObserver(entries => {
+            if (entries.length > 0) {
+                this.autofitColumns();
+            }
+        });
+
+        const element = this.datatableRef.current?.getElement();
+        if (element) {
+            this.resizeObserver.observe(element);
+        }
     }
 
     componentDidUpdate(prevProps: Readonly<MemoryTableProps>): void {
@@ -164,6 +185,12 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
             // eslint-disable-next-line no-null/no-null
             this.setState(prev => ({ ...prev, selection: null }));
         }
+
+        this.ensureGroupsPerRowToRenderIsSet();
+    }
+
+    componentWillUnmount(): void {
+        this.resizeObserver?.disconnect();
     }
 
     public render(): React.ReactNode {
@@ -171,13 +198,15 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
         let rows: MemoryRowData[] = [];
 
         if (memory) {
-            const memorySizeOptions = MemorySizeOptions.create(this.props);
+            const memorySizeOptions = MemorySizeOptions.create(this.props, this.state);
             const options = this.createMemoryRowListOptions(memory, memorySizeOptions);
             rows = this.createTableRows(memory, options);
         }
 
         const props = this.createDataTableProperties(rows);
-        const remainingWidth = 99; // Available width in percent without the fit columns
+        // Available width in percent without the fit columns
+        const remainingWidth = 100 -
+            this.props.columnOptions.filter(c => c.contribution.fittingType === 'content-width').length;
         const columnWidth = remainingWidth / (this.props.columnOptions.length);
 
         return (
@@ -187,15 +216,18 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
                     {...props}
                 >
                     {this.props.columnOptions.map(({ contribution }) => {
-                        const fit = contribution.id === AddressColumn.ID;
+                        const isContentWidhtFit = contribution.fittingType === 'content-width';
+                        const className = classNames(contribution.className, {
+                            'content-width-fit': isContentWidhtFit
+                        });
 
                         return <Column
                             key={contribution.id}
                             field={contribution.id}
                             header={contribution.label}
-                            className={classNames({ fit })}
-                            headerClassName={classNames({ fit })}
-                            style={{ width: fit ? undefined : `${columnWidth}%` }}
+                            className={className}
+                            headerClassName={className}
+                            style={{ width: isContentWidhtFit ? undefined : `${columnWidth}%` }}
                             body={(row?: MemoryRowData) => row && contribution.render(row, this.props.memory!, this.props)}>
                             {contribution.label}
                         </Column>;
@@ -214,6 +246,7 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
             lazy: true,
             metaKeySelection: false,
             onSelectionChange: this.onSelectionChanged,
+            onColumnResizeEnd: this.onColumnResizeEnd,
             resizableColumns: true,
             scrollable: true,
             scrollHeight: 'flex',
@@ -222,11 +255,14 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
             tableStyle: { minWidth: '30rem' },
             value: rows
         };
-
     }
 
     protected onSelectionChanged = (event: DataTableSelectionCellChangeEvent<MemoryRowData[]>) => {
         this.setState(prev => ({ ...prev, selection: event.value }));
+    };
+
+    protected onColumnResizeEnd = () => {
+        this.autofitColumns();
     };
 
     protected renderHeader(): React.ReactNode | undefined {
@@ -318,6 +354,38 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
             startAddress,
             endAddress: startAddress + memoryTableOptions.bigWordsPerRow
         };
+    }
+
+    /**
+     * Triggers the autofitting for the columns
+     */
+    protected autofitColumns(): void {
+        this.ensureGroupsPerRowToRenderIsSet();
+    }
+
+    /**
+     * Ensures that the {@link MemoryTableState.groupsPerRowToRender} is correctly set.
+     */
+    protected ensureGroupsPerRowToRenderIsSet(): void {
+        const groupsPerRowToRender = this.determineGroupsPerRowToRender();
+
+        if (this.state.groupsPerRowToRender !== groupsPerRowToRender) {
+            this.setState(prev => ({ ...prev, groupsPerRowToRender }));
+        }
+    }
+
+    protected determineGroupsPerRowToRender(): number {
+        const options = MemorySizeOptions.create(this.props, this.state);
+
+        if (this.props.groupsPerRow === 'Autofit') {
+            const row = this.datatableRef.current?.getElement().querySelector<HTMLElement>('tbody > tr');
+            if (row) {
+                return DataColumn.approximateGroupsPerRow(row, options);
+            }
+            return 1;
+        }
+
+        return options.groupsPerRow;
     }
 }
 
