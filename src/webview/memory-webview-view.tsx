@@ -107,7 +107,7 @@ class App extends React.Component<{}, MemoryAppState> {
                 updateTitle={this.updateTitle}
                 refreshMemory={this.refreshMemory}
                 toggleColumn={this.toggleColumn}
-                toggleFreezeButton={this.toggleFreezeButton}
+                toggleFrozen={this.toggleFrozen}
                 isFrozen={this.state.isFrozen}
                 fetchMemory={this.fetchMemory}
                 isMemoryFetching={this.state.isMemoryFetching}
@@ -185,8 +185,8 @@ class App extends React.Component<{}, MemoryAppState> {
         this.setState(prevState => ({ ...prevState, columns }));
     }
 
-    protected toggleFreezeButton = (): void => { this.doToggleFreezeButton(); };
-    protected doToggleFreezeButton(): void {
+    protected toggleFrozen = (): void => { this.doToggleFrozen(); };
+    protected doToggleFrozen(): void {
         this.setState(prevState => ({ ...prevState, isFrozen: !prevState.isFrozen }));
     }
 

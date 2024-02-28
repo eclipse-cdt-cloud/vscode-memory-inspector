@@ -41,7 +41,7 @@ export interface OptionsWidgetProps
     ) => void;
     refreshMemory: () => void;
     toggleColumn(id: string, isVisible: boolean): void;
-    toggleFreezeButton: () => void;
+    toggleFrozen: () => void;
     isFrozen: boolean;
 }
 
@@ -152,7 +152,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                         type='button'
                         className={`freeze-content-toggle ${isFrozen ? 'toggled' : ''}`}
                         icon={'codicon codicon-' + (isFrozen ? 'lock' : 'unlock')}
-                        onClick={this.props.toggleFreezeButton}
+                        onClick={this.props.toggleFrozen}
                         title={freezeContentToggleTitle}
                         aria-label={freezeContentToggleTitle}
                         rounded
@@ -184,9 +184,9 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                 <div className='core-options py-2'>
                     <Formik {...this.formConfig} >
                         {formik => (
-                            <form onSubmit={formik.handleSubmit} className='form-options' >
-                                <span className='pm-top-label form-texfield-long'>
-                                    <label htmlFor={InputId.Address} className={`p-inputtext-label ${isFrozen ? 'disabled' : ''}`} >
+                            <form onSubmit={formik.handleSubmit} className='form-options'>
+                                <span className={'pm-top-label form-texfield-long'}>
+                                    <label htmlFor={InputId.Address} className={`p-inputtext-label ${isFrozen ? 'p-disabled' : ''}`} >
                                         Address
                                     </label>
                                     <InputText
@@ -204,7 +204,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                         : undefined}
                                 </span>
                                 <span className='pm-top-label form-textfield'>
-                                    <label htmlFor={InputId.Offset} className={`p-inputtext-label ${isFrozen ? 'disabled' : ''}`}>
+                                    <label htmlFor={InputId.Offset} className={`p-inputtext-label ${isFrozen ? 'p-disabled' : ''}`}>
                                         Offset
                                     </label>
                                     <InputText
@@ -222,7 +222,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                         : undefined}
                                 </span>
                                 <span className='pm-top-label form-textfield'>
-                                    <label htmlFor={InputId.Length} className={`p-inputtext-label ${isFrozen ? 'disabled' : ''}`}>
+                                    <label htmlFor={InputId.Length} className={`p-inputtext-label ${isFrozen ? 'p-disabled' : ''}`}>
                                         Length
                                     </label>
                                     <InputText

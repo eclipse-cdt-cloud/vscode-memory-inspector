@@ -66,7 +66,7 @@ export const MoreMemorySelect: React.FC<MoreMemorySelectProps> = ({ count, offse
 
     return (
         <div
-            className={`more-memory-select ${disabled ? 'disabled' : ''}`}
+            className={`more-memory-select ${disabled ? 'p-disabled' : ''}`}
             tabIndex={0}
             role='button'
             onClick={loadMoreMemory}
@@ -76,7 +76,7 @@ export const MoreMemorySelect: React.FC<MoreMemorySelectProps> = ({ count, offse
             <div className='more-memory-select-top no-select'>
                 Load
                 <select
-                    className='bytes-select'
+                    className={`bytes-select ${disabled ? 'p-disabled' : ''}`}
                     onChange={onSelectChange}
                     tabIndex={0}
                     disabled={disabled}
