@@ -54,6 +54,7 @@ export class AdapterVariableTracker implements vscode.DebugAdapterTracker {
     /** Produces a two-level tree of scopes and their immediate children. Does not handle expansion of complex variables. */
     onDidSendMessage(message: unknown): void {
         if (isScopesResponse(message)) {
+            this.variablesTree = {}; // Scopes request implies that all scopes will be queried again.
             for (const scope of message.body.scopes) {
                 if (this.isDesiredScope(scope)) {
                     if (!this.variablesTree[scope.variablesReference] || this.variablesTree[scope.variablesReference].name !== scope.name) {
