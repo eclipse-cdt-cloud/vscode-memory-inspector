@@ -23,10 +23,9 @@ import type { MemorySizeOptions } from '../components/memory-table';
 import { elementInnerWidth, characterWidthInContainer } from '../utils/window';
 
 export class DataColumn implements ColumnContribution {
-    static ID = 'data';
     static CLASS_NAME = 'column-data';
 
-    readonly id = DataColumn.ID;
+    readonly id = 'data';
     readonly className = DataColumn.CLASS_NAME;
     readonly label = 'Data';
     readonly priority = 1;

@@ -216,9 +216,9 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
                     {...props}
                 >
                     {this.props.columnOptions.map(({ contribution }) => {
-                        const isContentWidhtFit = contribution.fittingType === 'content-width';
+                        const isContentWidthFit = contribution.fittingType === 'content-width';
                         const className = classNames(contribution.className, {
-                            'content-width-fit': isContentWidhtFit
+                            'content-width-fit': isContentWidthFit
                         });
 
                         return <Column
@@ -227,7 +227,7 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
                             header={contribution.label}
                             className={className}
                             headerClassName={className}
-                            style={{ width: isContentWidhtFit ? undefined : `${columnWidth}%` }}
+                            style={{ width: isContentWidthFit ? undefined : `${columnWidth}%` }}
                             body={(row?: MemoryRowData) => row && contribution.render(row, this.props.memory!, this.props)}>
                             {contribution.label}
                         </Column>;
