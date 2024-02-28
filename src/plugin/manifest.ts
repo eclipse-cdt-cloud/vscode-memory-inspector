@@ -30,20 +30,20 @@ export const DEFAULT_REFRESH_ON_STOP = 'on';
 // Words
 // - Bytes per Word
 export const CONFIG_BYTES_PER_WORD = 'groupings.bytesPerWord';
-export const CONFIG_BYTES_PER_WORD_CHOICES = [1, 2, 4, 8, 16];
+export const CONFIG_BYTES_PER_WORD_CHOICES = [1, 2, 4, 8, 16] as const;
 export const DEFAULT_BYTES_PER_WORD = 1;
 
 // - Words per Group
 export const CONFIG_WORDS_PER_GROUP = 'groupings.wordsPerGroup';
-export const CONFIG_WORDS_PER_GROUP_CHOICES = [1, 2, 4, 8, 16];
+export const CONFIG_WORDS_PER_GROUP_CHOICES = [1, 2, 4, 8, 16] as const;
 export const DEFAULT_WORDS_PER_GROUP = 1;
 
 // - Groups per Row
-export type GroupsPerRowChoices = ['Autofit', ...number[]];
 export const CONFIG_GROUPS_PER_ROW = 'groupings.groupsPerRow';
 export const CONFIG_GROUPS_PER_ROW_NUMERIC_CHOICES = [1, 2, 4, 8, 16, 32] as const;
-export const CONFIG_GROUPS_PER_ROW_CHOICES: GroupsPerRowChoices = ['Autofit', ...CONFIG_GROUPS_PER_ROW_NUMERIC_CHOICES];
-export const DEFAULT_GROUPS_PER_ROW = 4;
+export const CONFIG_GROUPS_PER_ROW_CHOICES = ['Autofit', ...CONFIG_GROUPS_PER_ROW_NUMERIC_CHOICES] as const;
+export type GroupsPerRowOption = (typeof CONFIG_GROUPS_PER_ROW_CHOICES)[number];
+export const DEFAULT_GROUPS_PER_ROW: GroupsPerRowOption = 4;
 
 // Scroll
 export const CONFIG_SCROLLING_BEHAVIOR = 'scrollingBehavior';

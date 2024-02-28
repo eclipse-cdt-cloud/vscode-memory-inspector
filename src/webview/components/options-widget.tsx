@@ -292,7 +292,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                 id={InputId.BytesPerWord}
                                 value={this.props.bytesPerWord}
                                 onChange={this.handleAdvancedOptionsDropdownChange}
-                                options={CONFIG_BYTES_PER_WORD_CHOICES}
+                                options={[...CONFIG_BYTES_PER_WORD_CHOICES]}
                                 className='advanced-options-dropdown' />
 
                             <label
@@ -305,7 +305,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                 id={InputId.WordsPerGroup}
                                 value={this.props.wordsPerGroup}
                                 onChange={this.handleAdvancedOptionsDropdownChange}
-                                options={CONFIG_WORDS_PER_GROUP_CHOICES}
+                                options={[...CONFIG_WORDS_PER_GROUP_CHOICES]}
                                 className='advanced-options-dropdown' />
                             <label
                                 htmlFor={InputId.GroupsPerRow}
@@ -317,7 +317,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                 id={InputId.GroupsPerRow}
                                 value={this.props.groupsPerRow}
                                 onChange={this.handleAdvancedOptionsDropdownChange}
-                                options={CONFIG_GROUPS_PER_ROW_CHOICES}
+                                options={[...CONFIG_GROUPS_PER_ROW_CHOICES]}
                                 className='advanced-options-dropdown' />
 
                             <h2>Address Format</h2>
