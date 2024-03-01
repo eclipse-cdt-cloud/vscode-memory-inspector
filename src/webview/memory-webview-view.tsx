@@ -100,7 +100,10 @@ class App extends React.Component<{}, MemoryAppState> {
             (this.state.addressPadding === 'Min' && this.state.memory !== prevState.memory)
             || this.state.addressPadding !== prevState.addressPadding;
         if (addressPaddingNeedsUpdate) {
-            this.setState({ effectiveAddressLength: this.getEffectiveAddressLength(this.state.memory), });
+            const effectiveAddressLength = this.getEffectiveAddressLength(this.state.memory);
+            if (this.state.effectiveAddressLength !== effectiveAddressLength) {
+                this.setState({ effectiveAddressLength });
+            }
         }
     }
 
