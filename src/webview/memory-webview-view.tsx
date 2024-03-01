@@ -43,6 +43,7 @@ export interface MemoryAppState extends MemoryState, MemoryDisplayConfiguration 
     title: string;
     decorations: Decoration[];
     columns: ColumnStatus[];
+    isFrozen: boolean;
 }
 
 const MEMORY_DISPLAY_CONFIGURATION_DEFAULTS: MemoryDisplayConfiguration = {
@@ -72,6 +73,7 @@ class App extends React.Component<{}, MemoryAppState> {
             decorations: [],
             columns: columnContributionService.getColumns(),
             isMemoryFetching: false,
+            isFrozen: false,
             ...MEMORY_DISPLAY_CONFIGURATION_DEFAULTS
         };
     }
@@ -105,6 +107,8 @@ class App extends React.Component<{}, MemoryAppState> {
                 updateTitle={this.updateTitle}
                 refreshMemory={this.refreshMemory}
                 toggleColumn={this.toggleColumn}
+                toggleFrozen={this.toggleFrozen}
+                isFrozen={this.state.isFrozen}
                 fetchMemory={this.fetchMemory}
                 isMemoryFetching={this.state.isMemoryFetching}
                 bytesPerWord={this.state.bytesPerWord}
@@ -135,6 +139,9 @@ class App extends React.Component<{}, MemoryAppState> {
 
     protected fetchMemory = async (partialOptions?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void> => this.doFetchMemory(partialOptions);
     protected async doFetchMemory(partialOptions?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void> {
+        if (this.state.isFrozen) {
+            return;
+        }
         this.setState(prev => ({ ...prev, isMemoryFetching: true }));
         const completeOptions = {
             memoryReference: partialOptions?.memoryReference || this.state.memoryReference,
@@ -177,6 +184,12 @@ class App extends React.Component<{}, MemoryAppState> {
         const columns = isVisible ? await columnContributionService.show(id, this.state) : columnContributionService.hide(id);
         this.setState(prevState => ({ ...prevState, columns }));
     }
+
+    protected toggleFrozen = (): void => { this.doToggleFrozen(); };
+    protected doToggleFrozen(): void {
+        this.setState(prevState => ({ ...prevState, isFrozen: !prevState.isFrozen }));
+    }
+
 }
 
 const container = document.getElementById('root') as Element;

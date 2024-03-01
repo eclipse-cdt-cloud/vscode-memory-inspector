@@ -33,6 +33,8 @@ interface MemoryWidgetProps extends MemoryDisplayConfiguration {
     refreshMemory: () => void;
     updateMemoryArguments: (memoryArguments: Partial<DebugProtocol.ReadMemoryArguments>) => void;
     toggleColumn(id: string, active: boolean): void;
+    isFrozen: boolean;
+    toggleFrozen: () => void;
     updateMemoryDisplayConfiguration: (memoryArguments: Partial<MemoryDisplayConfiguration>) => void;
     resetMemoryDisplayConfiguration: () => void;
     updateTitle: (title: string) => void;
@@ -73,6 +75,8 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 addressRadix={this.props.addressRadix}
                 showRadixPrefix={this.props.showRadixPrefix}
                 toggleColumn={this.props.toggleColumn}
+                toggleFrozen={this.props.toggleFrozen}
+                isFrozen={this.props.isFrozen}
             />
             <MemoryTable
                 decorations={this.props.decorations}
@@ -89,6 +93,7 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 scrollingBehavior={this.props.scrollingBehavior}
                 addressRadix={this.props.addressRadix}
                 showRadixPrefix={this.props.showRadixPrefix}
+                isFrozen={this.props.isFrozen}
             />
         </div>);
     }

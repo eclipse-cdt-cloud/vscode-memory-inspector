@@ -22,10 +22,20 @@
 
 .pm-top-label .p-inputtext-label {
   margin-bottom: 2px;
+}
+
+.p-inputtext-label:not(.p-disabled) {
   cursor: pointer;
 }
 
 small.p-invalid {
   margin-top: 4px;
   color: var(--vscode-errorForeground);
+}
+
+.p-disabled,
+.p-disabled * {
+  pointer-events: auto;
+  cursor: not-allowed;
+  color: var(--vscode-disabledForeground);
 }

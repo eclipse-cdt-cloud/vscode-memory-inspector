@@ -27,7 +27,7 @@
 .memory-options-widget .title-container h1 {
   flex-grow: 1;
   font-size: 1.3em;
-  margin: 8px 0 4px;
+  margin: 8px 5px 4px;
 }
 
 .memory-options-widget .title-container input {
@@ -45,6 +45,14 @@
 
 .memory-options-widget .title-container:hover .edit-label-toggle {
   opacity: 1;
+}
+
+.memory-options-widget .freeze-content-toggle {
+  margin-top: 4px;
+}
+
+.memory-options-widget .freeze-content-toggle.toggled {
+  background-color: var(--vscode-button-secondaryBackground);
 }
 
 .core-options {
