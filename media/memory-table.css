@@ -14,10 +14,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-.memory-inspector-table .group-separator > td {
-  border-bottom: 2px solid var(--vscode-editor-lineHighlightBorder);
-}
-
 .memory-inspector-table tr > th:not(.fit),
 .memory-inspector-table tr > td:not(.fit) {
   min-width: 120px;

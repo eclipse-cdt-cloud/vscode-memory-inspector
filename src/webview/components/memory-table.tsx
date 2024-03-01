@@ -17,7 +17,7 @@
 import { DebugProtocol } from '@vscode/debugprotocol';
 import memoize from 'memoize-one';
 import { Column } from 'primereact/column';
-import { DataTable, DataTableCellSelection, DataTableProps, DataTableRowData, DataTableSelectionCellChangeEvent } from 'primereact/datatable';
+import { DataTable, DataTableCellSelection, DataTableProps, DataTableSelectionCellChangeEvent } from 'primereact/datatable';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import React from 'react';
 import { TableRenderOptions } from '../columns/column-contribution-service';
@@ -211,7 +211,6 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
             lazy: true,
             metaKeySelection: false,
             onSelectionChange: this.onSelectionChanged,
-            rowClassName: this.rowClass,
             resizableColumns: true,
             scrollable: true,
             scrollHeight: 'flex',
@@ -286,20 +285,6 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
         );
     }
 
-    protected rowClass = (data?: DataTableRowData<MemoryRowData[]>) => {
-        const css: string[] = [];
-
-        if (data !== undefined && this.isGroupSeparatorRow(data)) {
-            css.push(MemoryTable.GROUP_SEPARATOR);
-        }
-
-        return css;
-    };
-
-    protected isGroupSeparatorRow(row: MemoryRowData): boolean {
-        return row.rowIndex % 4 === 3;
-    }
-
     protected createTableRows = memoize((memory: Memory, options: MemoryRowListOptions): MemoryRowData[] => {
         const rows: MemoryRowData[] = [];
         for (let i = 0; i < options.numRows; i++) {
@@ -333,5 +318,4 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
 
 export namespace MemoryTable {
     export const TABLE_CLASS = 'memory-inspector-table';
-    export const GROUP_SEPARATOR = 'group-separator';
 }
