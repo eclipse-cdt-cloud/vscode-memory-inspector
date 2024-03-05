@@ -39,6 +39,7 @@ import { DataColumn } from './columns/data-column';
 import { PrimeReactProvider } from 'primereact/api';
 import 'primeflex/primeflex.css';
 import { getAddressLength, getAddressString } from '../common/memory-range';
+import { Endianness } from '../common/memory-range';
 
 export interface MemoryAppState extends MemoryState, MemoryDisplayConfiguration {
     title: string;
@@ -52,6 +53,7 @@ const MEMORY_DISPLAY_CONFIGURATION_DEFAULTS: MemoryDisplayConfiguration = {
     bytesPerWord: 1,
     wordsPerGroup: 1,
     groupsPerRow: 4,
+    endianness: Endianness.Little,
     scrollingBehavior: 'Paginate',
     addressPadding: 'Min',
     addressRadix: 16,
@@ -132,6 +134,7 @@ class App extends React.Component<{}, MemoryAppState> {
                 isMemoryFetching={this.state.isMemoryFetching}
                 bytesPerWord={this.state.bytesPerWord}
                 groupsPerRow={this.state.groupsPerRow}
+                endianness={this.state.endianness}
                 wordsPerGroup={this.state.wordsPerGroup}
                 scrollingBehavior={this.state.scrollingBehavior}
                 addressPadding={this.state.addressPadding}

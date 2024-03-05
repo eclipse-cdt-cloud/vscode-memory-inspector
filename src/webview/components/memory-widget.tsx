@@ -17,7 +17,7 @@
 import { DebugProtocol } from '@vscode/debugprotocol';
 import React from 'react';
 import { ColumnStatus } from '../columns/column-contribution-service';
-import { Decoration, Endianness, Memory, MemoryDisplayConfiguration, MemoryState } from '../utils/view-types';
+import { Decoration, Memory, MemoryDisplayConfiguration, MemoryState } from '../utils/view-types';
 import { MemoryTable } from './memory-table';
 import { OptionsWidget } from './options-widget';
 
@@ -41,11 +41,9 @@ interface MemoryWidgetProps extends MemoryDisplayConfiguration {
 }
 
 interface MemoryWidgetState {
-    endianness: Endianness;
 }
 
 const defaultOptions: MemoryWidgetState = {
-    endianness: Endianness.Little,
 };
 
 export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidgetState> {
@@ -62,7 +60,7 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 columnOptions={this.props.columns}
                 configuredReadArguments={this.props.configuredReadArguments}
                 activeReadArguments={this.props.activeReadArguments}
-                endianness={this.state.endianness}
+                endianness={this.props.endianness}
                 bytesPerWord={this.props.bytesPerWord}
                 wordsPerGroup={this.props.wordsPerGroup}
                 groupsPerRow={this.props.groupsPerRow}
@@ -83,7 +81,7 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 decorations={this.props.decorations}
                 columnOptions={this.props.columns.filter(candidate => candidate.active)}
                 memory={this.props.memory}
-                endianness={this.state.endianness}
+                endianness={this.props.endianness}
                 bytesPerWord={this.props.bytesPerWord}
                 wordsPerGroup={this.props.wordsPerGroup}
                 groupsPerRow={this.props.groupsPerRow}

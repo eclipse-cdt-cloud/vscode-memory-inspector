@@ -17,13 +17,8 @@
 import type { DebugProtocol } from '@vscode/debugprotocol';
 import deepequal from 'fast-deep-equal';
 import type * as React from 'react';
-import { areRangesEqual, BigIntMemoryRange, Radix } from '../../common/memory-range';
+import { areRangesEqual, BigIntMemoryRange, Endianness, Radix } from '../../common/memory-range';
 import { GroupsPerRowOption } from '../../plugin/manifest';
-
-export enum Endianness {
-    Little = 'Little Endian',
-    Big = 'Big Endian'
-}
 
 export interface Memory {
     address: bigint;
@@ -91,6 +86,7 @@ export interface MemoryDisplayConfiguration {
     bytesPerWord: number;
     wordsPerGroup: number;
     groupsPerRow: GroupsPerRowOption;
+    endianness: Endianness;
     scrollingBehavior: ScrollingBehavior;
     addressPadding: AddressPadding;
     addressRadix: Radix;
