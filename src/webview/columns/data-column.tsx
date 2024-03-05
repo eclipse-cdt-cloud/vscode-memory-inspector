@@ -18,7 +18,7 @@ import { InputText } from 'primereact/inputtext';
 import * as React from 'react';
 import { HOST_EXTENSION } from 'vscode-messenger-common';
 import { Memory } from '../../common/memory';
-import { BigIntMemoryRange, Endianness, isWithin, toHexStringWithRadixMarker, toOffset } from '../../common/memory-range';
+import { BigIntMemoryRange, isWithin, toHexStringWithRadixMarker, toOffset } from '../../common/memory-range';
 import { writeMemoryType } from '../../common/messaging';
 import type { MemorySizeOptions } from '../components/memory-table';
 import { decorationService } from '../decorations/decoration-service';
@@ -134,7 +134,7 @@ export class EditableDataColumnRow extends React.Component<EditableDataColumnRow
 
     protected applyEndianness<T>(group: T[], options: TableRenderOptions): T[] {
         // Assume data from the DAP comes in Big Endian so we need to revert the order if we use Little Endian
-        return options.endianness === Endianness.Big ? group : group.reverse();
+        return options.endianness === 'Big Endian' ? group : group.reverse();
     }
 
     protected renderEditingGroup(editedRange: BigIntMemoryRange): React.ReactNode {
@@ -221,7 +221,7 @@ export class EditableDataColumnRow extends React.Component<EditableDataColumnRow
     protected processData(data: string, editedRange: BigIntMemoryRange): string {
         const characters = toOffset(editedRange.startAddress, editedRange.endAddress, this.props.options.bytesPerMau * 8) * 2;
         // Revert Endianness
-        if (this.props.options.endianness === Endianness.Little) {
+        if (this.props.options.endianness === 'Little Endian') {
             const chunks = data.padStart(characters, '0').match(/.{2}/g) || [];
             return chunks.reverse().join('');
         }

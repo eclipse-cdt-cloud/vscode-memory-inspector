@@ -15,13 +15,15 @@
  ********************************************************************************/
 
 import 'primeflex/primeflex.css';
+
 import { debounce } from 'lodash';
 import { PrimeReactProvider } from 'primereact/api';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { HOST_EXTENSION, WebviewIdMessageParticipant } from 'vscode-messenger-common';
+import * as manifest from '../common/manifest';
 import { createMemoryFromRead, Memory } from '../common/memory';
-import { BigIntMemoryRange, doOverlap, Endianness, getAddressLength, getAddressString, WrittenMemory } from '../common/memory-range';
+import { BigIntMemoryRange, doOverlap, getAddressLength, getAddressString, WrittenMemory } from '../common/memory-range';
 import {
     applyMemoryType,
     getWebviewSelectionType,
@@ -39,8 +41,11 @@ import {
     setTitleType,
     showAdvancedOptionsType,
     storeMemoryType,
+    ViewState,
+    viewStateChangedType,
     WebviewSelection,
 } from '../common/messaging';
+import { Change, hasChanged, hasChangedTo } from '../common/typescript';
 import { AddressColumn } from './columns/address-column';
 import { AsciiColumn } from './columns/ascii-column';
 import { columnContributionService, ColumnStatus } from './columns/column-contribution-service';
@@ -49,7 +54,7 @@ import { MemoryWidget } from './components/memory-widget';
 import { decorationService } from './decorations/decoration-service';
 import { AddressHover } from './hovers/address-hover';
 import { DataHover } from './hovers/data-hover';
-import { hoverService, HoverService } from './hovers/hover-service';
+import { HoverService, hoverService } from './hovers/hover-service';
 import { VariableHover } from './hovers/variable-hover';
 import { Decoration, MemoryDisplayConfiguration, MemoryState } from './utils/view-types';
 import { variableDecorator } from './variables/variable-decorations';
@@ -58,6 +63,7 @@ import { messenger } from './view-messenger';
 export interface MemoryAppState extends MemoryState, MemoryDisplayConfiguration {
     messageParticipant: WebviewIdMessageParticipant;
     title: string;
+    viewState: ViewState;
     sessionContext: SessionContext;
     effectiveAddressLength: number;
     decorations: Decoration[];
@@ -66,23 +72,30 @@ export interface MemoryAppState extends MemoryState, MemoryDisplayConfiguration 
     isFrozen: boolean;
 }
 
-const DEFAULT_SESSION_CONTEXT: SessionContext = {
+export const DEFAULT_SESSION_CONTEXT: SessionContext = {
     canRead: false,
     canWrite: false
 };
 
-const MEMORY_DISPLAY_CONFIGURATION_DEFAULTS: MemoryDisplayConfiguration = {
-    bytesPerMau: 1,
-    mausPerGroup: 1,
-    groupsPerRow: 4,
-    endianness: Endianness.Little,
-    scrollingBehavior: 'Paginate',
-    addressPadding: 'Min',
-    addressRadix: 16,
-    showRadixPrefix: true,
+export const DEFAULT_VIEW_STATE: ViewState = {
+    active: false,
+    visible: false
 };
 
-const DEFAULT_READ_ARGUMENTS: Required<ReadMemoryArguments> = {
+export const DEFAULT_MEMORY_DISPLAY_CONFIGURATION: MemoryDisplayConfiguration = {
+    bytesPerMau: manifest.DEFAULT_BYTES_PER_MAU,
+    mausPerGroup: manifest.DEFAULT_MAUS_PER_GROUP,
+    groupsPerRow: manifest.DEFAULT_GROUPS_PER_ROW,
+    endianness: manifest.DEFAULT_ENDIANNESS,
+    scrollingBehavior: manifest.DEFAULT_SCROLLING_BEHAVIOR,
+    addressPadding: manifest.DEFAULT_ADDRESS_PADDING,
+    addressRadix: manifest.DEFAULT_ADDRESS_RADIX,
+    showRadixPrefix: manifest.DEFAULT_SHOW_RADIX_PREFIX,
+    autoRefresh: manifest.DEFAULT_AUTO_REFRESH,
+    autoRefreshDelay: manifest.DEFAULT_AUTO_REFRESH_DELAY
+};
+
+export const DEFAULT_READ_ARGUMENTS: Required<ReadMemoryArguments> = {
     memoryReference: '',
     offset: 0,
     count: 256,
@@ -90,6 +103,7 @@ const DEFAULT_READ_ARGUMENTS: Required<ReadMemoryArguments> = {
 
 class App extends React.Component<{}, MemoryAppState> {
     protected memoryWidget = React.createRef<MemoryWidget>();
+    protected refreshTimer?: NodeJS.Timeout | number;
 
     public constructor(props: {}) {
         super(props);
@@ -104,6 +118,7 @@ class App extends React.Component<{}, MemoryAppState> {
         this.state = {
             messageParticipant: { type: 'webview', webviewId: '' },
             title: 'Memory',
+            viewState: DEFAULT_VIEW_STATE,
             sessionContext: DEFAULT_SESSION_CONTEXT,
             memory: undefined,
             effectiveAddressLength: 0,
@@ -114,7 +129,7 @@ class App extends React.Component<{}, MemoryAppState> {
             columns: columnContributionService.getColumns(),
             isMemoryFetching: false,
             isFrozen: false,
-            ...MEMORY_DISPLAY_CONFIGURATION_DEFAULTS
+            ...DEFAULT_MEMORY_DISPLAY_CONFIGURATION
         };
     }
 
@@ -122,6 +137,7 @@ class App extends React.Component<{}, MemoryAppState> {
         messenger.onRequest(setOptionsType, options => this.setOptions(options));
         messenger.onNotification(memoryWrittenType, writtenMemory => this.memoryWritten(writtenMemory));
         messenger.onNotification(sessionContextChangedType, sessionContext => this.sessionContextChanged(sessionContext));
+        messenger.onNotification(viewStateChangedType, viewState => this.viewStateChanged(viewState));
         messenger.onNotification(setMemoryViewSettingsType, config => {
             if (config.visibleColumns) {
                 for (const column of columnContributionService.getColumns()) {
@@ -135,20 +151,47 @@ class App extends React.Component<{}, MemoryAppState> {
         messenger.onRequest(getWebviewSelectionType, () => this.getWebviewSelection());
         messenger.onNotification(showAdvancedOptionsType, () => this.showAdvancedOptions());
         messenger.sendNotification(readyType, HOST_EXTENSION, undefined);
+        this.updateAutoRefresh();
     }
 
-    public componentDidUpdate(_: {}, prevState: MemoryAppState): void {
-        const addressPaddingNeedsUpdate =
-            (this.state.addressPadding === 'Min' && this.state.memory !== prevState.memory)
-            || this.state.addressPadding !== prevState.addressPadding;
-        if (addressPaddingNeedsUpdate) {
+    public componentDidUpdate(_: {}, from: MemoryAppState): void {
+        const current = this.state;
+        const stateChange: Change<MemoryAppState> = { from, to: current };
+        const sessionContextChange: Change<SessionContext> = { from: from.sessionContext, to: current.sessionContext };
+        const viewStateChange: Change<ViewState> = { from: from.viewState, to: current.viewState };
+
+        if (hasChanged(stateChange, 'addressPadding') || (this.state.addressPadding === 'Minimal' && hasChanged(stateChange, 'memory'))) {
             const effectiveAddressLength = this.getEffectiveAddressLength(this.state.memory);
             if (this.state.effectiveAddressLength !== effectiveAddressLength) {
                 this.setState({ effectiveAddressLength });
             }
         }
+        if (hasChanged(stateChange, 'autoRefresh') || hasChanged(stateChange, 'autoRefreshDelay')) {
+            this.updateAutoRefresh();
+        }
+
+        if (current.autoRefresh === 'On Stop' && hasChangedTo(sessionContextChange, 'stopped', true) ||
+            current.autoRefresh === 'On Focus' && hasChangedTo(viewStateChange, 'active', true)) {
+            this.fetchMemory();
+        }
+
         hoverService.setMemoryState(this.state);
     }
+
+    componentWillUnmount(): void {
+        clearTimeout(this.refreshTimer);
+    }
+
+    protected updateAutoRefresh = (): void => {
+        clearTimeout(this.refreshTimer);
+
+        if (this.state.autoRefresh === 'After Delay' && this.state.autoRefreshDelay && this.state.autoRefreshDelay > 0) {
+            // we do not use an interval here as we only want to schedule another refresh AFTER the previous execution AND the delay has passed
+            // and not strictly every n milliseconds. Even if 'fetchMemory' fails here, we schedule another auto-refresh.
+            const scheduleRefresh = () => this.fetchMemory().finally(() => this.updateAutoRefresh());
+            this.refreshTimer = setTimeout(scheduleRefresh, this.state.autoRefreshDelay);
+        }
+    };
 
     // use a slight debounce as the same event may come in short succession
     protected memoryWritten = debounce((writtenMemory: WrittenMemory): void => {
@@ -189,6 +232,10 @@ class App extends React.Component<{}, MemoryAppState> {
         this.setState({ sessionContext });
     }
 
+    protected viewStateChanged(viewState: ViewState): void {
+        this.setState({ viewState });
+    }
+
     public render(): React.ReactNode {
         return <PrimeReactProvider>
             <MemoryWidget
@@ -222,6 +269,8 @@ class App extends React.Component<{}, MemoryAppState> {
                 showRadixPrefix={this.state.showRadixPrefix}
                 storeMemory={this.storeMemory}
                 applyMemory={this.applyMemory}
+                autoRefresh={this.state.autoRefresh}
+                autoRefreshDelay={this.state.autoRefreshDelay}
             />
         </PrimeReactProvider>;
     }
@@ -229,6 +278,7 @@ class App extends React.Component<{}, MemoryAppState> {
     protected updateMemoryState = (newState?: Partial<MemoryState>) => this.setState(prevState => ({ ...prevState, ...newState }));
     protected updateMemoryDisplayConfiguration = (newState: Partial<MemoryDisplayConfiguration>) => this.setState(prevState => ({ ...prevState, ...newState }));
     protected resetMemoryDisplayConfiguration = () => messenger.sendNotification(resetMemoryViewSettingsType, HOST_EXTENSION, undefined);
+
     protected updateTitle = (title: string) => {
         this.setState({ title });
         messenger.sendNotification(setTitleType, HOST_EXTENSION, title);
@@ -236,64 +286,54 @@ class App extends React.Component<{}, MemoryAppState> {
 
     protected async setOptions(options?: MemoryOptions): Promise<void> {
         messenger.sendRequest(logMessageType, HOST_EXTENSION, `Setting options: ${JSON.stringify(options)}`);
-        if (this.state.configuredReadArguments.memoryReference === '') {
-            // Only update if we have no user configured read arguments
-            this.setState(prevState => ({ ...prevState, configuredReadArguments: { ...this.state.configuredReadArguments, ...options } }));
-        }
-
+        this.setState({ configuredReadArguments: { ...this.state.configuredReadArguments, ...options } });
         return this.fetchMemory(options);
     }
 
-    protected fetchMemory = async (partialOptions?: MemoryOptions): Promise<void> => this.doFetchMemory(partialOptions);
-    protected async doFetchMemory(partialOptions?: MemoryOptions): Promise<void> {
-        if (this.state.isFrozen) {
+    protected fetchMemory = async (partialOptions?: MemoryOptions): Promise<void> => {
+        if (this.state.isFrozen || !this.state.sessionContext.canRead) {
             return;
         }
-        this.setState(prev => ({ ...prev, isMemoryFetching: true }));
         const completeOptions = {
             memoryReference: partialOptions?.memoryReference || this.state.activeReadArguments.memoryReference,
             offset: partialOptions?.offset ?? this.state.activeReadArguments.offset,
             count: partialOptions?.count ?? this.state.activeReadArguments.count
         };
+        if (completeOptions.memoryReference === '') {
+            // may happen when we initialize empty
+            return;
+        }
+        this.doFetchMemory(completeOptions);
+    };
 
+    protected async doFetchMemory(memoryOptions: Required<MemoryOptions>): Promise<void> {
+        this.setState({ isMemoryFetching: true, activeReadArguments: memoryOptions });
         try {
-            const response = await messenger.sendRequest(readMemoryType, HOST_EXTENSION, completeOptions);
+            const response = await messenger.sendRequest(readMemoryType, HOST_EXTENSION, memoryOptions);
             await Promise.all(Array.from(
                 new Set(columnContributionService.getUpdateExecutors().concat(decorationService.getUpdateExecutors())),
-                executor => executor.fetchData(completeOptions)
+                executor => executor.fetchData(memoryOptions)
             ));
 
             const memory = createMemoryFromRead(response);
-
-            this.setState(prev => ({
-                ...prev,
-                decorations: decorationService.decorations,
-                memory,
-                activeReadArguments: completeOptions,
-                isMemoryFetching: false
-            }));
-
-            messenger.sendRequest(setOptionsType, HOST_EXTENSION, completeOptions);
+            this.setState({ memory, decorations: decorationService.decorations });
+            messenger.sendRequest(setOptionsType, HOST_EXTENSION, memoryOptions);
         } catch (ex) {
             // Do not show old results if the current search provided no memory
-            this.setState(prev => ({
-                ...prev,
-                memory: undefined,
-                activeReadArguments: completeOptions,
-            }));
+            this.setState({ memory: undefined });
 
             if (ex instanceof Error) {
                 console.error(ex);
             }
         } finally {
-            this.setState(prev => ({ ...prev, isMemoryFetching: false }));
+            this.setState({ isMemoryFetching: false });
         }
 
     }
 
     protected getEffectiveAddressLength(memory?: Memory): number {
         const { addressRadix, addressPadding } = this.state;
-        return addressPadding === 'Min' ? this.getLastAddressLength(memory) : getAddressLength(addressPadding, addressRadix);
+        return addressPadding === 'Minimal' ? this.getLastAddressLength(memory) : getAddressLength(addressPadding, addressRadix);
     }
 
     protected getLastAddressLength(memory?: Memory): number {
@@ -309,12 +349,12 @@ class App extends React.Component<{}, MemoryAppState> {
     protected toggleColumn = (id: string, active: boolean): void => { this.doToggleColumn(id, active); };
     protected async doToggleColumn(id: string, isVisible: boolean): Promise<void> {
         const columns = isVisible ? await columnContributionService.show(id, this.state) : columnContributionService.hide(id);
-        this.setState(prevState => ({ ...prevState, columns }));
+        this.setState({ columns });
     }
 
     protected toggleFrozen = (): void => { this.doToggleFrozen(); };
     protected doToggleFrozen(): void {
-        this.setState(prevState => ({ ...prevState, isFrozen: !prevState.isFrozen }));
+        this.setState(prevState => ({ isFrozen: !prevState.isFrozen }));
     }
 
     protected showAdvancedOptions(): void {

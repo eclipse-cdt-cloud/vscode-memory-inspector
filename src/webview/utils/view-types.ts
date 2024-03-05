@@ -17,10 +17,10 @@
 import deepequal from 'fast-deep-equal';
 import type * as React from 'react';
 import { WebviewIdMessageParticipant } from 'vscode-messenger-common';
+import { AutoRefresh, Endianness, GroupsPerRowOption } from '../../common/manifest';
 import { Memory } from '../../common/memory';
-import { areRangesEqual, BigIntMemoryRange, Endianness, Radix } from '../../common/memory-range';
+import { areRangesEqual, BigIntMemoryRange, Radix } from '../../common/memory-range';
 import { ReadMemoryArguments } from '../../common/messaging';
-import { GroupsPerRowOption } from '../../plugin/manifest';
 
 export interface SerializedTableRenderOptions extends MemoryDisplayConfiguration {
     columnOptions: Array<{ label: string, doRender: boolean }>;
@@ -89,12 +89,14 @@ export interface MemoryDisplayConfiguration {
     addressPadding: AddressPadding;
     addressRadix: Radix;
     showRadixPrefix: boolean;
+    autoRefresh: AutoRefresh;
+    autoRefreshDelay: number;
 }
 export type ScrollingBehavior = 'Paginate' | 'Grow' | 'Auto-Append';
 
-export type AddressPadding = 'Min' | number;
+export type AddressPadding = 'Minimal' | number;
 export const AddressPaddingOptions = {
-    'Minimal': 'Min',
+    'Minimal': 'Minimal',
     'Unpadded': 0,
     '32bit': 32,
     '64bit': 64,

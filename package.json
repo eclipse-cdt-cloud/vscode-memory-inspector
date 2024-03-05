@@ -25,7 +25,7 @@
     "prepare": "yarn build",
     "clean": "git clean -f -x ./node_modules ./dist",
     "build": "webpack --mode production && yarn lint",
-    "watch": "webpack -w",
+    "watch": "webpack -w --mode development ",
     "lint": "eslint . --ext .ts,.tsx",
     "package": "vsce package --yarn",
     "serve": "serve --cors -p 3333"
@@ -78,6 +78,7 @@
       {
         "command": "memory-inspector.show",
         "title": "Show Memory Inspector",
+        "icon": "$(file-binary)",
         "category": "Memory"
       },
       {
@@ -200,6 +201,13 @@
           "group": "z_more",
           "when": "webviewId === memory-inspector.memory"
         }
+      ],
+      "editor/title": [
+        {
+          "command": "memory-inspector.show",
+          "group": "navigation",
+          "when": "memory-inspector.canRead && (resourceLangId === c || resourceLangId === cpp)"
+        }
       ]
     },
     "customEditors": [
@@ -241,18 +249,28 @@
           ],
           "description": "C-based debuggers to activate (requires debug session restart)"
         },
-        "memory-inspector.refreshOnStop": {
+        "memory-inspector.autoRefresh": {
           "type": "string",
           "enum": [
-            "on",
-            "off"
+            "On Stop",
+            "On Focus",
+            "After Delay",
+            "Off"
           ],
           "enumDescriptions": [
-            "Refresh memory views when when debugger stops (e.g. a breakpoint is hit)",
-            "Memory view data is manually refreshed by user"
+            "Refresh when the debugger stops (e.g. a breakpoint is hit)",
+            "Refresh automatically when the view is newly focussed.",
+            "Refresh automatically after the configured `#memory-inspector.autoRefreshDelay#`",
+            "Memory Inspector needs to be manually refreshed by the user"
           ],
-          "default": "on",
-          "description": "Refresh memory views when debugger stops"
+          "default": "On Stop",
+          "description": "Controls when the Memory Inspector is refreshed."
+        },
+        "memory-inspector.autoRefreshDelay": {
+          "type": "number",
+          "default": 500,
+          "minimum": 500,
+          "markdownDescription": "Controls the delay in milliseconds after which a Memory Inspector is refrehsed automatically. Only applies when `#memory-inspector.autoRefresh#` is set to `afterDelay`."
         },
         "memory-inspector.groupings.bytesPerMAU": {
           "type": "number",

@@ -29,6 +29,7 @@ export interface DebugRequestTypes {
 
 export interface DebugEvents {
     'memory': DebugProtocol.MemoryEvent,
+    'continued': DebugProtocol.ContinuedEvent,
     'stopped': DebugProtocol.StoppedEvent
 }
 
