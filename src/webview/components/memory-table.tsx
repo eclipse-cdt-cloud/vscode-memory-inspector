@@ -240,7 +240,7 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
     protected createDataTableProperties(rows: MemoryRowData[]): DataTableProps<MemoryRowData[]> {
         return {
             cellSelection: true,
-            className: MemoryTable.TABLE_CLASS,
+            className: classNames(MemoryTable.TABLE_CLASS, { [MemoryTable.TABLE_GROUPS_PER_ROW_AUTOFIT]: this.props.groupsPerRow === 'Autofit' }),
             footer: this.renderFooter(),
             header: this.renderHeader(),
             lazy: true,
@@ -390,5 +390,6 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
 }
 
 export namespace MemoryTable {
-    export const TABLE_CLASS = 'memory-inspector-table';
+    export const TABLE_CLASS = 'memory-inspector-table' as const;
+    export const TABLE_GROUPS_PER_ROW_AUTOFIT = 'groups-per-row-autofit' as const;
 }

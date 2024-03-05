@@ -35,7 +35,7 @@ export class DataColumn implements ColumnContribution {
     };
 
     render(range: BigIntMemoryRange, memory: Memory, options: TableRenderOptions): React.ReactNode {
-        return this.renderGroups(range, memory, options);
+        return <div className='data-groups-container'>{this.renderGroups(range, memory, options)}</div>;
     }
 
     protected renderGroups(range: BigIntMemoryRange, memory: Memory, options: TableRenderOptions): React.ReactNode {
