@@ -107,8 +107,9 @@ export namespace DataColumn {
             return 1;
         }
         const columnWidth = elementInnerWidth(element);
-        const characterWidth = characterWidthInContainer(element, '0');
-        const groupWidth = characterWidth
+        // The browser also rounds the character width
+        const charactersWidth = Math.round((characterWidthInContainer(element, '0') + Number.EPSILON) * 100) / 100;
+        const groupWidth = charactersWidth
             * 2 // characters per byte
             * options.bytesPerWord
             * options.wordsPerGroup

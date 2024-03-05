@@ -20,8 +20,7 @@
 export function elementInnerWidth(element: HTMLElement): number {
     const styles = window.getComputedStyle(element);
     const padding = parseFloat(styles.paddingLeft) + parseFloat(styles.paddingRight);
-    const columnWidth = element.clientWidth - padding;
-    return columnWidth;
+    return parseFloat(styles.width) - padding;
 }
 
 /**
@@ -31,14 +30,14 @@ export function elementInnerWidth(element: HTMLElement): number {
  */
 export function characterWidthInContainer(container: HTMLElement, text: string): number {
     let width = 1;
-    const font = window.getComputedStyle(container).font;
-
+    const style = window.getComputedStyle(container);
+    const font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
 
     if (context) {
         context.font = font;
-        width = Math.ceil(context.measureText(text).width);
+        width = context.measureText(text).width;
     }
 
     return width;
