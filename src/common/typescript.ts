@@ -24,3 +24,16 @@ export function tryToNumber(value?: string | number): number | undefined {
 export function stringifyWithBigInts(object: any, space?: string | number): any {
     return JSON.stringify(object, (_key, value) => typeof value === 'bigint' ? value.toString() : value, space);
 }
+
+export interface Change<T> {
+    from: T;
+    to: T;
+}
+
+export function hasChanged<T, P extends keyof T>(change: Change<T>, prop: P): boolean {
+    return change.from[prop] !== change.to[prop];
+}
+
+export function hasChangedTo<T, P extends keyof T>(change: Change<T>, prop: P, value: T[P]): boolean {
+    return change.from[prop] !== change.to[prop] && change.to[prop] === value;
+}

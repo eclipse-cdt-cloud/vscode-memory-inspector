@@ -120,7 +120,8 @@
   gap: 8px;
 }
 
-.advanced-options-dropdown {
+.advanced-options-dropdown,
+.advanced-options-input {
   width: 100%;
 }
 

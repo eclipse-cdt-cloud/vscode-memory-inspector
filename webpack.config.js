@@ -8,7 +8,7 @@ const webpack = require('webpack');
 /** @type {WebpackConfig} */
 const common = {
     mode: 'development',
-    devtool: 'source-map',
+    devtool: 'inline-source-map',
     module: {
         rules: [
             {

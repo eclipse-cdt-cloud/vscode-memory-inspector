@@ -18,16 +18,17 @@ import { Formik, FormikConfig, FormikErrors, FormikProps } from 'formik';
 import { Button } from 'primereact/button';
 import { Checkbox } from 'primereact/checkbox';
 import { Dropdown, DropdownChangeEvent } from 'primereact/dropdown';
+import { InputNumber } from 'primereact/inputnumber';
 import { InputText } from 'primereact/inputtext';
 import { OverlayPanel } from 'primereact/overlaypanel';
 import { classNames } from 'primereact/utils';
 import React, { FocusEventHandler, KeyboardEvent, KeyboardEventHandler, MouseEventHandler, ReactNode } from 'react';
+import { AUTO_REFRESH_CHOICES, CONFIG_BYTES_PER_MAU_CHOICES, CONFIG_GROUPS_PER_ROW_CHOICES, CONFIG_MAUS_PER_GROUP_CHOICES, ENDIANNESS_CHOICES } from '../../common/manifest';
 import { validateCount, validateMemoryReference, validateOffset } from '../../common/memory';
-import { Endianness } from '../../common/memory-range';
 import { MemoryOptions, ReadMemoryArguments, SessionContext } from '../../common/messaging';
 import { tryToNumber } from '../../common/typescript';
-import { CONFIG_BYTES_PER_MAU_CHOICES, CONFIG_GROUPS_PER_ROW_CHOICES, CONFIG_MAUS_PER_GROUP_CHOICES } from '../../plugin/manifest';
 import { TableRenderOptions } from '../columns/column-contribution-service';
+import { DEFAULT_MEMORY_DISPLAY_CONFIGURATION } from '../memory-webview-view';
 import { AddressPaddingOptions, MemoryState, SerializedTableRenderOptions } from '../utils/view-types';
 import { createSectionVscodeContext } from '../utils/vscode-contexts';
 import { MultiSelectWithLabel } from './multi-select';
@@ -52,6 +53,7 @@ export interface OptionsWidgetProps
 
 interface OptionsWidgetState {
     isTitleEditing: boolean;
+    isEnablingAutoRefreshDelay: boolean;
 }
 
 const enum InputId {
@@ -65,6 +67,8 @@ const enum InputId {
     AddressPadding = 'address-padding',
     AddressRadix = 'address-radix',
     ShowRadixPrefix = 'show-radix-prefix',
+    AutoRefresh = 'auto-refresh',
+    AutoRefreshDelay = 'auto-refresh-delay',
 }
 
 interface OptionsForm {
@@ -77,6 +81,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
     protected formConfig: FormikConfig<OptionsForm>;
     protected extendedOptions = React.createRef<OverlayPanel>();
     protected labelEditInput = React.createRef<HTMLInputElement>();
+    protected refreshRateInput = React.createRef<InputNumber>();
     protected coreOptionsDiv = React.createRef<HTMLDivElement>();
     protected optionsMenuContext = createSectionVscodeContext('optionsWidget');
     protected advancedOptionsContext = createSectionVscodeContext('advancedOptionsOverlay');
@@ -96,11 +101,9 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
             initialValues: this.optionsFormValues,
             enableReinitialize: true,
             validate: this.validate,
-            onSubmit: () => {
-                this.props.fetchMemory(this.props.configuredReadArguments);
-            },
+            onSubmit: () => this.props.fetchMemory(this.props.configuredReadArguments),
         };
-        this.state = { isTitleEditing: false };
+        this.state = { isTitleEditing: false, isEnablingAutoRefreshDelay: false };
     }
 
     protected validate = (values: OptionsForm) => {
@@ -124,6 +127,11 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
         if (!prevState.isTitleEditing && this.state.isTitleEditing) {
             this.labelEditInput.current?.focus();
             this.labelEditInput.current?.select();
+        }
+        if (!prevState.isEnablingAutoRefreshDelay && this.state.isEnablingAutoRefreshDelay) {
+            const input = this.refreshRateInput.current?.getElement().getElementsByTagName('input')[0];
+            input?.focus();
+            input?.select();
         }
     }
 
@@ -360,7 +368,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                 id={InputId.EndiannessId}
                                 value={this.props.endianness}
                                 onChange={this.handleAdvancedOptionsDropdownChange}
-                                options={Object.values(Endianness)}
+                                options={[...ENDIANNESS_CHOICES]}
                                 className='advanced-options-dropdown' />
 
                             <h2>Address Format</h2>
@@ -403,6 +411,42 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                     checked={!!this.props.showRadixPrefix}
                                 />
                                 <label htmlFor={InputId.ShowRadixPrefix} className='ml-2'>Display Radix Prefix</label>
+                            </div>
+
+                            <h2>Auto-Refresh</h2>
+                            <label
+                                htmlFor={InputId.AutoRefresh}
+                                className='advanced-options-label'
+                            >
+                                Mode
+                            </label>
+                            <Dropdown
+                                id={InputId.AutoRefresh}
+                                value={this.props.autoRefresh}
+                                onChange={this.handleAdvancedOptionsDropdownChange}
+                                options={[...AUTO_REFRESH_CHOICES]}
+                                className="advanced-options-dropdown" />
+                            <label
+                                htmlFor={InputId.AutoRefreshDelay}
+                                className='advanced-options-label'
+                            >
+                                Delay
+                            </label>
+                            <div className='flex align-items-center'>
+                                <InputNumber
+                                    id={InputId.AutoRefreshDelay}
+                                    ref={this.refreshRateInput}
+                                    disabled={this.props.autoRefresh !== 'After Delay'}
+                                    value={this.props.autoRefreshDelay}
+                                    placeholder='Delay in ms'
+                                    inputClassName='advanced-options-input'
+                                    min={500}
+                                    step={250}
+                                    maxFractionDigits={0}
+                                    useGrouping={false}
+                                    onBlur={this.handleRefreshRateChange}
+                                    onKeyDown={this.handleRefreshRateChange} />
+                                <label htmlFor={InputId.AutoRefreshDelay} className='ml-2'>ms</label>
                             </div>
                         </div>
                     </OverlayPanel>
@@ -494,6 +538,10 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
             case InputId.ShowRadixPrefix:
                 this.props.updateRenderOptions({ showRadixPrefix: !!event.target.checked });
                 break;
+            case InputId.AutoRefresh:
+                this.props.updateRenderOptions({ autoRefresh: value });
+                this.setState({ isEnablingAutoRefreshDelay: value === 'After Delay' });
+                break;
             default: {
                 throw new Error(`${id} can not be handled. Did you call the correct method?`);
             }
@@ -506,6 +554,14 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
         const columnId = columnState?.contribution.id;
         if (columnId) {
             this.props.toggleColumn(columnId, isVisible);
+        }
+    }
+
+    protected handleRefreshRateChange: (event: React.FocusEvent<HTMLInputElement> | React.KeyboardEvent<HTMLInputElement>) => void = event => this.doHandleRefreshRateChange(event);
+    doHandleRefreshRateChange(event: React.FocusEvent<HTMLInputElement> | React.KeyboardEvent<HTMLInputElement>): void {
+        if (!('key' in event) || event.key === 'Enter') {
+            const autoRefreshDelay = tryToNumber(event.currentTarget.value) ?? DEFAULT_MEMORY_DISPLAY_CONFIGURATION.autoRefreshDelay;
+            this.props.updateRenderOptions({ autoRefreshDelay });
         }
     }
 
