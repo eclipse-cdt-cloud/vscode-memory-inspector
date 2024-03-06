@@ -85,3 +85,19 @@
 .radix-prefix {
   opacity: 0.6;
 }
+
+/* == Resize Handle == */
+
+.memory-inspector-table span.p-column-resizer {
+  border-right: 2px solid var(--vscode-editor-lineHighlightBorder);
+  transition: border-right .1s ease-out;
+}
+
+.memory-inspector-table span.p-column-resizer:hover {
+  border-right: 2px solid var(--vscode-sash-hoverBorder);
+}
+
+.memory-inspector-table .p-column-resizer-helper {
+  margin-top: 32px !important; /* avoid overlap with top 'Load more' widget */
+  width: 2px;
+}
