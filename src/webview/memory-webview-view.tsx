@@ -205,7 +205,7 @@ class App extends React.Component<{}, MemoryAppState> {
     }
 
     protected getLastAddressLength(memory?: Memory): number {
-        if (memory === undefined) {
+        if (memory === undefined || this.state.groupsPerRow === 'Autofit') {
             return 0;
         }
         const rowLength = this.state.bytesPerWord * this.state.wordsPerGroup * this.state.groupsPerRow;
