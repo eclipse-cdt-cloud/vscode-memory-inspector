@@ -54,14 +54,14 @@
   overflow-wrap: break-word;
   white-space: unset;
 }
-.p-datatable .p-datatable-tbody > tr > td.fit {
+.p-datatable .p-datatable-tbody > tr > td.content-width-fit {
   width: 1%;
   word-wrap: break-word;
   word-break: unset;
   background: var(--vscode-debugView-stateLabelBackground);
   color: var(--vscode-debugView-stateLabelForeground);
 }
-.p-datatable .p-datatable-thead > tr > th.fit {
+.p-datatable .p-datatable-thead > tr > th.content-width-fit {
   min-width: 80px;
 }
 

@@ -14,13 +14,21 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-.memory-inspector-table tr > th:not(.fit),
-.memory-inspector-table tr > td:not(.fit) {
+.memory-inspector-table tr > th:not(.content-width-fit),
+.memory-inspector-table tr > td:not(.content-width-fit) {
   min-width: 120px;
 }
 
 .memory-inspector-table tr > td {
   font-family: var(--vscode-editor-font-family);
+}
+
+.memory-inspector-table.groups-per-row-autofit tr > td.column-data > .data-groups-container {
+  overflow: hidden;
+  height: 1em;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
 }
 
 /* == MoreMemorySelect == */
@@ -72,10 +80,6 @@
 
 .more-memory-select select:hover:not(.p-disabled) {
   background: var(--vscode-dropdown-background);
-}
-
-.byte-group:not(:last-of-type) {
-  margin-right: 0.2em;
 }
 
 .radix-prefix {

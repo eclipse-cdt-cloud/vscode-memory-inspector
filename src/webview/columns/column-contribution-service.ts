@@ -19,9 +19,14 @@ import type * as React from 'react';
 import { BigIntMemoryRange } from '../../common/memory-range';
 import type { Disposable, Memory, MemoryState, SerializedTableRenderOptions, UpdateExecutor } from '../utils/view-types';
 
+export type ColumnFittingType = 'content-width';
+
 export interface ColumnContribution {
-    readonly label: string;
     readonly id: string;
+    readonly className?: string;
+    readonly label: string;
+    /** Depending on the supported fitting mode, the column will be rendered differently */
+    fittingType?: ColumnFittingType;
     /** Sorted low to high. If ommitted, sorted alphabetically by ID after all contributions with numbers. */
     priority?: number;
     render(range: BigIntMemoryRange, memory: Memory, options: TableRenderOptions): React.ReactNode
