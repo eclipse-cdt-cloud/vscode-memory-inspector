@@ -184,7 +184,10 @@
           "description": "Default words per group"
         },
         "memory-inspector.groupings.groupsPerRow": {
-          "type": ["string", "number"],
+          "type": [
+            "string",
+            "number"
+          ],
           "enum": [
             "Autofit",
             1,
@@ -230,10 +233,10 @@
           ],
           "default": "Minimal",
           "enumDescriptions": [
-            "Minimal padding based on the longest address in range.",
-            "Disables padding, presenting addresses as-is.",
-            "Pads addresses to fit within a 32-bit address space.",
-            "Pads addresses to fit within a 64-bit address space."
+            "Pads to largest address width in loaded range.",
+            "Disables padding.",
+            "Pads to 32 bits.",
+            "Pads to 64 bits."
           ],
           "description": "Controls the padding with 0s for memory addresses, enhancing readability by aligning them within a specified bit-width context."
         },
