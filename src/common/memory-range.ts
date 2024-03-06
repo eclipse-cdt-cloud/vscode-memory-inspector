@@ -85,9 +85,12 @@ export function getRadixMarker(radix: Radix): string {
     return radixPrefixMap[radix];
 }
 
-export function getAddressString(address: bigint, radix: Radix, architecture: Architecture = 32, addPadding = false): string {
-    const paddedLength = addPadding ? Math.ceil(architecture / Math.log2(radix)) : 0;
+export function getAddressString(address: bigint, radix: Radix, paddedLength: number = 0): string {
     return address.toString(radix).padStart(paddedLength, '0');
+}
+
+export function getAddressLength(padding: number, radix: Radix): number {
+    return Math.ceil(padding / Math.log2(radix));
 }
 
 export function toHexStringWithRadixMarker(target: bigint): string {

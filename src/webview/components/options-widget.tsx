@@ -23,16 +23,14 @@ import { OverlayPanel } from 'primereact/overlaypanel';
 import { classNames } from 'primereact/utils';
 import React, { FocusEventHandler, KeyboardEvent, KeyboardEventHandler, MouseEventHandler } from 'react';
 import { TableRenderOptions } from '../columns/column-contribution-service';
-import {
-    SerializedTableRenderOptions,
-} from '../utils/view-types';
+import { AddressPaddingOptions, SerializedTableRenderOptions } from '../utils/view-types';
 import { MultiSelectWithLabel } from './multi-select';
 import { CONFIG_BYTES_PER_WORD_CHOICES, CONFIG_GROUPS_PER_ROW_CHOICES, CONFIG_WORDS_PER_GROUP_CHOICES } from '../../plugin/manifest';
 import { tryToNumber } from '../../common/typescript';
 import { Checkbox } from 'primereact/checkbox';
 
 export interface OptionsWidgetProps
-    extends Omit<TableRenderOptions, 'scrollingBehavior'>,
+    extends Omit<TableRenderOptions, 'scrollingBehavior' | 'effectiveAddressLength'>,
     Required<DebugProtocol.ReadMemoryArguments> {
     title: string;
     updateRenderOptions: (options: Partial<SerializedTableRenderOptions>) => void;
@@ -58,6 +56,7 @@ const enum InputId {
     BytesPerWord = 'word-size',
     WordsPerGroup = 'words-per-group',
     GroupsPerRow = 'groups-per-row',
+    AddressPadding = 'address-padding',
     AddressRadix = 'address-radix',
     ShowRadixPrefix = 'show-radix-prefix',
 }
@@ -321,6 +320,20 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                 className='advanced-options-dropdown' />
 
                             <h2>Address Format</h2>
+
+                            <label
+                                htmlFor={InputId.AddressPadding}
+                                className='advanced-options-label'
+                            >
+                                Address Padding
+                            </label>
+                            <Dropdown
+                                id={InputId.AddressPadding}
+                                value={this.props.addressPadding}
+                                onChange={this.handleAdvancedOptionsDropdownChange}
+                                options={Object.entries(AddressPaddingOptions).map(([label, value]) => ({ label, value }))}
+                                className="advanced-options-dropdown" />
+
                             <label
                                 htmlFor={InputId.AddressRadix}
                                 className='advanced-options-label'
@@ -415,6 +428,9 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                 break;
             case InputId.GroupsPerRow:
                 this.props.updateRenderOptions({ groupsPerRow: tryToNumber(value) ?? value });
+                break;
+            case InputId.AddressPadding:
+                this.props.updateRenderOptions({ addressPadding: value });
                 break;
             case InputId.AddressRadix:
                 this.props.updateRenderOptions({ addressRadix: Number(value) });

@@ -48,6 +48,8 @@ export const DEFAULT_GROUPS_PER_ROW: GroupsPerRowOption = 4;
 // Scroll
 export const CONFIG_SCROLLING_BEHAVIOR = 'scrollingBehavior';
 export const DEFAULT_SCROLLING_BEHAVIOR = 'Paginate';
+export const CONFIG_ADDRESS_PADDING = 'addressPadding';
+export const DEFAULT_ADDRESS_PADDING = 'Minimal';
 export const CONFIG_ADDRESS_RADIX = 'addressRadix';
 export const DEFAULT_ADDRESS_RADIX = 16;
 export const CONFIG_SHOW_RADIX_PREFIX = 'showRadixPrefix';

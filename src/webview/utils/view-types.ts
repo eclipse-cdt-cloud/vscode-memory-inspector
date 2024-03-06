@@ -33,7 +33,7 @@ export interface Memory {
 export interface SerializedTableRenderOptions extends MemoryDisplayConfiguration {
     columnOptions: Array<{ label: string, doRender: boolean }>;
     endianness: Endianness;
-    bytesPerWord: number;
+    effectiveAddressLength: number;
 }
 
 export interface Event<T> {
@@ -84,10 +84,19 @@ export interface MemoryDisplayConfiguration {
     wordsPerGroup: number;
     groupsPerRow: GroupsPerRowOption;
     scrollingBehavior: ScrollingBehavior;
+    addressPadding: AddressPadding;
     addressRadix: Radix;
     showRadixPrefix: boolean;
 }
 export type ScrollingBehavior = 'Paginate' | 'Infinite';
+
+export type AddressPadding = 'Min' | number;
+export const AddressPaddingOptions = {
+    'Minimal': 'Min',
+    'Unpadded': 0,
+    '32bit': 32,
+    '64bit': 64,
+} as const;
 
 export interface ColumnVisibilityStatus {
     visibleColumns: string[];

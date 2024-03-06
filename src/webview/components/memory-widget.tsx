@@ -29,6 +29,7 @@ interface MemoryWidgetProps extends MemoryDisplayConfiguration {
     memoryReference: string;
     offset: number;
     count: number;
+    effectiveAddressLength: number;
     isMemoryFetching: boolean;
     refreshMemory: () => void;
     updateMemoryArguments: (memoryArguments: Partial<DebugProtocol.ReadMemoryArguments>) => void;
@@ -72,6 +73,7 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 updateRenderOptions={this.props.updateMemoryDisplayConfiguration}
                 resetRenderOptions={this.props.resetMemoryDisplayConfiguration}
                 refreshMemory={this.props.refreshMemory}
+                addressPadding={this.props.addressPadding}
                 addressRadix={this.props.addressRadix}
                 showRadixPrefix={this.props.showRadixPrefix}
                 toggleColumn={this.props.toggleColumn}
@@ -88,9 +90,11 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 groupsPerRow={this.props.groupsPerRow}
                 offset={this.props.offset}
                 count={this.props.count}
+                effectiveAddressLength={this.props.effectiveAddressLength}
                 fetchMemory={this.props.fetchMemory}
                 isMemoryFetching={this.props.isMemoryFetching}
                 scrollingBehavior={this.props.scrollingBehavior}
+                addressPadding={this.props.addressPadding}
                 addressRadix={this.props.addressRadix}
                 showRadixPrefix={this.props.showRadixPrefix}
                 isFrozen={this.props.isFrozen}
