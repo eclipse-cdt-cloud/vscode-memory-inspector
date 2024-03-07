@@ -54,7 +54,15 @@ export function areDecorationsEqual(one: Decoration, other: Decoration): boolean
     return areRangesEqual(one.range, other.range) && deepequal(one.style, other.style);
 }
 
-export interface MemoryState extends DebugProtocol.ReadMemoryArguments {
+export interface MemoryState {
+    /**
+     * The user configured memory read arguments
+     */
+    configuredReadArguments: Required<DebugProtocol.ReadMemoryArguments>;
+    /**
+     * The active memory read arguments used to load the memory
+     */
+    activeReadArguments: Required<DebugProtocol.ReadMemoryArguments>;
     memory?: Memory;
     isMemoryFetching: boolean;
 }
@@ -88,7 +96,7 @@ export interface MemoryDisplayConfiguration {
     addressRadix: Radix;
     showRadixPrefix: boolean;
 }
-export type ScrollingBehavior = 'Paginate' | 'Infinite';
+export type ScrollingBehavior = 'Paginate' | 'Grow' | 'Auto-Append';
 
 export type AddressPadding = 'Min' | number;
 export const AddressPaddingOptions = {

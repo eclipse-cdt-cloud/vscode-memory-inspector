@@ -28,17 +28,25 @@ import { tryToNumber } from '../../common/typescript';
 import { DataColumn } from '../columns/data-column';
 
 export interface MoreMemorySelectProps {
-    count: number;
-    offset: number;
+    activeReadArguments: Required<DebugProtocol.ReadMemoryArguments>;
     options: number[];
     direction: 'above' | 'below';
-    scrollingBehavior: ScrollingBehavior;
     fetchMemory(partialOptions?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void>;
     disabled: boolean
 }
 
-export const MoreMemorySelect: React.FC<MoreMemorySelectProps> = ({ count, offset, options, fetchMemory, direction, scrollingBehavior, disabled }) => {
-    const [numBytes, setNumBytes] = React.useState<number>(options[0]);
+export interface MoreMemoryAboveSelectProps extends MoreMemorySelectProps {
+    direction: 'above';
+    shouldPrepend?: boolean;
+}
+
+export interface MoreMemoryBelowSelectProps extends MoreMemorySelectProps {
+    direction: 'below';
+    shouldAppend?: boolean;
+}
+
+export const MoreMemorySelect: React.FC<MoreMemoryAboveSelectProps | MoreMemoryBelowSelectProps> = props => {
+    const [numBytes, setNumBytes] = React.useState<number>(props.options[0]);
     const containerRef = React.createRef<HTMLDivElement>();
     const onSelectChange = (e: React.ChangeEvent<HTMLSelectElement>): void => {
         e.stopPropagation();
@@ -46,43 +54,60 @@ export const MoreMemorySelect: React.FC<MoreMemorySelectProps> = ({ count, offse
         setNumBytes(parseInt(value));
     };
 
-    const loadMoreMemory = (e: React.MouseEvent | React.KeyboardEvent): void => {
+    const updateMemory = (e: React.MouseEvent | React.KeyboardEvent): void => {
         containerRef.current?.blur();
         if (isTrigger(e)) {
-            let newOffset = offset;
-            let newCount = count;
+            const direction = props.direction;
+
             if (direction === 'above') {
-                newOffset = offset - numBytes;
-            }
-            if (scrollingBehavior === 'Infinite') {
-                newCount = count + numBytes;
+                handleAboveDirection(props);
+            } else if (direction === 'below') {
+                handleBelowDirection(props);
             } else {
-                if (direction === 'below') {
-                    newOffset = offset + numBytes;
-                }
+                throw new Error(`Unknown direction ${direction}`);
             }
-            fetchMemory({ offset: newOffset, count: newCount });
+        }
+    };
+
+    const handleAboveDirection = (aboveProps: MoreMemoryAboveSelectProps): void => {
+        const { activeReadArguments, shouldPrepend, fetchMemory } = aboveProps;
+
+        const newOffset = activeReadArguments.offset - numBytes;
+        const newCount = shouldPrepend ? activeReadArguments.count + numBytes : activeReadArguments.count;
+
+        fetchMemory({ offset: newOffset, count: newCount });
+    };
+
+    const handleBelowDirection = (belowProps: MoreMemoryBelowSelectProps): void => {
+        const { activeReadArguments, fetchMemory } = belowProps;
+
+        if (belowProps.shouldAppend) {
+            const newCount = activeReadArguments.count + numBytes;
+            fetchMemory({ count: newCount });
+        } else {
+            const newOffset = activeReadArguments.offset + numBytes;
+            fetchMemory({ offset: newOffset });
         }
     };
 
     return (
         <div
-            className={`more-memory-select ${disabled ? 'p-disabled' : ''}`}
+            className={`more-memory-select ${props.disabled ? 'p-disabled' : ''}`}
             tabIndex={0}
             role='button'
-            onClick={loadMoreMemory}
-            onKeyDown={loadMoreMemory}
+            onClick={updateMemory}
+            onKeyDown={updateMemory}
             ref={containerRef}
         >
             <div className='more-memory-select-top no-select'>
                 Load
                 <select
-                    className={`bytes-select ${disabled ? 'p-disabled' : ''}`}
+                    className={`bytes-select ${props.disabled ? 'p-disabled' : ''}`}
                     onChange={onSelectChange}
                     tabIndex={0}
-                    disabled={disabled}
+                    disabled={props.disabled}
                 >
-                    {options.map(option => (
+                    {props.options.map(option => (
                         <option
                             key={`more-memory-select-${option}`}
                             value={option}
@@ -90,17 +115,17 @@ export const MoreMemorySelect: React.FC<MoreMemorySelectProps> = ({ count, offse
                             {option}
                         </option>))}
                 </select>
-                {`more bytes ${direction}`}
+                {`more bytes ${props.direction}`}
             </div>
         </div>
     );
 };
 
 interface MemoryTableProps extends TableRenderOptions, MemoryDisplayConfiguration {
+    configuredReadArguments: Required<DebugProtocol.ReadMemoryArguments>;
+    activeReadArguments: Required<DebugProtocol.ReadMemoryArguments>;
     memory?: Memory;
     decorations: Decoration[];
-    offset: number;
-    count: number;
     effectiveAddressLength: number;
     fetchMemory(partialOptions?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void>;
     isMemoryFetching: boolean;
@@ -145,8 +170,12 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
     protected datatableRef = React.createRef<DataTable<MemoryRowData[]>>();
     protected resizeObserver?: ResizeObserver;
 
-    protected get isShowMoreEnabled(): boolean {
-        return !!this.props.memory?.bytes.length;
+    protected get datatableWrapper(): HTMLElement | undefined {
+        return this.datatableRef.current?.getElement().querySelector<HTMLElement>('[data-pc-section="wrapper"]') ?? undefined;
+    }
+
+    protected get isLoading(): boolean {
+        return this.props.isMemoryFetching;
     }
 
     constructor(props: MemoryTableProps) {
@@ -167,6 +196,11 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
         this.resizeObserver = new ResizeObserver(entries => {
             if (entries.length > 0) {
                 this.autofitColumns();
+
+                // The size changed - we could have too few rows visible to enable a scrollbar
+                if (this.props.scrollingBehavior === 'Auto-Append') {
+                    this.ensureSufficientVisibleRowsForScrollbar();
+                }
             }
         });
 
@@ -177,7 +211,11 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
     }
 
     componentDidUpdate(prevProps: Readonly<MemoryTableProps>): void {
-        const hasMemoryChanged = prevProps.memory?.address !== this.props.memory?.address || prevProps.offset !== this.props.offset || prevProps.count !== this.props.count;
+        const hasMemoryChanged = (prevProps.memory === undefined || this.props.memory === undefined)
+            || prevProps.memory.address !== this.props.memory.address
+            || prevProps.activeReadArguments.offset !== this.props.activeReadArguments.offset
+            || prevProps.activeReadArguments.count !== this.props.activeReadArguments.count;
+
         const hasOptionsChanged = prevProps.wordsPerGroup !== this.props.wordsPerGroup || prevProps.groupsPerRow !== this.props.groupsPerRow;
 
         // Reset selection
@@ -188,6 +226,22 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
         }
 
         this.ensureGroupsPerRowToRenderIsSet();
+        if (this.props.memory !== undefined && this.props.scrollingBehavior === 'Auto-Append') {
+            this.ensureSufficientVisibleRowsForScrollbar();
+
+            // We have now less count than before - there was a change from outside
+            if (prevProps.memory !== undefined && prevProps.activeReadArguments.count > this.props.activeReadArguments.count) {
+                this.datatableRef.current?.resetScroll();
+            }
+
+            // If we disable frozen, then we need to check the current position of the scrollbar and if necessary append more memory
+            if (prevProps.isFrozen && !this.props.isFrozen) {
+                const wrapper = this.datatableWrapper;
+                if (wrapper) {
+                    this.appendMoreMemoryOnListEnd(wrapper);
+                }
+            }
+        }
     }
 
     componentWillUnmount(): void {
@@ -204,7 +258,7 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
             rows = this.createTableRows(memory, options);
         }
 
-        const props = this.createDataTableProperties(rows);
+        const props = this.createScrollingBehaviorSpecificProperties(this.createDataTableProperties(rows));
         // Available width in percent without the fit columns
         const remainingWidth = 100 -
             this.props.columnOptions.filter(c => c.contribution.fittingType === 'content-width').length;
@@ -242,7 +296,6 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
         return {
             cellSelection: true,
             className: classNames(MemoryTable.TABLE_CLASS, { [MemoryTable.TABLE_GROUPS_PER_ROW_AUTOFIT]: this.props.groupsPerRow === 'Autofit' }),
-            footer: this.renderFooter(),
             header: this.renderHeader(),
             lazy: true,
             metaKeySelection: false,
@@ -258,6 +311,66 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
         };
     }
 
+    protected createScrollingBehaviorSpecificProperties(props: DataTableProps<MemoryRowData[]>): DataTableProps<MemoryRowData[]> {
+        if (this.props.scrollingBehavior === 'Auto-Append') {
+            return {
+                ...props,
+                pt: {
+                    wrapper: {
+                        onScroll: event => {
+                            this.appendMoreMemoryOnListEnd(event.currentTarget);
+                        }
+                    }
+                }
+            };
+        } else {
+            return {
+                ...props,
+                footer: this.renderFooter()
+            };
+        }
+    }
+
+    /**
+     * This method ensures that we have sufficient rows visible to enable vertical scrollbars
+     */
+    protected ensureSufficientVisibleRowsForScrollbar(): void {
+        if (this.props.memory === undefined) {
+            return;
+        }
+
+        const requestedBytesNotLoaded = this.props.activeReadArguments.count > this.props.memory.bytes.length;
+        if (requestedBytesNotLoaded) {
+            return;
+        }
+
+        const datatableValues = this.datatableRef.current?.props.value;
+        if (datatableValues && datatableValues.length < MemoryTable.renderableRowsAtOnceCountForWrapper(this.datatableWrapper)) {
+            // We have too few rows, we need to load more data
+            this.appendMoreMemory();
+        }
+    }
+
+    protected appendMoreMemory(): void {
+        if (!this.isLoading && this.props.memory !== undefined) {
+            const memorySizeOptions = MemorySizeOptions.create(this.props, this.state);
+            const options = this.createMemoryRowListOptions(this.props.memory, memorySizeOptions);
+            const newCount = this.props.activeReadArguments.count + options.wordsPerRow * MemoryTable.renderableRowsAtOnceCountForWrapper(this.datatableWrapper);
+            this.props.fetchMemory({ count: newCount });
+        }
+    }
+
+    protected appendMoreMemoryOnListEnd(element: HTMLElement): void {
+        if (!this.isLoading) {
+            // Append new data only if we reach the bottom
+            const distanceBottom = Math.abs(element.scrollHeight - element.scrollTop - element.clientHeight);
+
+            if (distanceBottom < 1) {
+                this.appendMoreMemory();
+            }
+        }
+    }
+
     protected onSelectionChanged = (event: DataTableSelectionCellChangeEvent<MemoryRowData[]>) => {
         this.setState(prev => ({ ...prev, selection: event.value }));
     };
@@ -267,26 +380,24 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
     };
 
     protected renderHeader(): React.ReactNode | undefined {
-        const { offset, count, fetchMemory, scrollingBehavior } = this.props;
-
         let memorySelect: React.ReactNode | undefined;
         let loading: React.ReactNode | undefined;
 
-        if (this.isShowMoreEnabled) {
+        if (this.props.memory !== undefined) {
+            const prependScrollingBehaviors: ScrollingBehavior[] = ['Grow', 'Auto-Append'];
             memorySelect = <div className='flex-auto'>
                 <MoreMemorySelect
-                    offset={offset}
-                    count={count}
+                    activeReadArguments={this.props.activeReadArguments}
                     options={[128, 256, 512]}
                     direction='above'
-                    scrollingBehavior={scrollingBehavior}
-                    fetchMemory={fetchMemory}
+                    shouldPrepend={prependScrollingBehaviors.includes(this.props.scrollingBehavior)}
+                    fetchMemory={this.props.fetchMemory}
                     disabled={this.props.isFrozen}
                 />
             </div>;
         }
 
-        if (this.props.isMemoryFetching) {
+        if (this.isLoading) {
             loading = <div className='absolute right-0 flex align-items-center'>
                 <ProgressSpinner style={{ width: '16px', height: '16px' }} className='mr-2' />
                 <span>Loading</span>
@@ -302,19 +413,16 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
     }
 
     protected renderFooter(): React.ReactNode | undefined {
-        const { offset, count, fetchMemory, scrollingBehavior } = this.props;
-
         let memorySelect: React.ReactNode | undefined;
 
-        if (this.isShowMoreEnabled) {
+        if (this.props.memory !== undefined) {
             memorySelect = <div className='flex-auto'>
                 <MoreMemorySelect
-                    offset={offset}
-                    count={count}
+                    activeReadArguments={this.props.activeReadArguments}
                     options={[128, 256, 512]}
                     direction='below'
-                    scrollingBehavior={scrollingBehavior}
-                    fetchMemory={fetchMemory}
+                    shouldAppend={this.props.scrollingBehavior === 'Grow'}
+                    fetchMemory={this.props.fetchMemory}
                     disabled={this.props.isFrozen}
                 />
             </div>;
@@ -393,4 +501,27 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
 export namespace MemoryTable {
     export const TABLE_CLASS = 'memory-inspector-table' as const;
     export const TABLE_GROUPS_PER_ROW_AUTOFIT = 'groups-per-row-autofit' as const;
+
+    /**
+     * Approximates how many rows visually fit into the given wrapper without scrolling
+     */
+    export function visibleRowsCountInWrapper(wrapper?: HTMLElement): number {
+        if (wrapper) {
+            const row = wrapper.querySelector<HTMLElement>('tr');
+
+            if (row) {
+                return Math.ceil(wrapper.clientHeight / row.clientHeight);
+            }
+        }
+
+        return 1;
+    }
+
+    /**
+     * Returns the number of rows that the wrapper can render at once
+     */
+    export function renderableRowsAtOnceCountForWrapper(wrapper?: HTMLElement): number {
+        const buffer = 8;
+        return visibleRowsCountInWrapper(wrapper) + buffer;
+    }
 }

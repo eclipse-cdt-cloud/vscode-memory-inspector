@@ -214,12 +214,14 @@
           "type": "string",
           "enum": [
             "Paginate",
-            "Infinite"
+            "Grow",
+            "Auto-Append"
           ],
           "default": "Paginate",
           "enumDescriptions": [
             "Maintains a consistent memory size, replacing the previous request.",
-            "Appends new memory to bounds of current request, resulting in a growing list."
+            "Appends new memory to bounds of current request, resulting in a growing list.",
+            "Automatically appends new memory to the bounds of the current request on reaching the end of the list, resulting in a growing list."
           ],
           "description": "Behavior when adding more memory beyond the current view."
         },

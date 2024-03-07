@@ -21,25 +21,24 @@ import { Dropdown, DropdownChangeEvent } from 'primereact/dropdown';
 import { InputText } from 'primereact/inputtext';
 import { OverlayPanel } from 'primereact/overlaypanel';
 import { classNames } from 'primereact/utils';
-import React, { FocusEventHandler, KeyboardEvent, KeyboardEventHandler, MouseEventHandler } from 'react';
+import React, { FocusEventHandler, KeyboardEvent, KeyboardEventHandler, MouseEventHandler, ReactNode } from 'react';
 import { TableRenderOptions } from '../columns/column-contribution-service';
-import { AddressPaddingOptions, SerializedTableRenderOptions } from '../utils/view-types';
+import { AddressPaddingOptions, MemoryState, SerializedTableRenderOptions } from '../utils/view-types';
 import { MultiSelectWithLabel } from './multi-select';
 import { CONFIG_BYTES_PER_WORD_CHOICES, CONFIG_GROUPS_PER_ROW_CHOICES, CONFIG_WORDS_PER_GROUP_CHOICES } from '../../plugin/manifest';
 import { tryToNumber } from '../../common/typescript';
 import { Checkbox } from 'primereact/checkbox';
 
 export interface OptionsWidgetProps
-    extends Omit<TableRenderOptions, 'scrollingBehavior' | 'effectiveAddressLength'>,
-    Required<DebugProtocol.ReadMemoryArguments> {
+    extends Omit<TableRenderOptions, 'scrollingBehavior' | 'effectiveAddressLength'> {
+    configuredReadArguments: Required<DebugProtocol.ReadMemoryArguments>;
+    activeReadArguments: Required<DebugProtocol.ReadMemoryArguments>;
     title: string;
     updateRenderOptions: (options: Partial<SerializedTableRenderOptions>) => void;
     resetRenderOptions: () => void;
     updateTitle: (title: string) => void;
-    updateMemoryArguments: (
-        memoryArguments: Partial<DebugProtocol.ReadMemoryArguments>
-    ) => void;
-    refreshMemory: () => void;
+    updateMemoryState: (state: Partial<MemoryState>) => void;
+    fetchMemory(partialOptions?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void>
     toggleColumn(id: string, isVisible: boolean): void;
     toggleFrozen: () => void;
     isFrozen: boolean;
@@ -74,9 +73,9 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
 
     protected get optionsFormValues(): OptionsForm {
         return {
-            address: this.props.memoryReference,
-            offset: this.props.offset.toString(),
-            count: this.props.count.toString(),
+            address: this.props.configuredReadArguments.memoryReference,
+            offset: this.props.configuredReadArguments.offset.toString(),
+            count: this.props.configuredReadArguments.count.toString(),
         };
     }
 
@@ -88,7 +87,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
             enableReinitialize: true,
             validate: this.validate,
             onSubmit: () => {
-                this.props.refreshMemory();
+                this.props.fetchMemory(this.props.configuredReadArguments);
             },
         };
         this.state = { isTitleEditing: false };
@@ -141,6 +140,11 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
         const isLabelEditing = this.state.isTitleEditing;
         const isFrozen = this.props.isFrozen;
         const freezeContentToggleTitle = isFrozen ? 'Unfreeze Memory View' : 'Freeze Memory View';
+        const activeMemoryReadArgumentHint = (userValue: string | number, memoryValue: string | number): ReactNode | undefined => {
+            if (userValue !== memoryValue) {
+                return <small className="form-options-memory-read-argument-hint">Actual: {memoryValue}</small>;
+            }
+        };
 
         return (
             <div className='memory-options-widget px-4'>
@@ -182,7 +186,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                     <Formik {...this.formConfig} >
                         {formik => (
                             <form onSubmit={formik.handleSubmit} className='form-options'>
-                                <span className={'pm-top-label form-texfield-long'}>
+                                <span className={'pm-top-label form-textfield form-texfield-long'}>
                                     <label htmlFor={InputId.Address} className={`p-inputtext-label ${isFrozen ? 'p-disabled' : ''}`} >
                                         Address
                                     </label>
@@ -199,6 +203,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                             {formik.errors.address}
                                         </small>)
                                         : undefined}
+                                    {activeMemoryReadArgumentHint(this.props.configuredReadArguments.memoryReference, this.props.activeReadArguments.memoryReference)}
                                 </span>
                                 <span className='pm-top-label form-textfield'>
                                     <label htmlFor={InputId.Offset} className={`p-inputtext-label ${isFrozen ? 'p-disabled' : ''}`}>
@@ -217,6 +222,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                             {formik.errors.offset}
                                         </small>)
                                         : undefined}
+                                    {activeMemoryReadArgumentHint(this.props.configuredReadArguments.offset, this.props.activeReadArguments.offset)}
                                 </span>
                                 <span className='pm-top-label form-textfield'>
                                     <label htmlFor={InputId.Length} className={`p-inputtext-label ${isFrozen ? 'p-disabled' : ''}`}>
@@ -235,6 +241,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                             {formik.errors.count}
                                         </small>)
                                         : undefined}
+                                    {activeMemoryReadArgumentHint(this.props.configuredReadArguments.count, this.props.activeReadArguments.count)}
                                 </span>
                                 <Button type='submit' disabled={!formik.isValid || isFrozen}>
                                     Go
@@ -391,21 +398,30 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
     protected updateOptions(id: InputId, value: string): void {
         switch (id) {
             case InputId.Address:
-                this.props.updateMemoryArguments({
-                    memoryReference: value,
+                this.props.updateMemoryState({
+                    configuredReadArguments: {
+                        ...this.props.configuredReadArguments,
+                        memoryReference: value,
+                    }
                 });
                 break;
             case InputId.Offset:
                 if (!Number.isNaN(value)) {
-                    this.props.updateMemoryArguments({
-                        offset: Number(value),
+                    this.props.updateMemoryState({
+                        configuredReadArguments: {
+                            ...this.props.configuredReadArguments,
+                            offset: Number(value),
+                        }
                     });
                 }
                 break;
             case InputId.Length:
                 if (!Number.isNaN(value)) {
-                    this.props.updateMemoryArguments({
-                        count: Number(value),
+                    this.props.updateMemoryState({
+                        configuredReadArguments: {
+                            ...this.props.configuredReadArguments,
+                            count: Number(value),
+                        }
                     });
                 }
                 break;
