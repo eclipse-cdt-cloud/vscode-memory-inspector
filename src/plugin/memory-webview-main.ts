@@ -31,11 +31,15 @@ import {
     setMemoryViewSettingsType,
     resetMemoryViewSettingsType,
     setTitleType,
+    showAdvancedOptionsType,
+    getWebviewSelectionType,
+    WebviewSelection,
 } from '../common/messaging';
 import { MemoryProvider } from './memory-provider';
 import { outputChannelLogger } from './logger';
 import { Endianness, VariableRange } from '../common/memory-range';
 import { AddressPaddingOptions, MemoryViewSettings, ScrollingBehavior } from '../webview/utils/view-types';
+import { WebviewContext, getVisibleColumns } from '../common/webview-context';
 
 interface Variable {
     name: string;
@@ -59,6 +63,11 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
     public static ViewType = `${manifest.PACKAGE_NAME}.memory`;
     public static ShowCommandType = `${manifest.PACKAGE_NAME}.show`;
     public static VariableCommandType = `${manifest.PACKAGE_NAME}.show-variable`;
+    public static ToggleAsciiColumnCommandType = `${manifest.PACKAGE_NAME}.toggle-ascii-column`;
+    public static ToggleVariablesColumnCommandType = `${manifest.PACKAGE_NAME}.toggle-variables-column`;
+    public static ToggleRadixPrefixCommandType = `${manifest.PACKAGE_NAME}.toggle-radix-prefix`;
+    public static ShowAdvancedDisplayConfigurationCommandType = `${manifest.PACKAGE_NAME}.show-advanced-display-options`;
+    public static GetWebviewSelectionCommandType = `${manifest.PACKAGE_NAME}.get-webview-selection`;
 
     protected messenger: Messenger;
     protected refreshOnStop: RefreshEnum;
@@ -85,7 +94,20 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
                 if (isMemoryVariable(variable)) {
                     this.show({ memoryReference: variable.memoryReference.toString() });
                 }
-            })
+            }),
+            vscode.commands.registerCommand(MemoryWebview.ToggleVariablesColumnCommandType, (ctx: WebviewContext) => {
+                this.toggleWebviewColumn(ctx, 'variables');
+            }),
+            vscode.commands.registerCommand(MemoryWebview.ToggleAsciiColumnCommandType, (ctx: WebviewContext) => {
+                this.toggleWebviewColumn(ctx, 'ascii');
+            }),
+            vscode.commands.registerCommand(MemoryWebview.ToggleRadixPrefixCommandType, (ctx: WebviewContext) => {
+                this.setMemoryViewSettings(ctx.messageParticipant, { showRadixPrefix: !ctx.showRadixPrefix });
+            }),
+            vscode.commands.registerCommand(MemoryWebview.ShowAdvancedDisplayConfigurationCommandType, async (ctx: WebviewContext) => {
+                this.messenger.sendNotification(showAdvancedOptionsType, ctx.messageParticipant, undefined);
+            }),
+            vscode.commands.registerCommand(MemoryWebview.GetWebviewSelectionCommandType, (ctx: WebviewContext) => this.getWebviewSelection(ctx.messageParticipant)),
         );
     };
 
@@ -213,10 +235,14 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
     }
 
     protected setInitialSettings(webviewParticipant: WebviewIdMessageParticipant, title: string): void {
-        this.messenger.sendNotification(setMemoryViewSettingsType, webviewParticipant, this.getMemoryViewSettings(title));
+        this.setMemoryViewSettings(webviewParticipant, this.getMemoryViewSettings(webviewParticipant, title));
     }
 
-    protected getMemoryViewSettings(title: string): MemoryViewSettings {
+    protected setMemoryViewSettings(webviewParticipant: WebviewIdMessageParticipant, settings: Partial<MemoryViewSettings>): void {
+        this.messenger.sendNotification(setMemoryViewSettingsType, webviewParticipant, settings);
+    }
+
+    protected getMemoryViewSettings(messageParticipant: WebviewIdMessageParticipant, title: string): MemoryViewSettings {
         const memoryInspectorConfiguration = vscode.workspace.getConfiguration(manifest.PACKAGE_NAME);
         const bytesPerWord = memoryInspectorConfiguration.get<number>(manifest.CONFIG_BYTES_PER_WORD, manifest.DEFAULT_BYTES_PER_WORD);
         const wordsPerGroup = memoryInspectorConfiguration.get<number>(manifest.CONFIG_WORDS_PER_GROUP, manifest.DEFAULT_WORDS_PER_GROUP);
@@ -229,7 +255,7 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
         const addressPadding = AddressPaddingOptions[memoryInspectorConfiguration.get(manifest.CONFIG_ADDRESS_PADDING, manifest.DEFAULT_ADDRESS_PADDING)];
         const addressRadix = memoryInspectorConfiguration.get<number>(manifest.CONFIG_ADDRESS_RADIX, manifest.DEFAULT_ADDRESS_RADIX);
         const showRadixPrefix = memoryInspectorConfiguration.get<boolean>(manifest.CONFIG_SHOW_RADIX_PREFIX, manifest.DEFAULT_SHOW_RADIX_PREFIX);
-        return { title, bytesPerWord, wordsPerGroup, groupsPerRow, endianness, scrollingBehavior, visibleColumns, addressPadding, addressRadix, showRadixPrefix };
+        return { messageParticipant, title, bytesPerWord, wordsPerGroup, groupsPerRow, endianness, scrollingBehavior, visibleColumns, addressPadding, addressRadix, showRadixPrefix };
     }
 
     protected async readMemory(request: DebugProtocol.ReadMemoryArguments): Promise<MemoryReadResult> {
@@ -255,5 +281,21 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
             outputChannelLogger.error('Error fetching variables', err instanceof Error ? `: ${err.message}\n${err.stack}` : '');
             return [];
         }
+    }
+
+    protected getWebviewSelection(webviewParticipant: WebviewIdMessageParticipant): Promise<WebviewSelection> {
+        return this.messenger.sendRequest(getWebviewSelectionType, webviewParticipant, undefined);
+    }
+
+    protected toggleWebviewColumn(ctx: WebviewContext, column: string): void {
+        const visibleColumns = getVisibleColumns(ctx);
+        const index = visibleColumns.indexOf(column);
+        if (index === -1) {
+            visibleColumns.push(column);
+        } else {
+            visibleColumns.splice(index, 1);
+        }
+
+        this.setMemoryViewSettings(ctx.messageParticipant, { visibleColumns });
     }
 }

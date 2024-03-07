@@ -31,3 +31,14 @@ export const setOptionsType: RequestType<Partial<DebugProtocol.ReadMemoryArgumen
 export const readMemoryType: RequestType<DebugProtocol.ReadMemoryArguments, MemoryReadResult> = { method: 'readMemory' };
 export const writeMemoryType: RequestType<DebugProtocol.WriteMemoryArguments, MemoryWriteResult> = { method: 'writeMemory' };
 export const getVariables: RequestType<DebugProtocol.ReadMemoryArguments, VariableRange[]> = { method: 'getVariables' };
+
+export const showAdvancedOptionsType: NotificationType<void> = { method: 'showAdvancedOptions' };
+export const getWebviewSelectionType: RequestType<void, WebviewSelection> = { method: 'getWebviewSelection' };
+
+export interface WebviewSelection {
+    selectedCell?: {
+        column: string
+        value: string
+    }
+    textSelection?: string;
+}

@@ -25,6 +25,7 @@ import { Decorator } from '../decorations/decoration-service';
 import { ReactNode } from 'react';
 import { areVariablesEqual, compareBigInt, BigIntMemoryRange, BigIntVariableRange, doOverlap } from '../../common/memory-range';
 import * as React from 'react';
+import { createVariableVscodeContext } from '../utils/vscode-contexts';
 
 const NON_HC_COLORS = [
     'var(--vscode-terminal-ansiBlue)',
@@ -79,7 +80,10 @@ export class VariableDecorator implements ColumnContribution, Decorator {
     render(range: BigIntMemoryRange): ReactNode {
         return this.getVariablesInRange(range)?.reduce<ReactNode[]>((result, current, index) => {
             if (index > 0) { result.push(', '); }
-            result.push(React.createElement('span', { style: { color: current.color }, key: current.variable.name }, current.variable.name));
+            result.push(React.createElement('span', {
+                style: { color: current.color }, key: current.variable.name,
+                ...createVariableVscodeContext(current.variable)
+            }, current.variable.name));
             return result;
         }, []);
     }

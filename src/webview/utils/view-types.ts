@@ -19,6 +19,7 @@ import deepequal from 'fast-deep-equal';
 import type * as React from 'react';
 import { areRangesEqual, BigIntMemoryRange, Endianness, Radix } from '../../common/memory-range';
 import { GroupsPerRowOption } from '../../plugin/manifest';
+import { WebviewIdMessageParticipant } from 'vscode-messenger-common';
 
 export interface Memory {
     address: bigint;
@@ -79,6 +80,7 @@ export interface FullNodeAttributes extends StylableNodeAttributes {
 /** All settings related to memory view that can be specified for the webview from the extension "main". */
 export interface MemoryViewSettings extends ColumnVisibilityStatus, MemoryDisplayConfiguration {
     title: string
+    messageParticipant: WebviewIdMessageParticipant;
 }
 
 /** The memory display configuration that can be specified for the memory widget. */
@@ -111,3 +113,4 @@ export type ReactInteraction<E extends Element = Element> = React.MouseEvent<E> 
 export function isTrigger(event: ReactInteraction): boolean {
     return !('code' in event) || event.code === 'Enter' || event.code === 'Space';
 }
+

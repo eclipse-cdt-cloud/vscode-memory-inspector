@@ -20,8 +20,12 @@ import { ColumnStatus } from '../columns/column-contribution-service';
 import { Decoration, Memory, MemoryDisplayConfiguration, MemoryState } from '../utils/view-types';
 import { MemoryTable } from './memory-table';
 import { OptionsWidget } from './options-widget';
+import { WebviewIdMessageParticipant } from 'vscode-messenger-common';
+import { VscodeContext, createAppVscodeContext } from '../utils/vscode-contexts';
+import { WebviewSelection } from '../../common/messaging';
 
 interface MemoryWidgetProps extends MemoryDisplayConfiguration {
+    messageParticipant: WebviewIdMessageParticipant;
     configuredReadArguments: Required<DebugProtocol.ReadMemoryArguments>;
     activeReadArguments: Required<DebugProtocol.ReadMemoryArguments>;
     memory?: Memory;
@@ -47,14 +51,28 @@ const defaultOptions: MemoryWidgetState = {
 };
 
 export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidgetState> {
+    protected optionsWidget = React.createRef<OptionsWidget>();
+    protected memoryTable = React.createRef<MemoryTable>();
     constructor(props: MemoryWidgetProps) {
         super(props);
         this.state = { ...defaultOptions };
     }
 
+    protected createVscodeContext(): VscodeContext {
+        const visibleColumns = this.props.columns.filter(candidate => candidate.active).map(column => column.contribution.id);
+        return createAppVscodeContext({
+            messageParticipant: this.props.messageParticipant,
+            showRadixPrefix: this.props.showRadixPrefix,
+            showAsciiColumn: visibleColumns.includes('ascii'),
+            showVariablesColumn: visibleColumns.includes('variables'),
+        });
+
+    }
+
     override render(): React.ReactNode {
-        return (<div className='flex flex-column h-full'>
+        return (<div className='flex flex-column h-full' {...this.createVscodeContext()}>
             <OptionsWidget
+                ref={this.optionsWidget}
                 title={this.props.title}
                 updateTitle={this.props.updateTitle}
                 columnOptions={this.props.columns}
@@ -76,6 +94,7 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 isFrozen={this.props.isFrozen}
             />
             <MemoryTable
+                ref={this.memoryTable}
                 configuredReadArguments={this.props.configuredReadArguments}
                 activeReadArguments={this.props.activeReadArguments}
                 decorations={this.props.decorations}
@@ -95,6 +114,14 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 isFrozen={this.props.isFrozen}
             />
         </div>);
+    }
+
+    public showAdvancedOptions(): void {
+        this.optionsWidget.current?.showAdvancedOptions();
+    }
+
+    public getWebviewSelection(): WebviewSelection {
+        return this.memoryTable.current?.getWebviewSelection() ?? {};
     }
 
 }
