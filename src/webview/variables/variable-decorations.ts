@@ -66,7 +66,7 @@ export class VariableDecorator implements ColumnContribution, Decorator {
     async activate(memory: MemoryState): Promise<void> {
         this.active = true;
         if (memory.memory?.bytes.length) {
-            await this.fetchData({ count: memory.count, offset: memory.offset, memoryReference: memory.memoryReference, });
+            await this.fetchData(memory.activeReadArguments);
         }
     }
 

@@ -17,22 +17,20 @@
 import { DebugProtocol } from '@vscode/debugprotocol';
 import React from 'react';
 import { ColumnStatus } from '../columns/column-contribution-service';
-import { Decoration, Endianness, Memory, MemoryDisplayConfiguration } from '../utils/view-types';
+import { Decoration, Endianness, Memory, MemoryDisplayConfiguration, MemoryState } from '../utils/view-types';
 import { MemoryTable } from './memory-table';
 import { OptionsWidget } from './options-widget';
 
 interface MemoryWidgetProps extends MemoryDisplayConfiguration {
+    configuredReadArguments: Required<DebugProtocol.ReadMemoryArguments>;
+    activeReadArguments: Required<DebugProtocol.ReadMemoryArguments>;
     memory?: Memory;
     title: string;
     decorations: Decoration[];
     columns: ColumnStatus[];
-    memoryReference: string;
-    offset: number;
-    count: number;
     effectiveAddressLength: number;
     isMemoryFetching: boolean;
-    refreshMemory: () => void;
-    updateMemoryArguments: (memoryArguments: Partial<DebugProtocol.ReadMemoryArguments>) => void;
+    updateMemoryState: (state: Partial<MemoryState>) => void;
     toggleColumn(id: string, active: boolean): void;
     isFrozen: boolean;
     toggleFrozen: () => void;
@@ -62,25 +60,26 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 title={this.props.title}
                 updateTitle={this.props.updateTitle}
                 columnOptions={this.props.columns}
-                memoryReference={this.props.memoryReference}
-                offset={this.props.offset}
-                count={this.props.count}
+                configuredReadArguments={this.props.configuredReadArguments}
+                activeReadArguments={this.props.activeReadArguments}
                 endianness={this.state.endianness}
                 bytesPerWord={this.props.bytesPerWord}
                 wordsPerGroup={this.props.wordsPerGroup}
                 groupsPerRow={this.props.groupsPerRow}
-                updateMemoryArguments={this.props.updateMemoryArguments}
+                updateMemoryState={this.props.updateMemoryState}
                 updateRenderOptions={this.props.updateMemoryDisplayConfiguration}
                 resetRenderOptions={this.props.resetMemoryDisplayConfiguration}
-                refreshMemory={this.props.refreshMemory}
                 addressPadding={this.props.addressPadding}
                 addressRadix={this.props.addressRadix}
                 showRadixPrefix={this.props.showRadixPrefix}
+                fetchMemory={this.props.fetchMemory}
                 toggleColumn={this.props.toggleColumn}
                 toggleFrozen={this.props.toggleFrozen}
                 isFrozen={this.props.isFrozen}
             />
             <MemoryTable
+                configuredReadArguments={this.props.configuredReadArguments}
+                activeReadArguments={this.props.activeReadArguments}
                 decorations={this.props.decorations}
                 columnOptions={this.props.columns.filter(candidate => candidate.active)}
                 memory={this.props.memory}
@@ -88,8 +87,6 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 bytesPerWord={this.props.bytesPerWord}
                 wordsPerGroup={this.props.wordsPerGroup}
                 groupsPerRow={this.props.groupsPerRow}
-                offset={this.props.offset}
-                count={this.props.count}
                 effectiveAddressLength={this.props.effectiveAddressLength}
                 fetchMemory={this.props.fetchMemory}
                 isMemoryFetching={this.props.isMemoryFetching}

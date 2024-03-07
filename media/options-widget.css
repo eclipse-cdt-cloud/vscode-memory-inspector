@@ -74,6 +74,11 @@
   row-gap: 12px;
 }
 
+.form-textfield {
+  position: relative;
+  padding-bottom: 16px;
+}
+
 .form-textfield > input {
   width: 150px;
 }
@@ -87,6 +92,12 @@
   height: calc(var(--input-minHeight) * 1px);
   margin-top: 1rem;
   align-self: start;
+}
+
+.form-options-memory-read-argument-hint {
+  position: absolute;
+  bottom: 0;
+  color: var(--vscode-descriptionForeground);
 }
 
 .advanced-options-content h2 {
