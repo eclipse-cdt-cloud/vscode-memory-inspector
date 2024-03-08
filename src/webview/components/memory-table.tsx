@@ -305,7 +305,7 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
     protected createDataTableProperties(rows: MemoryRowData[]): DataTableProps<MemoryRowData[]> {
         return {
             cellSelection: true,
-            className: classNames(MemoryTable.TABLE_CLASS, { [MemoryTable.TABLE_GROUPS_PER_ROW_AUTOFIT]: this.props.groupsPerRow === 'Autofit' }),
+            className: classNames(MemoryTable.TABLE_CLASS, 'overflow-hidden'),
             header: this.renderHeader(),
             lazy: true,
             metaKeySelection: false,
@@ -557,7 +557,6 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
 
 export namespace MemoryTable {
     export const TABLE_CLASS = 'memory-inspector-table' as const;
-    export const TABLE_GROUPS_PER_ROW_AUTOFIT = 'groups-per-row-autofit' as const;
 
     /**
      * Approximates how many rows visually fit into the given wrapper without scrolling
