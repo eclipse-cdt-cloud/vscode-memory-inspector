@@ -28,6 +28,7 @@ import { MultiSelectWithLabel } from './multi-select';
 import { CONFIG_BYTES_PER_WORD_CHOICES, CONFIG_GROUPS_PER_ROW_CHOICES, CONFIG_WORDS_PER_GROUP_CHOICES } from '../../plugin/manifest';
 import { tryToNumber } from '../../common/typescript';
 import { Checkbox } from 'primereact/checkbox';
+import { Endianness } from '../../common/memory-range';
 
 export interface OptionsWidgetProps
     extends Omit<TableRenderOptions, 'scrollingBehavior' | 'effectiveAddressLength'> {
@@ -55,6 +56,7 @@ const enum InputId {
     BytesPerWord = 'word-size',
     WordsPerGroup = 'words-per-group',
     GroupsPerRow = 'groups-per-row',
+    EndiannessId = 'endianness',
     AddressPadding = 'address-padding',
     AddressRadix = 'address-radix',
     ShowRadixPrefix = 'show-radix-prefix',
@@ -326,6 +328,19 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                 options={[...CONFIG_GROUPS_PER_ROW_CHOICES]}
                                 className='advanced-options-dropdown' />
 
+                            <label
+                                htmlFor={InputId.EndiannessId}
+                                className='advanced-options-label mt-1'
+                            >
+                                Group Endianness
+                            </label>
+                            <Dropdown
+                                id={InputId.EndiannessId}
+                                value={this.props.endianness}
+                                onChange={this.handleAdvancedOptionsDropdownChange}
+                                options={Object.values(Endianness)}
+                                className='advanced-options-dropdown' />
+
                             <h2>Address Format</h2>
 
                             <label
@@ -444,6 +459,9 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                 break;
             case InputId.GroupsPerRow:
                 this.props.updateRenderOptions({ groupsPerRow: tryToNumber(value) ?? value });
+                break;
+            case InputId.EndiannessId:
+                this.props.updateRenderOptions({ endianness: value });
                 break;
             case InputId.AddressPadding:
                 this.props.updateRenderOptions({ addressPadding: value });

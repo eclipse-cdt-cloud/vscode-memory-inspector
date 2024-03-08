@@ -200,6 +200,19 @@
           "default": 4,
           "description": "Default groups per row"
         },
+        "memory-inspector.endianness": {
+          "type": "string",
+          "enum": [
+            "Big Endian",
+            "Little Endian"
+          ],
+          "enumDescriptions": [
+            "Most significant byte stored at smallest memory address",
+            "Least significant byte stored at smallest memory address"
+          ],
+          "default": "Little Endian",
+          "description": "Order of bytes within a group"
+        },
         "memory-inspector.columns.variables": {
           "type": "boolean",
           "default": false,

@@ -15,7 +15,7 @@
  ********************************************************************************/
 
 import * as React from 'react';
-import { BigIntMemoryRange, toOffset } from '../../common/memory-range';
+import { BigIntMemoryRange, Endianness, toOffset } from '../../common/memory-range';
 import { FullNodeAttributes, Memory } from '../utils/view-types';
 import { ColumnContribution, TableRenderOptions } from './column-contribution-service';
 import { decorationService } from '../decorations/decoration-service';
@@ -40,14 +40,14 @@ export class DataColumn implements ColumnContribution {
 
     protected renderGroups(range: BigIntMemoryRange, memory: Memory, options: TableRenderOptions): React.ReactNode {
         const groups = [];
-        let words = [];
-        for (let i = range.startAddress; i < range.endAddress; i++) {
-            words.push(this.renderWord(memory, options, i));
+        let words: React.ReactNode[] = [];
+        for (let address = range.startAddress; address < range.endAddress; address++) {
+            words.push(this.renderWord(memory, options, address));
             if (words.length % options.wordsPerGroup === 0) {
-                const isLast = i + 1n >= range.endAddress;
+                this.applyEndianness(words, options);
+                const isLast = address + 1n >= range.endAddress;
                 const style: React.CSSProperties | undefined = isLast ? undefined : this.byteGroupStyle;
-
-                groups.push(<span className='byte-group' style={style} key={i.toString(16)}>{words}</span>);
+                groups.push(<span className='byte-group' style={style} key={address.toString(16)}>{words}</span>);
                 words = [];
             }
         }
@@ -58,11 +58,17 @@ export class DataColumn implements ColumnContribution {
     protected renderWord(memory: Memory, options: TableRenderOptions, currentAddress: bigint): React.ReactNode {
         const initialOffset = toOffset(memory.address, currentAddress, options.bytesPerWord * 8);
         const finalOffset = initialOffset + options.bytesPerWord;
-        const bytes = [];
+        const bytes: React.ReactNode[] = [];
         for (let i = initialOffset; i < finalOffset; i++) {
             bytes.push(this.renderEightBits(memory, currentAddress, i));
         }
+        this.applyEndianness(bytes, options);
         return <span className='single-word' key={currentAddress.toString(16)}>{bytes}</span>;
+    }
+
+    protected applyEndianness<T>(group: T[], options: TableRenderOptions): T[] {
+        // Assume data from the DAP comes in Big Endian so we need to revert the order if we use Little Endian
+        return options.endianness === Endianness.Big ? group : group.reverse();
     }
 
     protected renderEightBits(memory: Memory, currentAddress: bigint, offset: number): React.ReactNode {

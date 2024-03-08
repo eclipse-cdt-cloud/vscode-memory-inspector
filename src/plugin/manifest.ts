@@ -14,6 +14,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
+import { Endianness } from '../common/memory-range';
+
 // Common
 export const PACKAGE_NAME = 'memory-inspector';
 export const DISPLAY_NAME = 'Memory Inspector';
@@ -44,6 +46,10 @@ export const CONFIG_GROUPS_PER_ROW_NUMERIC_CHOICES = [1, 2, 4, 8, 16, 32] as con
 export const CONFIG_GROUPS_PER_ROW_CHOICES = ['Autofit', ...CONFIG_GROUPS_PER_ROW_NUMERIC_CHOICES] as const;
 export type GroupsPerRowOption = (typeof CONFIG_GROUPS_PER_ROW_CHOICES)[number];
 export const DEFAULT_GROUPS_PER_ROW: GroupsPerRowOption = 4;
+
+// - Group Endianness
+export const CONFIG_ENDIANNESS = 'endianness';
+export const DEFAULT_ENDIANNESS = Endianness.Little;
 
 // Scroll
 export const CONFIG_SCROLLING_BEHAVIOR = 'scrollingBehavior';
