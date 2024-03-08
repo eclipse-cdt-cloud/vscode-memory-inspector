@@ -401,24 +401,11 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
     protected onCopy = (event: React.ClipboardEvent) => {
         event.preventDefault();
         const textSelection = window.getSelection()?.toString();
-        if (!textSelection) {
-            if (this.state.selection) {
-                navigator.clipboard.writeText(this.state.selection.textContent);
-            }
-            return;
-        }
-
-        if (this.props.groupsPerRow !== 'Autofit') {
+        if (textSelection) {
             navigator.clipboard.writeText(textSelection);
-            return;
-        }
+        } else if (this.state.selection) {
+            navigator.clipboard.writeText(this.state.selection.textContent);
 
-        // If the autofit is enabled, we need to temporarily remove the class to calculate the correct selection
-        if (event.currentTarget instanceof HTMLDivElement) {
-            event.currentTarget.classList.remove('groups-per-row-autofit');
-            const correctedSelection = window.getSelection()!.toString();
-            event.currentTarget.classList.add('groups-per-row-autofit');
-            navigator.clipboard.writeText(correctedSelection);
         }
     };
 

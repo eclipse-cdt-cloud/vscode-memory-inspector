@@ -255,7 +255,10 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
         const addressPadding = AddressPaddingOptions[memoryInspectorConfiguration.get(manifest.CONFIG_ADDRESS_PADDING, manifest.DEFAULT_ADDRESS_PADDING)];
         const addressRadix = memoryInspectorConfiguration.get<number>(manifest.CONFIG_ADDRESS_RADIX, manifest.DEFAULT_ADDRESS_RADIX);
         const showRadixPrefix = memoryInspectorConfiguration.get<boolean>(manifest.CONFIG_SHOW_RADIX_PREFIX, manifest.DEFAULT_SHOW_RADIX_PREFIX);
-        return { messageParticipant, title, bytesPerWord, wordsPerGroup, groupsPerRow, endianness, scrollingBehavior, visibleColumns, addressPadding, addressRadix, showRadixPrefix };
+        return {
+            messageParticipant, title, bytesPerWord, wordsPerGroup, groupsPerRow,
+            endianness, scrollingBehavior, visibleColumns, addressPadding, addressRadix, showRadixPrefix
+        };
     }
 
     protected async readMemory(request: DebugProtocol.ReadMemoryArguments): Promise<MemoryReadResult> {
