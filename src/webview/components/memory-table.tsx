@@ -288,7 +288,7 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
                     target=".hoverable"
                     onBeforeShow={this.handleOnBeforeTooltipShow}
                     onHide={this.handleOnTooltipHide}
-                    showDelay={1000}
+                    showDelay={300}
                     autoHide={false}
                 >{this.state.hoverContent}</Tooltip>
                 <DataTable<MemoryRowData[]>

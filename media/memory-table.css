@@ -98,8 +98,8 @@
   width: 2px;
 }
 
-.hoverable {
-  position: relative;
+.hoverable:hover {
+  border-bottom: 1px dotted var(--vscode-editorHoverWidget-border);
 }
 
 /* Basic hover formatting (copied from Monaco hovers) */
