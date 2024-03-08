@@ -17,7 +17,7 @@
 import { DebugProtocol } from '@vscode/debugprotocol';
 import * as vscode from 'vscode';
 import { VariableRange, WrittenMemory } from '../common/memory-range';
-import { ReadMemoryResult, WriteMemoryResult } from '../common/messaging';
+import { ReadMemoryResult, SessionContext, WriteMemoryResult } from '../common/messaging';
 import { AdapterRegistry } from './adapter-registry/adapter-registry';
 import * as manifest from './manifest';
 import { sendRequest } from '../common/debug-requests';
@@ -42,9 +42,17 @@ export class MemoryProvider {
     private _onDidWriteMemory = new vscode.EventEmitter<WrittenMemory>();
     public readonly onDidWriteMemory = this._onDidWriteMemory.event;
 
+    private _sessionContext: SessionContext = { canRead: false, canWrite: false };
+    private _onDidChangeSessionContext = new vscode.EventEmitter<SessionContext>();
+    public readonly onDidChangeSessionContext = this._onDidChangeSessionContext.event;
+
     protected readonly sessions = new Map<string, DebugProtocol.Capabilities | undefined>();
 
     constructor(protected adapterRegistry: AdapterRegistry) {
+    }
+
+    get sessionContext(): SessionContext {
+        return this._sessionContext;
     }
 
     public activate(context: vscode.ExtensionContext): void {
@@ -66,7 +74,7 @@ export class MemoryProvider {
                         // Check for right capabilities in the adapter
                         this.sessions.set(session.id, message.body);
                         if (vscode.debug.activeDebugSession?.id === session.id) {
-                            this.setContext(message.body);
+                            this.setContext(session);
                         }
                     }
                     if (isStoppedEvent(message)) {
@@ -82,10 +90,7 @@ export class MemoryProvider {
 
         context.subscriptions.push(
             vscode.debug.registerDebugAdapterTrackerFactory('*', { createDebugAdapterTracker }),
-            vscode.debug.onDidChangeActiveDebugSession(session => {
-                const capabilities = session && this.sessions.get(session.id);
-                this.setContext(capabilities);
-            })
+            vscode.debug.onDidChangeActiveDebugSession(session => this.setContext(session))
         );
     }
 
@@ -97,9 +102,16 @@ export class MemoryProvider {
         this.sessions.delete(session.id);
     }
 
-    protected setContext(capabilities?: DebugProtocol.Capabilities): void {
-        vscode.commands.executeCommand('setContext', MemoryProvider.ReadKey, !!capabilities?.supportsReadMemoryRequest);
-        vscode.commands.executeCommand('setContext', MemoryProvider.WriteKey, !!capabilities?.supportsWriteMemoryRequest);
+    protected setContext(session?: vscode.DebugSession): void {
+        const capabilities = session && this.sessions.get(session.id);
+        this._sessionContext = {
+            sessionId: session?.id,
+            canRead: !!capabilities?.supportsReadMemoryRequest,
+            canWrite: !!capabilities?.supportsWriteMemoryRequest
+        };
+        vscode.commands.executeCommand('setContext', MemoryProvider.ReadKey, this.sessionContext.canRead);
+        vscode.commands.executeCommand('setContext', MemoryProvider.WriteKey, this.sessionContext.canWrite);
+        this._onDidChangeSessionContext.fire(this.sessionContext);
     }
 
     /** Returns the session if the capability is present, otherwise throws. */

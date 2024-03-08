@@ -22,6 +22,7 @@ import {
     MemoryOptions,
     ReadMemoryArguments,
     ReadMemoryResult,
+    SessionContext,
     StoreMemoryArguments,
     WebviewSelection,
     WriteMemoryArguments,
@@ -34,6 +35,7 @@ import {
     readMemoryType,
     readyType,
     resetMemoryViewSettingsType,
+    sessionContextChangedType,
     setMemoryViewSettingsType,
     setOptionsType,
     setTitleType,
@@ -204,6 +206,7 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
         const disposables = [
             this.messenger.onNotification(readyType, () => {
                 this.setInitialSettings(participant, panel.title);
+                this.setSessionContext(participant, this.memoryProvider.sessionContext);
                 this.refresh(participant, options);
             }, { sender: participant }),
             this.messenger.onRequest(setOptionsType, o => {
@@ -223,6 +226,7 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
                     this.refresh(participant);
                 }
             }),
+            this.memoryProvider.onDidChangeSessionContext(context => this.setSessionContext(participant, context)),
             this.memoryProvider.onDidWriteMemory(writtenMemory => this.messenger.sendNotification(memoryWrittenType, participant, writtenMemory))
         ];
         panel.onDidChangeViewState(newState => {
@@ -243,6 +247,10 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
 
     protected setMemoryViewSettings(webviewParticipant: WebviewIdMessageParticipant, settings: Partial<MemoryViewSettings>): void {
         this.messenger.sendNotification(setMemoryViewSettingsType, webviewParticipant, settings);
+    }
+
+    protected setSessionContext(webviewParticipant: WebviewIdMessageParticipant, context: SessionContext): void {
+        this.messenger.sendNotification(sessionContextChangedType, webviewParticipant, context);
     }
 
     protected getMemoryViewSettings(messageParticipant: WebviewIdMessageParticipant, title: string): MemoryViewSettings {
@@ -306,10 +314,20 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
     }
 
     protected async storeMemory(storeArguments: StoreMemoryArguments): Promise<void> {
+        // Even if we disable the command in VS Code through enablement or when condition, programmatic execution is still possible.
+        // However, we want to fail early in case the user tries to execute a disabled command
+        if (!this.memoryProvider.sessionContext.canRead) {
+            throw new Error('Cannot read memory, no valid debug session.');
+        }
         return vscode.commands.executeCommand(StoreCommandType, storeArguments);
     }
 
     protected async applyMemory(): Promise<MemoryOptions> {
+        // Even if we disable the command in VS Code through enablement or when condition, programmatic execution is still possible.
+        // However, we want to fail early in case the user tries to execute a disabled command
+        if (!this.memoryProvider.sessionContext.canWrite) {
+            throw new Error('Cannot write memory, no valid debug session.');
+        }
         return vscode.commands.executeCommand(ApplyCommandType);
     }
 

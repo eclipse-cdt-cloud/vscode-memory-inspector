@@ -37,6 +37,8 @@ import {
     setTitleType,
     showAdvancedOptionsType,
     storeMemoryType,
+    sessionContextChangedType,
+    SessionContext,
 } from '../common/messaging';
 import { AddressColumn } from './columns/address-column';
 import { AsciiColumn } from './columns/ascii-column';
@@ -55,12 +57,18 @@ import { VariableHover } from './hovers/variable-hover';
 export interface MemoryAppState extends MemoryState, MemoryDisplayConfiguration {
     messageParticipant: WebviewIdMessageParticipant;
     title: string;
+    sessionContext: SessionContext;
     effectiveAddressLength: number;
     decorations: Decoration[];
     hoverService: HoverService;
     columns: ColumnStatus[];
     isFrozen: boolean;
 }
+
+const DEFAULT_SESSION_CONTEXT: SessionContext = {
+    canRead: false,
+    canWrite: false
+};
 
 const MEMORY_DISPLAY_CONFIGURATION_DEFAULTS: MemoryDisplayConfiguration = {
     bytesPerWord: 1,
@@ -72,6 +80,7 @@ const MEMORY_DISPLAY_CONFIGURATION_DEFAULTS: MemoryDisplayConfiguration = {
     addressRadix: 16,
     showRadixPrefix: true,
 };
+
 const DEFAULT_READ_ARGUMENTS: Required<ReadMemoryArguments> = {
     memoryReference: '',
     offset: 0,
@@ -94,6 +103,7 @@ class App extends React.Component<{}, MemoryAppState> {
         this.state = {
             messageParticipant: { type: 'webview', webviewId: '' },
             title: 'Memory',
+            sessionContext: DEFAULT_SESSION_CONTEXT,
             memory: undefined,
             effectiveAddressLength: 0,
             configuredReadArguments: DEFAULT_READ_ARGUMENTS,
@@ -109,7 +119,8 @@ class App extends React.Component<{}, MemoryAppState> {
 
     public componentDidMount(): void {
         messenger.onRequest(setOptionsType, options => this.setOptions(options));
-        messenger.onNotification(memoryWrittenType, writtenMemory => this.handleWrittenMemory(writtenMemory));
+        messenger.onNotification(memoryWrittenType, writtenMemory => this.memoryWritten(writtenMemory));
+        messenger.onNotification(sessionContextChangedType, sessionContext => this.sessionContextChanged(sessionContext));
         messenger.onNotification(setMemoryViewSettingsType, config => {
             if (config.visibleColumns) {
                 for (const column of columnContributionService.getColumns()) {
@@ -138,7 +149,7 @@ class App extends React.Component<{}, MemoryAppState> {
         hoverService.setMemoryState(this.state);
     }
 
-    protected handleWrittenMemory(writtenMemory: WrittenMemory): void {
+    protected memoryWritten(writtenMemory: WrittenMemory): void {
         if (!this.state.memory) {
             return;
         }
@@ -171,11 +182,16 @@ class App extends React.Component<{}, MemoryAppState> {
         this.updateMemoryState();
     }
 
+    protected sessionContextChanged(sessionContext: SessionContext): void {
+        this.setState({ sessionContext });
+    }
+
     public render(): React.ReactNode {
         return <PrimeReactProvider>
             <MemoryWidget
                 ref={this.memoryWidget}
                 messageParticipant={this.state.messageParticipant}
+                sessionContext={this.state.sessionContext}
                 configuredReadArguments={this.state.configuredReadArguments}
                 activeReadArguments={this.state.activeReadArguments}
                 memory={this.state.memory}

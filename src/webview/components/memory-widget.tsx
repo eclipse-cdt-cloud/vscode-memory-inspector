@@ -22,12 +22,13 @@ import { OptionsWidget } from './options-widget';
 import { WebviewIdMessageParticipant } from 'vscode-messenger-common';
 import { VscodeContext, createAppVscodeContext } from '../utils/vscode-contexts';
 import { WebviewSelection } from '../../common/messaging';
-import { MemoryOptions, ReadMemoryArguments } from '../../common/messaging';
+import { MemoryOptions, ReadMemoryArguments, SessionContext } from '../../common/messaging';
 import { Memory } from '../../common/memory';
 import { HoverService } from '../hovers/hover-service';
 
 interface MemoryWidgetProps extends MemoryDisplayConfiguration {
     messageParticipant: WebviewIdMessageParticipant;
+    sessionContext: SessionContext;
     configuredReadArguments: Required<ReadMemoryArguments>;
     activeReadArguments: Required<ReadMemoryArguments>;
     memory?: Memory;
@@ -78,6 +79,7 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
         return (<div className='flex flex-column h-full' {...this.createVscodeContext()}>
             <OptionsWidget
                 ref={this.optionsWidget}
+                sessionContext={this.props.sessionContext}
                 title={this.props.title}
                 updateTitle={this.props.updateTitle}
                 columnOptions={this.props.columns}
