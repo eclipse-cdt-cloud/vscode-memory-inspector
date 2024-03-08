@@ -25,6 +25,10 @@ export interface AdapterCapabilities {
     getVariables?(session: vscode.DebugSession): Promise<VariableRange[]>;
     /** Resolve symbols resident in the memory at the specified range. Will be preferred to {@link getVariables} if present. */
     getResidents?(session: vscode.DebugSession, params: DebugProtocol.ReadMemoryArguments): Promise<VariableRange[]>;
+    /** Resolves the address of a given variable in bytes withthe current context. */
+    getAddressOfVariable?(session: vscode.DebugSession, variableName: string): Promise<string | undefined>;
+    /** Resolves the size of a given variable in bytes within the current context. */
+    getSizeOfVariable?(session: vscode.DebugSession, variableName: string): Promise<bigint | undefined>;
     initializeAdapterTracker?(session: vscode.DebugSession): vscode.DebugAdapterTracker | undefined;
 }
 
@@ -106,9 +110,15 @@ export class AdapterVariableTracker implements vscode.DebugAdapterTracker {
     protected variableToVariableRange(_variable: DebugProtocol.Variable, _session: vscode.DebugSession): Promise<VariableRange | undefined> {
         throw new Error('To be implemented by derived classes!');
     }
+
+    /** Resolves the address of a given variable in bytes withthe current context. */
+    getAddressOfVariable?(variableName: string, session: vscode.DebugSession): Promise<string | undefined>;
+
+    /** Resolves the size of a given variable in bytes within the current context. */
+    getSizeOfVariable?(variableName: string, session: vscode.DebugSession): Promise<bigint | undefined>;
 }
 
-export class VariableTracker {
+export class VariableTracker implements AdapterCapabilities {
     protected sessions = new Map<string, AdapterVariableTracker>();
     protected types: string[];
 
@@ -127,8 +137,16 @@ export class VariableTracker {
         }
     }
 
-    getVariables(session: vscode.DebugSession): Promise<VariableRange[]> {
-        return Promise.resolve(this.sessions.get(session.id)?.getLocals(session) ?? []);
+    async getVariables(session: vscode.DebugSession): Promise<VariableRange[]> {
+        return this.sessions.get(session.id)?.getLocals(session) ?? [];
+    }
+
+    async getAddressOfVariable(session: vscode.DebugSession, variableName: string): Promise<string | undefined> {
+        return this.sessions.get(session.id)?.getAddressOfVariable?.(variableName, session);
+    }
+
+    async getSizeOfVariable(session: vscode.DebugSession, variableName: string): Promise<bigint | undefined> {
+        return this.sessions.get(session.id)?.getSizeOfVariable?.(variableName, session);
     }
 }
 

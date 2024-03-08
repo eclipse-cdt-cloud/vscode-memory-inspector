@@ -91,7 +91,7 @@ export function getRadixMarker(radix: Radix): string {
     return radixPrefixMap[radix];
 }
 
-export function getAddressString(address: bigint, radix: Radix, paddedLength: number = 0): string {
+export function getAddressString(address: bigint | number, radix: Radix, paddedLength: number = 0): string {
     return address.toString(radix).padStart(paddedLength, '0');
 }
 
@@ -99,7 +99,7 @@ export function getAddressLength(padding: number, radix: Radix): number {
     return Math.ceil(padding / Math.log2(radix));
 }
 
-export function toHexStringWithRadixMarker(target: bigint, paddedLength: number = 0): string {
+export function toHexStringWithRadixMarker(target: bigint | number, paddedLength: number = 0): string {
     return `${getRadixMarker(Radix.Hexadecimal)}${getAddressString(target, Radix.Hexadecimal, paddedLength)}`;
 }
 

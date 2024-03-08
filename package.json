@@ -113,11 +113,13 @@
       {
         "command": "memory-inspector.store-file",
         "title": "Store Memory as File",
+        "enablement": "memory-inspector.canRead",
         "category": "Memory"
       },
       {
         "command": "memory-inspector.apply-file",
         "title": "Apply Memory from File",
+        "enablement": "memory-inspector.canWrite",
         "category": "Memory"
       }
     ],
@@ -132,12 +134,10 @@
           "when": "false"
         },
         {
-          "command": "memory-inspector.store-file",
-          "when": "memory-inspector.canRead"
+          "command": "memory-inspector.store-file"
         },
         {
-          "command": "memory-inspector.apply-file",
-          "when": "memory-inspector.canWrite"
+          "command": "memory-inspector.apply-file"
         }
       ],
       "debug/variables/context": [

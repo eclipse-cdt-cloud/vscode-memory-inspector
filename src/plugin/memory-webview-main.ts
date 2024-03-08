@@ -17,7 +17,6 @@
 import * as vscode from 'vscode';
 import { Messenger } from 'vscode-messenger';
 import { WebviewIdMessageParticipant } from 'vscode-messenger-common';
-import { isMemoryVariableNode } from '../common/memory';
 import { Endianness, VariableRange } from '../common/memory-range';
 import {
     MemoryOptions,
@@ -48,6 +47,7 @@ import { outputChannelLogger } from './logger';
 import * as manifest from './manifest';
 import { MemoryProvider } from './memory-provider';
 import { ApplyCommandType, StoreCommandType } from './memory-storage';
+import { isVariablesContext } from './external-views';
 
 enum RefreshEnum {
     off = 0,
@@ -89,9 +89,10 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
         context.subscriptions.push(
             vscode.window.registerCustomEditorProvider(manifest.EDITOR_NAME, this),
             vscode.commands.registerCommand(MemoryWebview.ShowCommandType, () => this.show()),
-            vscode.commands.registerCommand(MemoryWebview.VariableCommandType, node => {
-                if (isMemoryVariableNode(node)) {
-                    this.show({ memoryReference: node.variable.memoryReference.toString() });
+            vscode.commands.registerCommand(MemoryWebview.VariableCommandType, async args => {
+                if (isVariablesContext(args)) {
+                    const memoryReference = args.variable.memoryReference ?? await this.memoryProvider.getAddressOfVariable(args.variable.name);
+                    this.show({ memoryReference });
                 }
             }),
             vscode.commands.registerCommand(MemoryWebview.ToggleVariablesColumnCommandType, (ctx: WebviewContext) => {
@@ -273,7 +274,7 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
 
     protected async writeMemory(request: WriteMemoryArguments): Promise<WriteMemoryResult> {
         try {
-            return this.memoryProvider.writeMemory(request);
+            return await this.memoryProvider.writeMemory(request);
         } catch (err) {
             this.logError('Error writing memory', err);
         }

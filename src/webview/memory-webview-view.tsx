@@ -148,7 +148,9 @@ class App extends React.Component<{}, MemoryAppState> {
             return;
         }
         try {
-            // if we are dealing with numeric addresses (and not expressions) then we can determine the overlap
+            // If we are dealing with numeric addresses (and not expressions) then we can determine the overlap.
+            // Note that we use big int arithmetic here to determine the overlap for (start address + length) vs (memory state address + length), i.e.,
+            // we do not actually determine the end address may need to consider the size of a word in bytes
             const written: BigIntMemoryRange = {
                 startAddress: BigInt(writtenMemory.memoryReference),
                 endAddress: BigInt(writtenMemory.memoryReference) + BigInt(writtenMemory.count ?? 0)
@@ -199,8 +201,8 @@ class App extends React.Component<{}, MemoryAppState> {
                 addressPadding={this.state.addressPadding}
                 addressRadix={this.state.addressRadix}
                 showRadixPrefix={this.state.showRadixPrefix}
-                triggerStoreMemory={this.requestStoreMemory}
-                triggerApplyMemory={this.requestApplyMemory}
+                storeMemory={this.storeMemory}
+                applyMemory={this.applyMemory}
             />
         </PrimeReactProvider>;
     }
@@ -304,11 +306,11 @@ class App extends React.Component<{}, MemoryAppState> {
         return this.memoryWidget.current?.getWebviewSelection() ?? {};
     }
 
-    protected requestStoreMemory = (): void => {
-        messenger.sendRequest(storeMemoryType, HOST_EXTENSION, { ...this.state.activeReadArguments });
+    protected storeMemory = async (): Promise<void> => {
+        await messenger.sendRequest(storeMemoryType, HOST_EXTENSION, { ...this.state.activeReadArguments });
     };
 
-    protected requestApplyMemory = async (): Promise<void> => {
+    protected applyMemory = async (): Promise<void> => {
         await messenger.sendRequest(applyMemoryType, HOST_EXTENSION, undefined);
     };
 }

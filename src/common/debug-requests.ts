@@ -29,11 +29,17 @@ export async function sendRequest<K extends keyof DebugRequestTypes>(session: De
     return session.customRequest(command, args);
 }
 
-export namespace EvaluateExpression {
-    export function sizeOf(expression: string): string {
-        return `sizeof(${expression})`;
-    }
-    export function addressOf(expression: string): string {
-        return `&(${expression})`;
-    }
-};
+export function isDebugVariable(variable: DebugProtocol.Variable | unknown): variable is DebugProtocol.Variable {
+    const assumed = variable ? variable as DebugProtocol.Variable : undefined;
+    return typeof assumed?.name === 'string' && typeof assumed?.value === 'string';
+}
+
+export function isDebugScope(scope: DebugProtocol.Scope | unknown): scope is DebugProtocol.Scope {
+    const assumed = scope ? scope as DebugProtocol.Scope : undefined;
+    return typeof assumed?.name === 'string' && typeof assumed?.variablesReference === 'number';
+}
+
+export function isDebugEvaluateArguments(args: DebugProtocol.EvaluateArguments | unknown): args is DebugProtocol.EvaluateArguments {
+    const assumed = args ? args as DebugProtocol.EvaluateArguments : undefined;
+    return typeof assumed?.expression === 'string';
+}

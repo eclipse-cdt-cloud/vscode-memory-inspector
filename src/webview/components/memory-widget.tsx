@@ -14,7 +14,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-import { DebugProtocol } from '@vscode/debugprotocol';
 import React from 'react';
 import { ColumnStatus } from '../columns/column-contribution-service';
 import { Decoration, MemoryDisplayConfiguration, MemoryState } from '../utils/view-types';
@@ -22,14 +21,15 @@ import { MemoryTable } from './memory-table';
 import { OptionsWidget } from './options-widget';
 import { WebviewIdMessageParticipant } from 'vscode-messenger-common';
 import { VscodeContext, createAppVscodeContext } from '../utils/vscode-contexts';
-import { WebviewSelection, MemoryOptions } from '../../common/messaging';
+import { WebviewSelection } from '../../common/messaging';
+import { MemoryOptions, ReadMemoryArguments } from '../../common/messaging';
 import { Memory } from '../../common/memory';
 import { HoverService } from '../hovers/hover-service';
 
 interface MemoryWidgetProps extends MemoryDisplayConfiguration {
     messageParticipant: WebviewIdMessageParticipant;
-    configuredReadArguments: Required<DebugProtocol.ReadMemoryArguments>;
-    activeReadArguments: Required<DebugProtocol.ReadMemoryArguments>;
+    configuredReadArguments: Required<ReadMemoryArguments>;
+    activeReadArguments: Required<ReadMemoryArguments>;
     memory?: Memory;
     title: string;
     decorations: Decoration[];
@@ -45,8 +45,8 @@ interface MemoryWidgetProps extends MemoryDisplayConfiguration {
     resetMemoryDisplayConfiguration: () => void;
     updateTitle: (title: string) => void;
     fetchMemory(partialOptions?: MemoryOptions): Promise<void>;
-    triggerStoreMemory(): void;
-    triggerApplyMemory(): void;
+    storeMemory(): void;
+    applyMemory(): void;
 }
 
 interface MemoryWidgetState {
@@ -97,8 +97,8 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 toggleColumn={this.props.toggleColumn}
                 toggleFrozen={this.props.toggleFrozen}
                 isFrozen={this.props.isFrozen}
-                triggerStoreMemory={this.props.triggerStoreMemory}
-                triggerApplyMemory={this.props.triggerApplyMemory}
+                storeMemory={this.props.storeMemory}
+                applyMemory={this.props.applyMemory}
             />
             <MemoryTable
                 ref={this.memoryTable}

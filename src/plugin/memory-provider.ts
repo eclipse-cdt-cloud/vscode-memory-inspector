@@ -132,14 +132,22 @@ export class MemoryProvider {
         });
     }
 
-    public async evaluate(args: DebugProtocol.EvaluateArguments): Promise<DebugProtocol.EvaluateResponse['body']> {
-        return sendRequest(this.assertActiveSession('evaluate'), 'evaluate', args);
-    }
-
     public async getVariables(variableArguments: DebugProtocol.ReadMemoryArguments): Promise<VariableRange[]> {
         const session = this.assertActiveSession('get variables');
         const handler = this.adapterRegistry?.getHandlerForSession(session.type);
         if (handler?.getResidents) { return handler.getResidents(session, variableArguments); }
         return handler?.getVariables?.(session) ?? [];
+    }
+
+    public async getAddressOfVariable(variableName: string): Promise<string | undefined> {
+        const session = this.assertActiveSession('get address of variable');
+        const handler = this.adapterRegistry?.getHandlerForSession(session.type);
+        return handler?.getAddressOfVariable?.(session, variableName);
+    }
+
+    public async getSizeOfVariable(variableName: string): Promise<bigint | undefined> {
+        const session = this.assertActiveSession('get address of variable');
+        const handler = this.adapterRegistry?.getHandlerForSession(session.type);
+        return handler?.getSizeOfVariable?.(session, variableName);
     }
 }

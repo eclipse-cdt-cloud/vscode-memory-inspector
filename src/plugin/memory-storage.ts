@@ -20,13 +20,13 @@ import { URI, Utils } from 'vscode-uri';
 import { IntelHEX } from '../common/intel-hex';
 import {
     bytesToStringMemory, createMemoryFromRead,
-    isMemoryVariableNode, validateCount, validateMemoryReference, validateOffset
+    validateCount, validateMemoryReference, validateOffset
 } from '../common/memory';
 import { toHexStringWithRadixMarker } from '../common/memory-range';
 import * as manifest from './manifest';
 import { MemoryProvider } from './memory-provider';
-import { EvaluateExpression } from '../common/debug-requests';
 import { ApplyMemoryArguments, ApplyMemoryResult, MemoryOptions, StoreMemoryArguments } from '../common/messaging';
+import { isVariablesContext } from './external-views';
 
 export const StoreCommandType = `${manifest.PACKAGE_NAME}.store-file`;
 export const ApplyCommandType = `${manifest.PACKAGE_NAME}.apply-file`;
@@ -34,10 +34,11 @@ export const ApplyCommandType = `${manifest.PACKAGE_NAME}.apply-file`;
 const VALID_FILE_NAME_CHARS = /[^a-zA-Z0-9 _-]/g;
 
 type StoreMemoryOptions = Required<MemoryOptions> & {
+    proposedOutputName?: string,
     outputFile: vscode.Uri;
 };
 
-const DEFAULT_STORE_OPTIONS: Omit<StoreMemoryOptions, 'outputFile'> = {
+const DEFAULT_STORE_OPTIONS: Omit<StoreMemoryOptions, 'outputFile' | 'proposedOutputName'> = {
     memoryReference: toHexStringWithRadixMarker(0n, 8),
     offset: 0,
     count: 256
@@ -91,12 +92,12 @@ export class MemoryStorage {
         if (!args) {
             return {};
         }
-        if (isMemoryVariableNode(args)) {
+        if (isVariablesContext(args)) {
             try {
                 const variableName = args.variable.evaluateName ?? args.variable.name;
-                const { result } = await this.memoryProvider.evaluate({ expression: EvaluateExpression.sizeOf(variableName), context: 'watch' });
-                const count = validateCount(result) === undefined ? Number(result) : undefined;
-                return { count, memoryReference: EvaluateExpression.addressOf(variableName), offset: 0 };
+                const count = await this.memoryProvider.getSizeOfVariable(variableName);
+                const memoryReference = args.variable.memoryReference ?? await this.memoryProvider.getAddressOfVariable(variableName);
+                return { count: Number(count), memoryReference, offset: 0, proposedOutputName: variableName };
             } catch (error) {
                 // ignore, we are just using them as default values
                 return { memoryReference: args.variable.memoryReference, offset: 0 };
@@ -137,7 +138,9 @@ export class MemoryStorage {
             return;
         }
         const workspaceUri = vscode.workspace.workspaceFolders?.[0]?.uri;
-        const defaultUri = workspaceUri ? Utils.joinPath(workspaceUri, memoryReference.replace(VALID_FILE_NAME_CHARS, '') + '_' + count) : workspaceUri;
+        const proposedName = providedDefault?.proposedOutputName ?? memoryReference + '_' + count;
+        const validName = proposedName.replace(VALID_FILE_NAME_CHARS, '');
+        const defaultUri = workspaceUri ? Utils.joinPath(workspaceUri, validName) : workspaceUri;
         const saveFile = await vscode.window.showSaveDialog({ title: 'Store Memory', defaultUri, filters: IntelHEX.DialogFilters });
         if (!saveFile) {
             return;
@@ -159,7 +162,7 @@ export class MemoryStorage {
             let memoryReference: string | undefined;
             let count: number | undefined;
             for (const [address, memory] of memoryMap) {
-                memoryReference = toHexStringWithRadixMarker(BigInt(address));
+                memoryReference = toHexStringWithRadixMarker(address);
                 count = memory.length;
                 const data = bytesToStringMemory(memory);
                 await this.memoryProvider.writeMemory({ memoryReference, data, count });

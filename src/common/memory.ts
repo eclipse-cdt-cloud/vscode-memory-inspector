@@ -14,16 +14,19 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-import type { DebugProtocol } from '@vscode/debugprotocol';
-import { ReadMemoryResult } from './messaging';
+import { ReadMemoryArguments, ReadMemoryResult } from './messaging';
 
 export interface Memory {
     address: bigint;
     bytes: Uint8Array;
 }
 
-export function createMemoryFromRead(result: ReadMemoryResult): Memory {
-    if (!result?.data) { throw new Error('No memory provided!'); }
+export function createMemoryFromRead(result: ReadMemoryResult, request?: ReadMemoryArguments): Memory {
+    if (!result?.data) {
+        const message = request ? `No memory provided for address ${request.memoryReference}`
+            + `, offset ${request.offset} and count ${request.count}!` : 'No memory provided.';
+        throw new Error(message);
+    }
     const address = BigInt(result.address);
     const bytes = stringToBytesMemory(result.data);
     return { bytes, address };
@@ -40,35 +43,19 @@ export function bytesToStringMemory(data: Uint8Array): string {
 export function validateMemoryReference(reference: string): string | undefined {
     const asNumber = Number(reference);
     // we allow an address that is not a number, e.g., an expression, but if it is a number it must be >= 0
-    return !isNaN(asNumber) && asNumber < 0 ? 'Value needs to be >= 0' : undefined;
+    return !isNaN(asNumber) && asNumber < 0 ? 'Value must be >= 0' : undefined;
 }
 
 export function validateOffset(offset: string): string | undefined {
     const asNumber = Number(offset);
-    return isNaN(asNumber) ? 'No number provided' : undefined;
+    return isNaN(asNumber) ? 'Must be number' : undefined;
 }
 
 export function validateCount(count: string): string | undefined {
     const asNumber = Number(count);
     if (isNaN(asNumber)) {
-        return 'No number provided';
+        return 'Must be number';
     } else if (asNumber <= 0) {
-        return 'Value needs to be > 0';
+        return 'Value must be > 0';
     }
 }
-
-export interface MemoryVariable extends DebugProtocol.Variable {
-    memoryReference: string;
-}
-
-export const isMemoryVariable = (variable: unknown): variable is MemoryVariable => !!variable && !!(variable as MemoryVariable).memoryReference;
-
-export interface MemoryVariableNode {
-    variable: MemoryVariable;
-    sessionId: string;
-}
-
-export const isMemoryVariableNode = (node: unknown): node is MemoryVariableNode =>
-    !!node
-    && isMemoryVariable((node as MemoryVariableNode).variable)
-    && typeof (node as MemoryVariableNode).sessionId === 'string';

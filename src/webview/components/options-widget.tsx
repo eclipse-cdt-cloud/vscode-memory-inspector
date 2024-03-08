@@ -14,7 +14,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-import type { DebugProtocol } from '@vscode/debugprotocol';
 import { Formik, FormikConfig, FormikErrors, FormikProps } from 'formik';
 import { Button } from 'primereact/button';
 import { Dropdown, DropdownChangeEvent } from 'primereact/dropdown';
@@ -30,7 +29,7 @@ import { tryToNumber } from '../../common/typescript';
 import { Checkbox } from 'primereact/checkbox';
 import { Endianness } from '../../common/memory-range';
 import { createSectionVscodeContext } from '../utils/vscode-contexts';
-import { ReadMemoryArguments } from '../../common/messaging';
+import { MemoryOptions, ReadMemoryArguments } from '../../common/messaging';
 import { validateMemoryReference, validateOffset, validateCount } from '../../common/memory';
 
 export interface OptionsWidgetProps
@@ -42,12 +41,12 @@ export interface OptionsWidgetProps
     resetRenderOptions: () => void;
     updateTitle: (title: string) => void;
     updateMemoryState: (state: Partial<MemoryState>) => void;
-    fetchMemory(partialOptions?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void>
+    fetchMemory(partialOptions?: MemoryOptions): Promise<void>
     toggleColumn(id: string, isVisible: boolean): void;
     toggleFrozen: () => void;
     isFrozen: boolean;
-    triggerStoreMemory(): void;
-    triggerApplyMemory(): void;
+    storeMemory(): void;
+    applyMemory(): void;
 }
 
 interface OptionsWidgetState {
@@ -177,7 +176,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                 type='button'
                                 className='store-file-button'
                                 icon='codicon codicon-save'
-                                onClick={this.props.triggerStoreMemory}
+                                onClick={this.props.storeMemory}
                                 title='Store Memory as File'
                                 aria-label='Store Memory as File'
                                 rounded
@@ -187,7 +186,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                 type='button'
                                 className='apply-file-button'
                                 icon='codicon codicon-folder-opened'
-                                onClick={this.props.triggerApplyMemory}
+                                onClick={this.props.applyMemory}
                                 title='Apply Memory from File'
                                 aria-label='Apply Memory from File'
                                 rounded

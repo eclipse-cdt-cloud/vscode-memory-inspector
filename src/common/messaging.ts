@@ -19,8 +19,8 @@ import type { NotificationType, RequestType } from 'vscode-messenger-common';
 import { MemoryViewSettings } from '../webview/utils/view-types';
 import type { VariableRange, WrittenMemory } from './memory-range';
 import { DebugRequestTypes } from './debug-requests';
-import { MemoryVariableNode } from './memory';
 import { URI } from 'vscode-uri';
+import { VariablesView } from '../plugin/external-views';
 
 // convenience types for easier readability and better semantics
 export type MemoryOptions = Partial<DebugProtocol.ReadMemoryArguments>;
@@ -31,7 +31,7 @@ export type ReadMemoryResult = DebugRequestTypes['readMemory'][1];
 export type WriteMemoryArguments = DebugRequestTypes['writeMemory'][0] & { count?: number };
 export type WriteMemoryResult = DebugRequestTypes['writeMemory'][1];
 
-export type StoreMemoryArguments = MemoryOptions | MemoryVariableNode;
+export type StoreMemoryArguments = MemoryOptions & { proposedOutputName?: string } | VariablesView.IVariablesContext;
 export type StoreMemoryResult = void;
 
 export type ApplyMemoryArguments = URI | undefined;
