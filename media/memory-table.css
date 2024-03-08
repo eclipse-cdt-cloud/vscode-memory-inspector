@@ -23,6 +23,10 @@
   font-family: var(--vscode-editor-font-family);
 }
 
+.memory-inspector-table span.eight-bits {
+  white-space: nowrap;
+}
+
 /* == MoreMemorySelect == */
 
 .bytes-select {
