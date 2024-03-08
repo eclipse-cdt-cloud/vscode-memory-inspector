@@ -23,14 +23,6 @@
   font-family: var(--vscode-editor-font-family);
 }
 
-.memory-inspector-table.groups-per-row-autofit tr > td.column-data > .data-groups-container {
-  overflow: hidden;
-  height: 1em;
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-}
-
 /* == MoreMemorySelect == */
 
 .bytes-select {
