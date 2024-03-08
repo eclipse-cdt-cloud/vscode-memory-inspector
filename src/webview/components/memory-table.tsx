@@ -28,6 +28,7 @@ import { tryToNumber } from '../../common/typescript';
 import { DataColumn } from '../columns/data-column';
 import { createColumnVscodeContext, createSectionVscodeContext } from '../utils/vscode-contexts';
 import { WebviewSelection } from '../../common/messaging';
+import { debounce } from 'lodash';
 
 export interface MoreMemorySelectProps {
     activeReadArguments: Required<DebugProtocol.ReadMemoryArguments>;
@@ -199,14 +200,18 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
     }
 
     componentDidMount(): void {
+        const handleResize = debounce(() => {
+            this.autofitColumns();
+
+            // The size changed - we could have too few rows visible to enable a scrollbar
+            if (this.props.scrollingBehavior === 'Auto-Append') {
+                this.ensureSufficientVisibleRowsForScrollbar();
+            }
+        }, 100);
+
         this.resizeObserver = new ResizeObserver(entries => {
             if (entries.length > 0) {
-                this.autofitColumns();
-
-                // The size changed - we could have too few rows visible to enable a scrollbar
-                if (this.props.scrollingBehavior === 'Auto-Append') {
-                    this.ensureSufficientVisibleRowsForScrollbar();
-                }
+                handleResize();
             }
         });
 
