@@ -16,7 +16,7 @@
 
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { HOST_EXTENSION } from 'vscode-messenger-common';
+import { HOST_EXTENSION, WebviewIdMessageParticipant } from 'vscode-messenger-common';
 import {
     readyType,
     logMessageType,
@@ -25,6 +25,9 @@ import {
     setTitleType,
     setMemoryViewSettingsType,
     resetMemoryViewSettingsType,
+    showAdvancedOptionsType,
+    getWebviewSelectionType,
+    WebviewSelection,
 } from '../common/messaging';
 import type { DebugProtocol } from '@vscode/debugprotocol';
 import { Decoration, Memory, MemoryDisplayConfiguration, MemoryState } from './utils/view-types';
@@ -42,6 +45,7 @@ import { getAddressLength, getAddressString } from '../common/memory-range';
 import { Endianness } from '../common/memory-range';
 
 export interface MemoryAppState extends MemoryState, MemoryDisplayConfiguration {
+    messageParticipant: WebviewIdMessageParticipant;
     title: string;
     effectiveAddressLength: number;
     decorations: Decoration[];
@@ -66,6 +70,7 @@ const DEFAULT_READ_ARGUMENTS: Required<DebugProtocol.ReadMemoryArguments> = {
 };
 
 class App extends React.Component<{}, MemoryAppState> {
+    protected memoryWidget = React.createRef<MemoryWidget>();
 
     public constructor(props: {}) {
         super(props);
@@ -75,6 +80,7 @@ class App extends React.Component<{}, MemoryAppState> {
         columnContributionService.register(new AsciiColumn());
         decorationService.register(variableDecorator);
         this.state = {
+            messageParticipant: { type: 'webview', webviewId: '' },
             title: 'Memory',
             memory: undefined,
             effectiveAddressLength: 0,
@@ -91,13 +97,17 @@ class App extends React.Component<{}, MemoryAppState> {
     public componentDidMount(): void {
         messenger.onRequest(setOptionsType, options => this.setOptions(options));
         messenger.onNotification(setMemoryViewSettingsType, config => {
-            for (const column of columnContributionService.getColumns()) {
-                const id = column.contribution.id;
-                const configurable = column.configurable;
-                this.toggleColumn(id, !configurable || !!config.visibleColumns?.includes(id));
+            if (config.visibleColumns) {
+                for (const column of columnContributionService.getColumns()) {
+                    const id = column.contribution.id;
+                    const configurable = column.configurable;
+                    this.toggleColumn(id, !configurable || config.visibleColumns.includes(id));
+                }
             }
             this.setState(prevState => ({ ...prevState, ...config, title: config.title ?? prevState.title, }));
         });
+        messenger.onRequest(getWebviewSelectionType, () => this.getWebviewSelection());
+        messenger.onNotification(showAdvancedOptionsType, () => this.showAdvancedOptions());
         messenger.sendNotification(readyType, HOST_EXTENSION, undefined);
     }
 
@@ -116,6 +126,8 @@ class App extends React.Component<{}, MemoryAppState> {
     public render(): React.ReactNode {
         return <PrimeReactProvider>
             <MemoryWidget
+                ref={this.memoryWidget}
+                messageParticipant={this.state.messageParticipant}
                 configuredReadArguments={this.state.configuredReadArguments}
                 activeReadArguments={this.state.activeReadArguments}
                 memory={this.state.memory}
@@ -245,6 +257,13 @@ class App extends React.Component<{}, MemoryAppState> {
         this.setState(prevState => ({ ...prevState, isFrozen: !prevState.isFrozen }));
     }
 
+    protected showAdvancedOptions(): void {
+        this.memoryWidget.current?.showAdvancedOptions();
+    }
+
+    protected getWebviewSelection(): WebviewSelection {
+        return this.memoryWidget.current?.getWebviewSelection() ?? {};
+    }
 }
 
 const container = document.getElementById('root') as Element;

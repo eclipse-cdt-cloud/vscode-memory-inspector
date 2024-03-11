@@ -29,6 +29,7 @@ import { CONFIG_BYTES_PER_WORD_CHOICES, CONFIG_GROUPS_PER_ROW_CHOICES, CONFIG_WO
 import { tryToNumber } from '../../common/typescript';
 import { Checkbox } from 'primereact/checkbox';
 import { Endianness } from '../../common/memory-range';
+import { createSectionVscodeContext } from '../utils/vscode-contexts';
 
 export interface OptionsWidgetProps
     extends Omit<TableRenderOptions, 'scrollingBehavior' | 'effectiveAddressLength'> {
@@ -72,6 +73,9 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
     protected formConfig: FormikConfig<OptionsForm>;
     protected extendedOptions = React.createRef<OverlayPanel>();
     protected labelEditInput = React.createRef<HTMLInputElement>();
+    protected coreOptionsDiv = React.createRef<HTMLDivElement>();
+    protected optionsMenuContext = createSectionVscodeContext('optionsWidget');
+    protected advancedOptionsContext = createSectionVscodeContext('advancedOptionsOverlay');
 
     protected get optionsFormValues(): OptionsForm {
         return {
@@ -149,7 +153,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
         };
 
         return (
-            <div className='memory-options-widget px-4'>
+            <div className='memory-options-widget px-4' {...this.optionsMenuContext}>
                 <div className='title-container'>
                     <Button
                         type='button'
@@ -184,8 +188,8 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                         />
                     )}
                 </div>
-                <div className='core-options py-2'>
-                    <Formik {...this.formConfig} >
+                <div className='core-options py-2' ref={this.coreOptionsDiv}>
+                    <Formik {...this.formConfig}>
                         {formik => (
                             <form onSubmit={formik.handleSubmit} className='form-options'>
                                 <span className={'pm-top-label form-textfield form-texfield-long'}>
@@ -263,7 +267,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                         aria-label='Advanced Display Options'
                         aria-haspopup
                     ></Button>
-                    <OverlayPanel ref={this.extendedOptions}>
+                    <OverlayPanel ref={this.extendedOptions} {...this.advancedOptionsContext}>
                         <Button
                             icon='codicon codicon-discard'
                             className='reset-advanced-options-icon'
@@ -516,6 +520,14 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
         if (this.state.isTitleEditing && this.labelEditInput.current) {
             this.props.updateTitle(this.labelEditInput.current.value.trim());
             this.disableTitleEditing();
+        }
+    }
+
+    public showAdvancedOptions(): void {
+        if (this.extendedOptions.current && this.coreOptionsDiv.current) {
+            if (!this.extendedOptions.current.getElement()) {
+                this.coreOptionsDiv.current.querySelector<HTMLButtonElement>('.advanced-options-toggle')?.click();
+            }
         }
     }
 

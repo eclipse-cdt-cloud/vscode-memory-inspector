@@ -81,6 +81,30 @@
         "command": "memory-inspector.show-variable",
         "title": "Show in Memory Inspector",
         "category": "Memory"
+      },
+      {
+        "command": "memory-inspector.toggle-variables-column",
+        "title": "Toggle Variables Column",
+        "category": "Memory",
+        "enablement": "webviewId === memory-inspector.memory"
+      },
+      {
+        "command": "memory-inspector.toggle-ascii-column",
+        "title": "Toggle ASCII Column",
+        "category": "Memory",
+        "enablement": "webviewId === memory-inspector.memory"
+      },
+      {
+        "command": "memory-inspector.toggle-radix-prefix",
+        "title": "Toggle Radix Prefix",
+        "category": "Memory",
+        "enablement": "webviewId === memory-inspector.memory"
+      },
+      {
+        "command": "memory-inspector.show-advanced-display-options",
+        "title": "Advanced Display Options",
+        "category": "Memory",
+        "enablement": "webviewId === memory-inspector.memory"
       }
     ],
     "menus": {
@@ -104,6 +128,28 @@
         {
           "command": "memory-inspector.show-variable",
           "when": "canViewMemory && memory-inspector.canRead"
+        }
+      ],
+      "webview/context": [
+        {
+          "command": "memory-inspector.toggle-variables-column",
+          "group": "display@1",
+          "when": "webviewId === memory-inspector.memory"
+        },
+        {
+          "command": "memory-inspector.toggle-ascii-column",
+          "group": "display@2",
+          "when": "webviewId === memory-inspector.memory"
+        },
+        {
+          "command": "memory-inspector.toggle-radix-prefix",
+          "group": "display@3",
+          "when": "webviewId === memory-inspector.memory"
+        },
+        {
+          "command": "memory-inspector.show-advanced-display-options",
+          "group": "display@4",
+          "when": "webviewId === memory-inspector.memory"
         }
       ]
     },

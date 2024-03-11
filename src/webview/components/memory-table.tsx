@@ -26,6 +26,8 @@ import isDeepEqual from 'fast-deep-equal';
 import { classNames } from 'primereact/utils';
 import { tryToNumber } from '../../common/typescript';
 import { DataColumn } from '../columns/data-column';
+import { createColumnVscodeContext, createSectionVscodeContext } from '../utils/vscode-contexts';
+import { WebviewSelection } from '../../common/messaging';
 
 export interface MoreMemorySelectProps {
     activeReadArguments: Required<DebugProtocol.ReadMemoryArguments>;
@@ -144,13 +146,16 @@ interface MemoryRowData {
     endAddress: bigint;
 }
 
+export interface MemoryTableCellSelection extends DataTableCellSelection<MemoryRowData[]> {
+    textContent: string;
+}
 interface MemoryTableState {
     /**
      * The value coming from {@link MemoryTableProps.groupsPerRow} can have non-numeric values such as `Autofit`.
      * For this reason, we need to transform the provided value to a numeric one to render correctly.
      */
     groupsPerRowToRender: number;
-    selection: DataTableCellSelection<MemoryRowData[]> | null;
+    selection: MemoryTableCellSelection | null;
 }
 
 export type MemorySizeOptions = Pick<MemoryTableProps, 'bytesPerWord' | 'wordsPerGroup'> & { groupsPerRow: number };
@@ -169,6 +174,7 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
 
     protected datatableRef = React.createRef<DataTable<MemoryRowData[]>>();
     protected resizeObserver?: ResizeObserver;
+    protected sectionMenuContext = createSectionVscodeContext('memoryTable');
 
     protected get datatableWrapper(): HTMLElement | undefined {
         return this.datatableRef.current?.getElement().querySelector<HTMLElement>('[data-pc-section="wrapper"]') ?? undefined;
@@ -265,9 +271,11 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
         const columnWidth = remainingWidth / (this.props.columnOptions.length);
 
         return (
-            <div className='flex-1 overflow-auto px-4'>
+            <div className='flex-1 overflow-auto px-4' >
                 <DataTable<MemoryRowData[]>
                     ref={this.datatableRef}
+                    onContextMenuCapture={this.onContextMenu}
+                    {...this.sectionMenuContext}
                     {...props}
                 >
                     {this.props.columnOptions.map(({ contribution }) => {
@@ -275,6 +283,7 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
                         const className = classNames(contribution.className, {
                             'content-width-fit': isContentWidthFit
                         });
+                        const pt = { root: createColumnVscodeContext(contribution.id) };
 
                         return <Column
                             key={contribution.id}
@@ -283,6 +292,7 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
                             className={className}
                             headerClassName={className}
                             style={{ width: isContentWidthFit ? undefined : `${columnWidth}%` }}
+                            pt={pt}
                             body={(row?: MemoryRowData) => row && contribution.render(row, this.props.memory!, this.props)}>
                             {contribution.label}
                         </Column>;
@@ -301,6 +311,9 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
             metaKeySelection: false,
             onSelectionChange: this.onSelectionChanged,
             onColumnResizeEnd: this.onColumnResizeEnd,
+            onContextMenuCapture: this.onContextMenu,
+            onCopy: this.onCopy,
+            onCut: this.onCut,
             resizableColumns: true,
             scrollable: true,
             scrollHeight: 'flex',
@@ -372,11 +385,50 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
     }
 
     protected onSelectionChanged = (event: DataTableSelectionCellChangeEvent<MemoryRowData[]>) => {
-        this.setState(prev => ({ ...prev, selection: event.value }));
+        // eslint-disable-next-line no-null/no-null
+        const value = event.value ? event.value as MemoryTableCellSelection : null;
+        if (value) {
+            value.textContent = event.originalEvent.currentTarget?.textContent ?? '';
+        }
+
+        this.setState(prev => ({ ...prev, selection: value }));
     };
 
     protected onColumnResizeEnd = () => {
         this.autofitColumns();
+    };
+
+    protected onCopy = (event: React.ClipboardEvent) => {
+        event.preventDefault();
+        const textSelection = window.getSelection()?.toString();
+        if (textSelection) {
+            navigator.clipboard.writeText(textSelection);
+        } else if (this.state.selection) {
+            navigator.clipboard.writeText(this.state.selection.textContent);
+
+        }
+    };
+
+    protected onCut = (event: React.ClipboardEvent) => this.onCopy(event);
+
+    protected onContextMenu = (event: React.MouseEvent) => {
+        if (!(event.target instanceof HTMLElement)) {
+            return;
+        }
+
+        const cell = event.target.closest('.p-selectable-cell');
+        if (!cell || !(cell instanceof HTMLTableCellElement)) {
+            return;
+        }
+
+        /*
+         * Before opening a context menu for a table cell target we dynamically add the `value` property to the <vscode-data-context.
+         * Using this dynamic approach ensures the the cell value is also set correctly when the menu was opened on empty cell space.
+         */
+        const value = cell.textContent;
+        const cellContext = JSON.parse(cell.dataset.vscodeContext ?? '{}');
+        cellContext.value = value;
+        cell.dataset.vscodeContext = JSON.stringify(cellContext);
     };
 
     protected renderHeader(): React.ReactNode | undefined {
@@ -495,6 +547,11 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
         }
 
         return options.groupsPerRow;
+    }
+
+    public getWebviewSelection(): WebviewSelection {
+        const textSelection = window.getSelection()?.toString() ?? '';
+        return this.state.selection ? { textSelection, selectedCell: { column: this.state.selection.field, value: this.state.selection.textContent } } : { textSelection };
     }
 }
 
