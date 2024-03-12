@@ -20,17 +20,12 @@ import { VariableRange, WrittenMemory } from '../common/memory-range';
 import { ReadMemoryResult, SessionContext, WriteMemoryResult } from '../common/messaging';
 import { AdapterRegistry } from './adapter-registry/adapter-registry';
 import * as manifest from './manifest';
-import { sendRequest } from '../common/debug-requests';
+import { isDebugEvent, isDebugRequest, isDebugResponse, sendRequest } from '../common/debug-requests';
 import { stringToBytesMemory } from '../common/memory';
 
 export interface LabeledUint8Array extends Uint8Array {
     label?: string;
 }
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const isInitializeMessage = (message: any): message is DebugProtocol.InitializeResponse => message.command === 'initialize' && message.type === 'response';
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const isStoppedEvent = (message: any): boolean => message.type === 'event' && message.event === 'stopped';
 
 export class MemoryProvider {
     public static ReadKey = `${manifest.PACKAGE_NAME}.canRead`;
@@ -46,7 +41,8 @@ export class MemoryProvider {
     private _onDidChangeSessionContext = new vscode.EventEmitter<SessionContext>();
     public readonly onDidChangeSessionContext = this._onDidChangeSessionContext.event;
 
-    protected readonly sessions = new Map<string, DebugProtocol.Capabilities | undefined>();
+    protected readonly sessionDebugCapabilities = new Map<string, DebugProtocol.Capabilities | undefined>();
+    protected readonly sessionClientCapabilities = new Map<string, DebugProtocol.InitializeRequestArguments | undefined>();
 
     constructor(protected adapterRegistry: AdapterRegistry) {
     }
@@ -70,21 +66,27 @@ export class MemoryProvider {
                     contributedTracker?.onWillStopSession?.();
                 },
                 onDidSendMessage: message => {
-                    if (isInitializeMessage(message)) {
+                    if (isDebugResponse('initialize', message)) {
                         // Check for right capabilities in the adapter
-                        this.sessions.set(session.id, message.body);
+                        this.sessionDebugCapabilities.set(session.id, message.body);
                         if (vscode.debug.activeDebugSession?.id === session.id) {
                             this.setContext(session);
                         }
-                    }
-                    if (isStoppedEvent(message)) {
+                    } else if (isDebugEvent('stopped', message)) {
                         this._onDidStopDebug.fire(session);
+                    } else if (isDebugEvent('memory', message)) {
+                        this._onDidWriteMemory.fire(message.body);
                     }
                     contributedTracker?.onDidSendMessage?.(message);
                 },
                 onError: error => { contributedTracker?.onError?.(error); },
                 onExit: (code, signal) => { contributedTracker?.onExit?.(code, signal); },
-                onWillReceiveMessage: message => { contributedTracker?.onWillReceiveMessage?.(message); }
+                onWillReceiveMessage: message => {
+                    if (isDebugRequest('initialize', message)) {
+                        this.sessionClientCapabilities.set(session.id, message.arguments);
+                    }
+                    contributedTracker?.onWillReceiveMessage?.(message);
+                }
             });
         };
 
@@ -99,11 +101,12 @@ export class MemoryProvider {
     }
 
     protected debugSessionTerminated(session: vscode.DebugSession): void {
-        this.sessions.delete(session.id);
+        this.sessionDebugCapabilities.delete(session.id);
+        this.sessionClientCapabilities.delete(session.id);
     }
 
     protected setContext(session?: vscode.DebugSession): void {
-        const capabilities = session && this.sessions.get(session.id);
+        const capabilities = session && this.sessionDebugCapabilities.get(session.id);
         this._sessionContext = {
             sessionId: session?.id,
             canRead: !!capabilities?.supportsReadMemoryRequest,
@@ -117,10 +120,18 @@ export class MemoryProvider {
     /** Returns the session if the capability is present, otherwise throws. */
     protected assertCapability(capability: keyof DebugProtocol.Capabilities, action: string): vscode.DebugSession {
         const session = this.assertActiveSession(action);
-        if (!this.sessions.get(session.id)?.[capability]) {
+        if (!this.hasDebugCapabilitiy(session, capability)) {
             throw new Error(`Cannot ${action}. Session does not have capability ${capability}.`);
         }
         return session;
+    }
+
+    protected hasDebugCapabilitiy(session: vscode.DebugSession, capability: keyof DebugProtocol.Capabilities): boolean {
+        return !!this.sessionDebugCapabilities.get(session.id)?.[capability];
+    }
+
+    protected hasClientCapabilitiy(session: vscode.DebugSession, capability: keyof DebugProtocol.InitializeRequestArguments): boolean {
+        return !!this.sessionClientCapabilities.get(session.id)?.[capability];
     }
 
     protected assertActiveSession(action: string): vscode.DebugSession {
@@ -135,11 +146,16 @@ export class MemoryProvider {
     }
 
     public async writeMemory(args: DebugProtocol.WriteMemoryArguments & { count?: number }): Promise<WriteMemoryResult> {
-        return sendRequest(this.assertCapability('supportsWriteMemoryRequest', 'write memory'), 'writeMemory', args).then(response => {
+        const session = this.assertCapability('supportsWriteMemoryRequest', 'write memory');
+        return sendRequest(session, 'writeMemory', args).then(response => {
             const offset = response?.offset ? (args.offset ?? 0) + response.offset : args.offset;
             // we accept count as an additional argument so we can skip the memory length calculation
             const count = response?.bytesWritten ?? args.count ?? stringToBytesMemory(args.data).length;
-            this._onDidWriteMemory.fire({ memoryReference: args.memoryReference, offset, count });
+            if (!this.hasClientCapabilitiy(session, 'supportsMemoryEvent')) {
+                // we only send out a custom event if we don't expect the client to handle the memory event
+                // since our client is VS Code we can assume that they will always support this but better to be safe
+                this._onDidWriteMemory.fire({ memoryReference: args.memoryReference, offset, count });
+            }
             return response;
         });
     }

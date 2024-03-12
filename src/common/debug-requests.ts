@@ -20,9 +20,21 @@ import type { DebugSession } from 'vscode';
 
 export interface DebugRequestTypes {
     'evaluate': [DebugProtocol.EvaluateArguments, DebugProtocol.EvaluateResponse['body']]
+    'initialize': [DebugProtocol.InitializeRequestArguments, DebugProtocol.InitializeResponse['body']]
     'readMemory': [DebugProtocol.ReadMemoryArguments, DebugProtocol.ReadMemoryResponse['body']]
+    'scopes': [DebugProtocol.ScopesArguments, DebugProtocol.ScopesResponse['body']]
+    'variables': [DebugProtocol.VariablesArguments, DebugProtocol.VariablesResponse['body']]
     'writeMemory': [DebugProtocol.WriteMemoryArguments, DebugProtocol.WriteMemoryResponse['body']]
 }
+
+export interface DebugEvents {
+    'memory': DebugProtocol.MemoryEvent,
+    'stopped': DebugProtocol.StoppedEvent
+}
+
+export type DebugRequest<COMMAND, ARGS> = Omit<DebugProtocol.Request, 'command' | 'arguments'> & { command: COMMAND, arguments: ARGS };
+export type DebugResponse<COMMAND, BODY> = Omit<DebugProtocol.Response, 'command' | 'body'> & { command: COMMAND, body: BODY };
+export type DebugEvent<T> = DebugProtocol.Event & { body: T };
 
 export async function sendRequest<K extends keyof DebugRequestTypes>(session: DebugSession,
     command: K, args: DebugRequestTypes[K][0]): Promise<DebugRequestTypes[K][1]> {
@@ -42,4 +54,19 @@ export function isDebugScope(scope: DebugProtocol.Scope | unknown): scope is Deb
 export function isDebugEvaluateArguments(args: DebugProtocol.EvaluateArguments | unknown): args is DebugProtocol.EvaluateArguments {
     const assumed = args ? args as DebugProtocol.EvaluateArguments : undefined;
     return typeof assumed?.expression === 'string';
+}
+
+export function isDebugRequest<K extends keyof DebugRequestTypes>(command: K, message: unknown): message is DebugRequest<K, DebugRequestTypes[K][0]> {
+    const assumed = message ? message as DebugProtocol.Request : undefined;
+    return !!assumed && assumed.type === 'request' && assumed.command === command;
+}
+
+export function isDebugResponse<K extends keyof DebugRequestTypes>(command: K, message: unknown): message is DebugResponse<K, DebugRequestTypes[K][1]> {
+    const assumed = message ? message as DebugProtocol.Response : undefined;
+    return !!assumed && assumed.type === 'response' && assumed.command === command;
+}
+
+export function isDebugEvent<K extends keyof DebugEvents>(event: K, message: unknown): message is DebugEvents[K] {
+    const assumed = message ? message as DebugProtocol.Event : undefined;
+    return !!assumed && assumed.type === 'event' && assumed.event === event;
 }

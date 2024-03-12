@@ -442,7 +442,7 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
         }
 
         /*
-         * Before opening a context menu for a table cell target we dynamically add the `value` property to the <vscode-data-context.
+         * Before opening a context menu for a table cell target we dynamically add the value property to the vscode-data-context.
          * Using this dynamic approach ensures the the cell value is also set correctly when the menu was opened on empty cell space.
          */
         const value = cell.textContent;

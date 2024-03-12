@@ -417,7 +417,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
 
     protected handleKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void = e => this.doHandleKeyDown(e);
     protected doHandleKeyDown(event: KeyboardEvent<HTMLInputElement>): void {
-        if (event.code === 'Enter') {
+        if (event.key === 'Enter') {
             const id = event.currentTarget.id as InputId;
             const value = event.currentTarget.value;
 

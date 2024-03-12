@@ -27,6 +27,7 @@ import * as manifest from './manifest';
 import { MemoryProvider } from './memory-provider';
 import { ApplyMemoryArguments, ApplyMemoryResult, MemoryOptions, StoreMemoryArguments } from '../common/messaging';
 import { isVariablesContext } from './external-views';
+import { isWebviewContext } from '../common/webview-context';
 
 export const StoreCommandType = `${manifest.PACKAGE_NAME}.store-file`;
 export const ApplyCommandType = `${manifest.PACKAGE_NAME}.apply-file`;
@@ -92,6 +93,9 @@ export class MemoryStorage {
         if (!args) {
             return {};
         }
+        if (isWebviewContext(args)) {
+            return { ...args.activeReadArguments };
+        }
         if (isVariablesContext(args)) {
             try {
                 const variableName = args.variable.evaluateName ?? args.variable.name;
@@ -108,7 +112,7 @@ export class MemoryStorage {
 
     protected async getStoreMemoryOptions(providedDefault?: Partial<StoreMemoryOptions>): Promise<StoreMemoryOptions | undefined> {
         const memoryReference = await vscode.window.showInputBox({
-            title: 'Store Memory as File (1/3)',
+            title: 'Store Memory to File (1/3)',
             prompt: 'Start Memory Address',
             placeHolder: 'Hex address or expression',
             value: providedDefault?.memoryReference ?? DEFAULT_STORE_OPTIONS.memoryReference,
@@ -118,7 +122,7 @@ export class MemoryStorage {
             return;
         }
         const offset = await vscode.window.showInputBox({
-            title: 'Store Memory as File (2/3)',
+            title: 'Store Memory to File (2/3)',
             prompt: 'Memory Address Offset',
             placeHolder: 'Positive or negative offset in bytes',
             value: providedDefault?.offset?.toString() ?? DEFAULT_STORE_OPTIONS.offset.toString(),
@@ -128,7 +132,7 @@ export class MemoryStorage {
             return;
         }
         const count = await vscode.window.showInputBox({
-            title: 'Store Memory as File (3/3)',
+            title: 'Store Memory to File (3/3)',
             prompt: 'Length',
             placeHolder: 'Number of bytes to read',
             value: providedDefault?.count?.toString() ?? DEFAULT_STORE_OPTIONS.count.toString(),
@@ -188,7 +192,11 @@ export class MemoryStorage {
             // if we are already given a URI, let's not bother the user and simply use it
             return { uri: providedDefault.uri };
         }
-        const selectedUris = await vscode.window.showOpenDialog({ title: 'Apply Memory', filters: IntelHEX.DialogFilters });
+        const selectedUris = await vscode.window.showOpenDialog({
+            title: 'Apply Memory',
+            filters: IntelHEX.DialogFilters,
+            defaultUri: vscode.workspace.workspaceFolders?.[0]?.uri
+        });
         if (selectedUris && selectedUris?.length > 0) {
             return { uri: selectedUris[0] };
         }

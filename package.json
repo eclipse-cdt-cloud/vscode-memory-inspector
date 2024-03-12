@@ -112,7 +112,7 @@
       },
       {
         "command": "memory-inspector.store-file",
-        "title": "Store Memory as File",
+        "title": "Store Memory to File",
         "enablement": "memory-inspector.canRead",
         "category": "Memory"
       },
@@ -189,6 +189,16 @@
         {
           "command": "memory-inspector.show-advanced-display-options",
           "group": "display@4",
+          "when": "webviewId === memory-inspector.memory"
+        },
+        {
+          "command": "memory-inspector.store-file",
+          "group": "display@5",
+          "when": "webviewId === memory-inspector.memory"
+        },
+        {
+          "command": "memory-inspector.apply-file",
+          "group": "display@6",
           "when": "webviewId === memory-inspector.memory"
         }
       ]

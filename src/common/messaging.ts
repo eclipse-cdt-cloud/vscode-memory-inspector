@@ -21,6 +21,7 @@ import type { VariableRange, WrittenMemory } from './memory-range';
 import { DebugRequestTypes } from './debug-requests';
 import { URI } from 'vscode-uri';
 import { VariablesView } from '../plugin/external-views';
+import { WebviewContext } from './webview-context';
 
 // convenience types for easier readability and better semantics
 export type MemoryOptions = Partial<DebugProtocol.ReadMemoryArguments>;
@@ -31,7 +32,7 @@ export type ReadMemoryResult = DebugRequestTypes['readMemory'][1];
 export type WriteMemoryArguments = DebugRequestTypes['writeMemory'][0] & { count?: number };
 export type WriteMemoryResult = DebugRequestTypes['writeMemory'][1];
 
-export type StoreMemoryArguments = MemoryOptions & { proposedOutputName?: string } | VariablesView.IVariablesContext;
+export type StoreMemoryArguments = MemoryOptions & { proposedOutputName?: string } | VariablesView.IVariablesContext | WebviewContext;
 export type StoreMemoryResult = void;
 
 export type ApplyMemoryArguments = URI | undefined;

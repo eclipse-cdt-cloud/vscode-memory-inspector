@@ -18,6 +18,7 @@ import * as vscode from 'vscode';
 import { DebugProtocol } from '@vscode/debugprotocol';
 import { VariableRange } from '../../common/memory-range';
 import { Logger } from '../logger';
+import { isDebugRequest, isDebugResponse } from '../../common/debug-requests';
 
 /** Represents capabilities that may be achieved with particular debug adapters but are not part of the DAP */
 export interface AdapterCapabilities {
@@ -46,9 +47,9 @@ export class AdapterVariableTracker implements vscode.DebugAdapterTracker {
     constructor(protected readonly onEnd: vscode.Disposable, protected logger: Logger) { }
 
     onWillReceiveMessage(message: unknown): void {
-        if (isScopesRequest(message)) {
+        if (isDebugRequest('scopes', message)) {
             this.currentFrame = message.arguments.frameId;
-        } else if (isVariableRequest(message)) {
+        } else if (isDebugRequest('variables', message)) {
             if (message.arguments.variablesReference in this.variablesTree) {
                 this.pendingMessages.set(message.seq, message.arguments.variablesReference);
             }
@@ -57,7 +58,7 @@ export class AdapterVariableTracker implements vscode.DebugAdapterTracker {
 
     /** Produces a two-level tree of scopes and their immediate children. Does not handle expansion of complex variables. */
     onDidSendMessage(message: unknown): void {
-        if (isScopesResponse(message)) {
+        if (isDebugResponse('scopes', message)) {
             this.variablesTree = {}; // Scopes request implies that all scopes will be queried again.
             for (const scope of message.body.scopes) {
                 if (this.isDesiredScope(scope)) {
@@ -66,7 +67,7 @@ export class AdapterVariableTracker implements vscode.DebugAdapterTracker {
                     }
                 }
             }
-        } else if (isVariableResponse(message)) {
+        } else if (isDebugResponse('variables', message)) {
             if (this.pendingMessages.has(message.request_seq)) {
                 const parentReference = this.pendingMessages.get(message.request_seq)!;
                 this.pendingMessages.delete(message.request_seq);
@@ -148,24 +149,4 @@ export class VariableTracker implements AdapterCapabilities {
     async getSizeOfVariable(session: vscode.DebugSession, variableName: string): Promise<bigint | undefined> {
         return this.sessions.get(session.id)?.getSizeOfVariable?.(variableName, session);
     }
-}
-
-export function isScopesRequest(message: unknown): message is DebugProtocol.ScopesRequest {
-    const candidate = message as DebugProtocol.ScopesRequest;
-    return !!candidate && candidate.command === 'scopes';
-}
-
-export function isVariableRequest(message: unknown): message is DebugProtocol.VariablesRequest {
-    const candidate = message as DebugProtocol.VariablesRequest;
-    return !!candidate && candidate.command === 'variables';
-}
-
-export function isScopesResponse(message: unknown): message is DebugProtocol.ScopesResponse {
-    const candidate = message as DebugProtocol.ScopesResponse;
-    return !!candidate && candidate.command === 'scopes' && Array.isArray(candidate.body.scopes);
-}
-
-export function isVariableResponse(message: unknown): message is DebugProtocol.VariablesResponse {
-    const candidate = message as DebugProtocol.VariablesResponse;
-    return !!candidate && candidate.command === 'variables' && Array.isArray(candidate.body.variables);
 }

@@ -53,6 +53,7 @@ import { hoverService, HoverService } from './hovers/hover-service';
 import { AddressHover } from './hovers/address-hover';
 import { DataHover } from './hovers/data-hover';
 import { VariableHover } from './hovers/variable-hover';
+import { debounce } from 'lodash';
 
 export interface MemoryAppState extends MemoryState, MemoryDisplayConfiguration {
     messageParticipant: WebviewIdMessageParticipant;
@@ -149,13 +150,14 @@ class App extends React.Component<{}, MemoryAppState> {
         hoverService.setMemoryState(this.state);
     }
 
-    protected memoryWritten(writtenMemory: WrittenMemory): void {
+    // use a slight debounce as the same event may come in short succession
+    protected memoryWritten = debounce((writtenMemory: WrittenMemory): void => {
         if (!this.state.memory) {
             return;
         }
         if (this.state.activeReadArguments.memoryReference === writtenMemory.memoryReference) {
             // catch simple case
-            this.updateMemoryState();
+            this.fetchMemory();
             return;
         }
         try {
@@ -171,7 +173,8 @@ class App extends React.Component<{}, MemoryAppState> {
                 endAddress: this.state.memory.address + BigInt(this.state.memory.bytes.length)
             };
             if (doOverlap(written, shown)) {
-                this.updateMemoryState();
+                this.fetchMemory();
+                return;
             }
         } catch (error) {
             // ignore and fall through
@@ -179,8 +182,8 @@ class App extends React.Component<{}, MemoryAppState> {
 
         // we could try to convert any expression we may have to an address by sending an evaluation request to the DA
         // but for now we just go with a pessimistic approach: if we are unsure, we refresh the memory
-        this.updateMemoryState();
-    }
+        this.fetchMemory();
+    }, 100);
 
     protected sessionContextChanged(sessionContext: SessionContext): void {
         this.setState({ sessionContext });

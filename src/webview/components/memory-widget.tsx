@@ -71,6 +71,7 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
             showRadixPrefix: this.props.showRadixPrefix,
             showAsciiColumn: visibleColumns.includes('ascii'),
             showVariablesColumn: visibleColumns.includes('variables'),
+            activeReadArguments: this.props.activeReadArguments
         });
 
     }
