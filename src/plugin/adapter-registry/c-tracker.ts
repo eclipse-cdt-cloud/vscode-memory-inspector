@@ -45,6 +45,7 @@ export class CTracker extends AdapterVariableTracker {
                 startAddress: toHexStringWithRadixMarker(startAddress),
                 endAddress: endAddress === undefined ? undefined : toHexStringWithRadixMarker(endAddress),
                 value: variable.value,
+                type: variable.type,
             };
         } catch (err) {
             this.logger.warn('Unable to resolve location and size of', variable.name + (err instanceof Error ? ':\n\t' + err.message : ''));

@@ -97,3 +97,59 @@
   margin-top: 32px !important; /* avoid overlap with top 'Load more' widget */
   width: 2px;
 }
+
+.hoverable:hover {
+  border-bottom: 1px dotted var(--vscode-editorHoverWidget-border);
+}
+
+/* Basic hover formatting (copied from Monaco hovers) */
+.memory-hover {
+  min-width: fit-content;
+  max-width: var(--vscode-hover-maxWidth,500px);
+  border: 1px solid var(--vscode-editorHoverWidget-border);
+  border-radius: 3px;
+
+  color: var(--vscode-editorHoverWidget-foreground);
+  background-color: var(--vscode-editorHoverWidget-background);
+
+  font-family: var(--vscode-editor-font-family);
+  font-size: var(--vscode-font-size);
+}
+
+/* Table formatting for hovers */
+.memory-hover table {
+  border-collapse: collapse;
+  border-style: hidden;
+}
+.memory-hover table caption {
+  padding: 4px;
+  border-bottom: 1px solid var(--vscode-editorHoverWidget-border);
+}
+.memory-hover td {
+  border: 1px solid var(--vscode-editorHoverWidget-border);
+  padding: 2px 8px;
+}
+.memory-hover td:first-child {
+  text-align: right;
+}
+
+/* Colors for the hover fields */
+.memory-hover .label-value-pair>.label {
+  color: var(--vscode-debugTokenExpression-string);
+}
+.memory-hover .label-value-pair>.value {
+  color: var(--vscode-debugTokenExpression-number);
+}
+
+/* Colors for specific hover fields */
+.memory-hover .address-hover .primary {
+  background-color: var(--vscode-list-hoverBackground);
+}
+.memory-hover table caption {
+  color: var(--vscode-symbolIcon-variableForeground);
+}
+.memory-hover .address-hover .value.utf8,
+.memory-hover .data-hover .value.utf8,
+.memory-hover .variable-hover .value.type {
+  color: var(--vscode-debugTokenExpression-name);
+}
