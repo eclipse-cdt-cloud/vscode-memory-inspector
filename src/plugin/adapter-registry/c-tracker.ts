@@ -16,7 +16,7 @@
 
 import * as vscode from 'vscode';
 import { DebugProtocol } from '@vscode/debugprotocol';
-import { AdapterVariableTracker, hexAddress, notADigit } from './adapter-capabilities';
+import { AdapterVariableTracker, findHexAddress, notADigit } from './adapter-capabilities';
 import { toHexStringWithRadixMarker, VariableRange } from '../../common/memory-range';
 import { sendRequest } from '../../common/debug-requests';
 
@@ -43,7 +43,7 @@ export class CTracker extends AdapterVariableTracker {
         }
         try {
             const [variableAddress, variableSize] = await Promise.all([
-                variable.memoryReference && hexAddress.test(variable.memoryReference) ? variable.memoryReference : this.getAddressOfVariable(variable.name, session),
+                findHexAddress(variable.memoryReference) ?? this.getAddressOfVariable(variable.name, session),
                 this.getSizeOfVariable(variable.name, session)
             ]);
             if (!variableAddress) { return undefined; }
@@ -66,8 +66,7 @@ export class CTracker extends AdapterVariableTracker {
 
     async getAddressOfVariable(variableName: string, session: vscode.DebugSession): Promise<string | undefined> {
         const response = await sendRequest(session, 'evaluate', { expression: CEvaluateExpression.addressOf(variableName), context: 'watch', frameId: this.currentFrame });
-        const addressPart = hexAddress.exec(response.result);
-        return addressPart ? addressPart[0] : undefined;
+        return findHexAddress(response.result);
     }
 
     async getSizeOfVariable(variableName: string, session: vscode.DebugSession): Promise<bigint | undefined> {

@@ -38,6 +38,10 @@ export type VariablesTree = Record<number, WithChildren<DebugProtocol.Scope | De
 export const hexAddress = /0x[0-9a-f]+/i;
 export const notADigit = /[^0-9]/;
 
+export function findHexAddress(text?: string): string | undefined {
+    return text ? hexAddress.exec(text)?.[0] : undefined;
+}
+
 /** This class implements some of the basic elements of tracking adapter sessions in order to maintain a list of variables. */
 export class AdapterVariableTracker implements vscode.DebugAdapterTracker {
     protected currentFrame?: number;
