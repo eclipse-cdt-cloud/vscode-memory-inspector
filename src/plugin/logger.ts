@@ -16,6 +16,7 @@
 
 import * as vscode from 'vscode';
 import * as manifest from './manifest';
+import { stringifyWithBigInts } from '../common/typescript';
 
 export enum Verbosity {
     off = 0,
@@ -50,7 +51,7 @@ export abstract class Logger {
             return;
         }
 
-        const result = messages.map(message => typeof message === 'string' ? message : JSON.stringify(message, undefined, '\t')).join(' ');
+        const result = messages.map(message => typeof message === 'string' ? message : stringifyWithBigInts(message, '\t')).join(' ');
 
         this.logMessage(result);
     }

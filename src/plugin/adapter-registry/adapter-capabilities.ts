@@ -36,10 +36,20 @@ export interface AdapterCapabilities {
 export type WithChildren<Original> = Original & { children?: Array<WithChildren<DebugProtocol.Variable>> };
 export type VariablesTree = Record<number, WithChildren<DebugProtocol.Scope | DebugProtocol.Variable>>;
 export const hexAddress = /0x[0-9a-f]+/i;
+export const decimalAddress = /[0-9]+/i;
 export const notADigit = /[^0-9]/;
 
-export function findHexAddress(text?: string): string | undefined {
+export function extractHexAddress(text?: string): string | undefined {
     return text ? hexAddress.exec(text)?.[0] : undefined;
+}
+
+export function extractDecimalAddress(text?: string): string | undefined {
+    return text ? decimalAddress.exec(text)?.[0] : undefined;
+}
+
+export function extractAddress(text?: string): string | undefined {
+    // search for hex address first as a hex adress (0x12345678) also matches an integer address (12345678)
+    return text ? extractHexAddress(text) ?? extractDecimalAddress(text) : undefined;
 }
 
 /** This class implements some of the basic elements of tracking adapter sessions in order to maintain a list of variables. */

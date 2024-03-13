@@ -16,7 +16,7 @@
 
 import * as vscode from 'vscode';
 import { DebugProtocol } from '@vscode/debugprotocol';
-import { AdapterVariableTracker, findHexAddress, notADigit } from './adapter-capabilities';
+import { AdapterVariableTracker, extractAddress, notADigit } from './adapter-capabilities';
 import { toHexStringWithRadixMarker, VariableRange } from '../../common/memory-range';
 import { sendRequest } from '../../common/debug-requests';
 
@@ -41,32 +41,35 @@ export class CTracker extends AdapterVariableTracker {
                 { noName: !variable.name, noFrame: this.currentFrame === undefined });
             return undefined;
         }
+        let variableAddress = extractAddress(variable.memoryReference);
+        let variableSize: bigint | undefined = undefined;
         try {
-            const [variableAddress, variableSize] = await Promise.all([
-                findHexAddress(variable.memoryReference) ?? this.getAddressOfVariable(variable.name, session),
+            [variableAddress, variableSize] = await Promise.all([
+                variableAddress ?? this.getAddressOfVariable(variable.name, session),
                 this.getSizeOfVariable(variable.name, session)
             ]);
-            if (!variableAddress) { return undefined; }
-
-            const startAddress = BigInt(variableAddress);
-            const endAddress = variableSize !== undefined ? startAddress + variableSize : undefined;
-            this.logger.debug('Resolved', variable.name, { start: variableAddress, size: variableSize });
-            return {
-                name: variable.name,
-                startAddress: toHexStringWithRadixMarker(startAddress),
-                endAddress: endAddress === undefined ? undefined : toHexStringWithRadixMarker(endAddress),
-                value: variable.value,
-                type: variable.type,
-            };
         } catch (err) {
             this.logger.warn('Unable to resolve location and size of', variable.name + (err instanceof Error ? ':\n\t' + err.message : ''));
+            // fall through as we may still have a valid variable address that we can use
+        }
+        if (!variableAddress) {
             return undefined;
         }
+        this.logger.debug('Resolved', variable.name, { start: variableAddress, size: variableSize });
+        const address = BigInt(variableAddress);
+        const variableRange: VariableRange = {
+            name: variable.name,
+            startAddress: toHexStringWithRadixMarker(address),
+            endAddress: variableSize === undefined ? undefined : toHexStringWithRadixMarker(address + variableSize),
+            value: variable.value,
+            type: variable.type,
+        };
+        return variableRange;
     }
 
     async getAddressOfVariable(variableName: string, session: vscode.DebugSession): Promise<string | undefined> {
         const response = await sendRequest(session, 'evaluate', { expression: CEvaluateExpression.addressOf(variableName), context: 'watch', frameId: this.currentFrame });
-        return findHexAddress(response.result);
+        return extractAddress(response.result);
     }
 
     async getSizeOfVariable(variableName: string, session: vscode.DebugSession): Promise<bigint | undefined> {

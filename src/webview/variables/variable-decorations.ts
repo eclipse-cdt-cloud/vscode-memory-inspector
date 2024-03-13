@@ -25,6 +25,7 @@ import { ReactNode } from 'react';
 import { areVariablesEqual, compareBigInt, BigIntMemoryRange, BigIntVariableRange, doOverlap } from '../../common/memory-range';
 import * as React from 'react';
 import { createVariableVscodeContext } from '../utils/vscode-contexts';
+import { stringifyWithBigInts } from '../../common/typescript';
 
 const NON_HC_COLORS = [
     'var(--vscode-terminal-ansiBlue)',
@@ -135,11 +136,6 @@ export class VariableDecorator implements ColumnContribution, Decorator {
     dispose(): void {
         this.onDidChangeEmitter.dispose();
     }
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function stringifyWithBigInts(object: any): any {
-    return JSON.stringify(object, (_key, value) => typeof value === 'bigint' ? value.toString() : value);
 }
 
 export const variableDecorator = new VariableDecorator();
