@@ -29,7 +29,7 @@ export type MemoryOptions = Partial<DebugProtocol.ReadMemoryArguments>;
 export type ReadMemoryArguments = DebugRequestTypes['readMemory'][0];
 export type ReadMemoryResult = DebugRequestTypes['readMemory'][1];
 
-export type WriteMemoryArguments = DebugRequestTypes['writeMemory'][0] & { count?: number };
+export type WriteMemoryArguments = DebugRequestTypes['writeMemory'][0];
 export type WriteMemoryResult = DebugRequestTypes['writeMemory'][1];
 
 export type StoreMemoryArguments = MemoryOptions & { proposedOutputName?: string } | VariablesView.IVariablesContext | WebviewContext;

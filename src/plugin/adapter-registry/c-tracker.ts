@@ -42,13 +42,14 @@ export class CTracker extends AdapterVariableTracker {
             return undefined;
         }
         try {
-            const variableAddress = await this.getAddressOfVariable(variable.name, session);
+            const [variableAddress, variableSize] = await Promise.all([
+                variable.memoryReference && hexAddress.test(variable.memoryReference) ? variable.memoryReference : this.getAddressOfVariable(variable.name, session),
+                this.getSizeOfVariable(variable.name, session)
+            ]);
             if (!variableAddress) { return undefined; }
-            const variableSize = await this.getSizeOfVariable(variable.name, session);
-            if (!variableSize) { return undefined; }
 
             const startAddress = BigInt(variableAddress);
-            const endAddress = BigInt(variableAddress) + variableSize;
+            const endAddress = variableSize !== undefined ? startAddress + variableSize : undefined;
             this.logger.debug('Resolved', variable.name, { start: variableAddress, size: variableSize });
             return {
                 name: variable.name,

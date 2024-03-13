@@ -37,7 +37,6 @@ export class MemoryProvider {
     private _onDidWriteMemory = new vscode.EventEmitter<WrittenMemory>();
     public readonly onDidWriteMemory = this._onDidWriteMemory.event;
 
-    private _sessionContext: SessionContext = { canRead: false, canWrite: false };
     private _onDidChangeSessionContext = new vscode.EventEmitter<SessionContext>();
     public readonly onDidChangeSessionContext = this._onDidChangeSessionContext.event;
 
@@ -45,10 +44,6 @@ export class MemoryProvider {
     protected readonly sessionClientCapabilities = new Map<string, DebugProtocol.InitializeRequestArguments | undefined>();
 
     constructor(protected adapterRegistry: AdapterRegistry) {
-    }
-
-    get sessionContext(): SessionContext {
-        return this._sessionContext;
     }
 
     public activate(context: vscode.ExtensionContext): void {
@@ -105,16 +100,21 @@ export class MemoryProvider {
         this.sessionClientCapabilities.delete(session.id);
     }
 
-    protected setContext(session?: vscode.DebugSession): void {
-        const capabilities = session && this.sessionDebugCapabilities.get(session.id);
-        this._sessionContext = {
-            sessionId: session?.id,
+    createContext(session = vscode.debug.activeDebugSession): SessionContext {
+        const sessionId = session?.id;
+        const capabilities = sessionId ? this.sessionDebugCapabilities.get(sessionId) : undefined;
+        return {
+            sessionId,
             canRead: !!capabilities?.supportsReadMemoryRequest,
             canWrite: !!capabilities?.supportsWriteMemoryRequest
         };
-        vscode.commands.executeCommand('setContext', MemoryProvider.ReadKey, this.sessionContext.canRead);
-        vscode.commands.executeCommand('setContext', MemoryProvider.WriteKey, this.sessionContext.canWrite);
-        this._onDidChangeSessionContext.fire(this.sessionContext);
+    }
+
+    protected setContext(session?: vscode.DebugSession): void {
+        const newContext = this.createContext(session);
+        vscode.commands.executeCommand('setContext', MemoryProvider.ReadKey, newContext.canRead);
+        vscode.commands.executeCommand('setContext', MemoryProvider.WriteKey, newContext.canWrite);
+        this._onDidChangeSessionContext.fire(newContext);
     }
 
     /** Returns the session if the capability is present, otherwise throws. */
@@ -145,15 +145,14 @@ export class MemoryProvider {
         return sendRequest(this.assertCapability('supportsReadMemoryRequest', 'read memory'), 'readMemory', args);
     }
 
-    public async writeMemory(args: DebugProtocol.WriteMemoryArguments & { count?: number }): Promise<WriteMemoryResult> {
+    public async writeMemory(args: DebugProtocol.WriteMemoryArguments): Promise<WriteMemoryResult> {
         const session = this.assertCapability('supportsWriteMemoryRequest', 'write memory');
         return sendRequest(session, 'writeMemory', args).then(response => {
-            const offset = response?.offset ? (args.offset ?? 0) + response.offset : args.offset;
-            // we accept count as an additional argument so we can skip the memory length calculation
-            const count = response?.bytesWritten ?? args.count ?? stringToBytesMemory(args.data).length;
             if (!this.hasClientCapabilitiy(session, 'supportsMemoryEvent')) {
                 // we only send out a custom event if we don't expect the client to handle the memory event
                 // since our client is VS Code we can assume that they will always support this but better to be safe
+                const offset = response?.offset ? (args.offset ?? 0) + response.offset : args.offset;
+                const count = response?.bytesWritten ?? stringToBytesMemory(args.data).length;
                 this._onDidWriteMemory.fire({ memoryReference: args.memoryReference, offset, count });
             }
             return response;

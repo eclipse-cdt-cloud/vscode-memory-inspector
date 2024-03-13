@@ -1,5 +1,5 @@
 /********************************************************************************
- * Copyright (C) 2018 Red Hat, Inc. and others.
+ * Copyright (C) 2024 EclipseSource.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -32,8 +32,8 @@ export interface DebugEvents {
     'stopped': DebugProtocol.StoppedEvent
 }
 
-export type DebugRequest<COMMAND, ARGS> = Omit<DebugProtocol.Request, 'command' | 'arguments'> & { command: COMMAND, arguments: ARGS };
-export type DebugResponse<COMMAND, BODY> = Omit<DebugProtocol.Response, 'command' | 'body'> & { command: COMMAND, body: BODY };
+export type DebugRequest<C, A> = Omit<DebugProtocol.Request, 'command' | 'arguments'> & { command: C, arguments: A };
+export type DebugResponse<C, B> = Omit<DebugProtocol.Response, 'command' | 'body'> & { command: C, body: B };
 export type DebugEvent<T> = DebugProtocol.Event & { body: T };
 
 export async function sendRequest<K extends keyof DebugRequestTypes>(session: DebugSession,

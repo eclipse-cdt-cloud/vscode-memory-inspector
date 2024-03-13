@@ -169,7 +169,7 @@ export class MemoryStorage {
                 memoryReference = toHexStringWithRadixMarker(address);
                 count = memory.length;
                 const data = bytesToStringMemory(memory);
-                await this.memoryProvider.writeMemory({ memoryReference, data, count });
+                await this.memoryProvider.writeMemory({ memoryReference, data });
             }
             await vscode.window.showInformationMessage(`Memory from '${vscode.workspace.asRelativePath(options.uri)}' applied.`);
             return { memoryReference, count, offset: 0 };

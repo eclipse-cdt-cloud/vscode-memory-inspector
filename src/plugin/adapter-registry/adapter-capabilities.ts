@@ -112,7 +112,7 @@ export class AdapterVariableTracker implements vscode.DebugAdapterTracker {
         throw new Error('To be implemented by derived classes!');
     }
 
-    /** Resolves the address of a given variable in bytes withthe current context. */
+    /** Resolves the address of a given variable in bytes within the current context. */
     getAddressOfVariable?(variableName: string, session: vscode.DebugSession): Promise<string | undefined>;
 
     /** Resolves the size of a given variable in bytes within the current context. */
