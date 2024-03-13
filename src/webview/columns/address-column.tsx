@@ -17,7 +17,7 @@
 import React, { ReactNode } from 'react';
 import { BigIntMemoryRange, getAddressString, getRadixMarker } from '../../common/memory-range';
 import { ColumnContribution, ColumnFittingType, TableRenderOptions } from './column-contribution-service';
-import { Memory } from '../utils/view-types';
+import { Memory } from '../../common/memory';
 
 export class AddressColumn implements ColumnContribution {
     static ID = 'address';

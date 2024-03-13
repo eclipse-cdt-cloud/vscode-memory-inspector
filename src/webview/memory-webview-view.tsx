@@ -14,49 +14,62 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
+import 'primeflex/primeflex.css';
+import { PrimeReactProvider } from 'primereact/api';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { HOST_EXTENSION, WebviewIdMessageParticipant } from 'vscode-messenger-common';
+import { Memory, createMemoryFromRead } from '../common/memory';
+import { BigIntMemoryRange, Endianness, WrittenMemory, doOverlap, getAddressLength, getAddressString } from '../common/memory-range';
 import {
-    readyType,
-    logMessageType,
-    setOptionsType,
-    readMemoryType,
-    setTitleType,
-    setMemoryViewSettingsType,
-    resetMemoryViewSettingsType,
-    showAdvancedOptionsType,
-    getWebviewSelectionType,
+    MemoryOptions,
+    ReadMemoryArguments,
     WebviewSelection,
+    applyMemoryType,
+    getWebviewSelectionType,
+    logMessageType,
+    memoryWrittenType,
+    readMemoryType,
+    readyType,
+    resetMemoryViewSettingsType,
+    setMemoryViewSettingsType,
+    setOptionsType,
+    setTitleType,
+    showAdvancedOptionsType,
+    storeMemoryType,
+    sessionContextChangedType,
+    SessionContext,
 } from '../common/messaging';
-import type { DebugProtocol } from '@vscode/debugprotocol';
-import { Decoration, Memory, MemoryDisplayConfiguration, MemoryState } from './utils/view-types';
-import { MemoryWidget } from './components/memory-widget';
-import { messenger } from './view-messenger';
-import { ColumnStatus, columnContributionService } from './columns/column-contribution-service';
-import { decorationService } from './decorations/decoration-service';
-import { variableDecorator } from './variables/variable-decorations';
-import { AsciiColumn } from './columns/ascii-column';
 import { AddressColumn } from './columns/address-column';
+import { AsciiColumn } from './columns/ascii-column';
+import { ColumnStatus, columnContributionService } from './columns/column-contribution-service';
 import { DataColumn } from './columns/data-column';
-import { PrimeReactProvider } from 'primereact/api';
-import 'primeflex/primeflex.css';
-import { getAddressLength, getAddressString } from '../common/memory-range';
-import { Endianness } from '../common/memory-range';
+import { MemoryWidget } from './components/memory-widget';
+import { decorationService } from './decorations/decoration-service';
+import { Decoration, MemoryDisplayConfiguration, MemoryState } from './utils/view-types';
+import { variableDecorator } from './variables/variable-decorations';
+import { messenger } from './view-messenger';
 import { hoverService, HoverService } from './hovers/hover-service';
 import { AddressHover } from './hovers/address-hover';
 import { DataHover } from './hovers/data-hover';
 import { VariableHover } from './hovers/variable-hover';
+import { debounce } from 'lodash';
 
 export interface MemoryAppState extends MemoryState, MemoryDisplayConfiguration {
     messageParticipant: WebviewIdMessageParticipant;
     title: string;
+    sessionContext: SessionContext;
     effectiveAddressLength: number;
     decorations: Decoration[];
     hoverService: HoverService;
     columns: ColumnStatus[];
     isFrozen: boolean;
 }
+
+const DEFAULT_SESSION_CONTEXT: SessionContext = {
+    canRead: false,
+    canWrite: false
+};
 
 const MEMORY_DISPLAY_CONFIGURATION_DEFAULTS: MemoryDisplayConfiguration = {
     bytesPerWord: 1,
@@ -68,7 +81,8 @@ const MEMORY_DISPLAY_CONFIGURATION_DEFAULTS: MemoryDisplayConfiguration = {
     addressRadix: 16,
     showRadixPrefix: true,
 };
-const DEFAULT_READ_ARGUMENTS: Required<DebugProtocol.ReadMemoryArguments> = {
+
+const DEFAULT_READ_ARGUMENTS: Required<ReadMemoryArguments> = {
     memoryReference: '',
     offset: 0,
     count: 256,
@@ -90,6 +104,7 @@ class App extends React.Component<{}, MemoryAppState> {
         this.state = {
             messageParticipant: { type: 'webview', webviewId: '' },
             title: 'Memory',
+            sessionContext: DEFAULT_SESSION_CONTEXT,
             memory: undefined,
             effectiveAddressLength: 0,
             configuredReadArguments: DEFAULT_READ_ARGUMENTS,
@@ -105,6 +120,8 @@ class App extends React.Component<{}, MemoryAppState> {
 
     public componentDidMount(): void {
         messenger.onRequest(setOptionsType, options => this.setOptions(options));
+        messenger.onNotification(memoryWrittenType, writtenMemory => this.memoryWritten(writtenMemory));
+        messenger.onNotification(sessionContextChangedType, sessionContext => this.sessionContextChanged(sessionContext));
         messenger.onNotification(setMemoryViewSettingsType, config => {
             if (config.visibleColumns) {
                 for (const column of columnContributionService.getColumns()) {
@@ -133,11 +150,51 @@ class App extends React.Component<{}, MemoryAppState> {
         hoverService.setMemoryState(this.state);
     }
 
+    // use a slight debounce as the same event may come in short succession
+    protected memoryWritten = debounce((writtenMemory: WrittenMemory): void => {
+        if (!this.state.memory) {
+            return;
+        }
+        if (this.state.activeReadArguments.memoryReference === writtenMemory.memoryReference) {
+            // catch simple case
+            this.fetchMemory();
+            return;
+        }
+        try {
+            // If we are dealing with numeric addresses (and not expressions) then we can determine the overlap.
+            // Note that we use big int arithmetic here to determine the overlap for (start address + length) vs (memory state address + length), i.e.,
+            // we do not actually determine the end address may need to consider the size of a word in bytes
+            const written: BigIntMemoryRange = {
+                startAddress: BigInt(writtenMemory.memoryReference),
+                endAddress: BigInt(writtenMemory.memoryReference) + BigInt(writtenMemory.count ?? 0)
+            };
+            const shown: BigIntMemoryRange = {
+                startAddress: this.state.memory.address,
+                endAddress: this.state.memory.address + BigInt(this.state.memory.bytes.length)
+            };
+            if (doOverlap(written, shown)) {
+                this.fetchMemory();
+                return;
+            }
+        } catch (error) {
+            // ignore and fall through
+        }
+
+        // we could try to convert any expression we may have to an address by sending an evaluation request to the DA
+        // but for now we just go with a pessimistic approach: if we are unsure, we refresh the memory
+        this.fetchMemory();
+    }, 100);
+
+    protected sessionContextChanged(sessionContext: SessionContext): void {
+        this.setState({ sessionContext });
+    }
+
     public render(): React.ReactNode {
         return <PrimeReactProvider>
             <MemoryWidget
                 ref={this.memoryWidget}
                 messageParticipant={this.state.messageParticipant}
+                sessionContext={this.state.sessionContext}
                 configuredReadArguments={this.state.configuredReadArguments}
                 activeReadArguments={this.state.activeReadArguments}
                 memory={this.state.memory}
@@ -163,11 +220,13 @@ class App extends React.Component<{}, MemoryAppState> {
                 addressPadding={this.state.addressPadding}
                 addressRadix={this.state.addressRadix}
                 showRadixPrefix={this.state.showRadixPrefix}
+                storeMemory={this.storeMemory}
+                applyMemory={this.applyMemory}
             />
         </PrimeReactProvider>;
     }
 
-    protected updateMemoryState = (newState: Partial<MemoryState>) => this.setState(prevState => ({ ...prevState, ...newState }));
+    protected updateMemoryState = (newState?: Partial<MemoryState>) => this.setState(prevState => ({ ...prevState, ...newState }));
     protected updateMemoryDisplayConfiguration = (newState: Partial<MemoryDisplayConfiguration>) => this.setState(prevState => ({ ...prevState, ...newState }));
     protected resetMemoryDisplayConfiguration = () => messenger.sendNotification(resetMemoryViewSettingsType, HOST_EXTENSION, undefined);
     protected updateTitle = (title: string) => {
@@ -175,7 +234,7 @@ class App extends React.Component<{}, MemoryAppState> {
         messenger.sendNotification(setTitleType, HOST_EXTENSION, title);
     };
 
-    protected async setOptions(options?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void> {
+    protected async setOptions(options?: MemoryOptions): Promise<void> {
         messenger.sendRequest(logMessageType, HOST_EXTENSION, `Setting options: ${JSON.stringify(options)}`);
         if (this.state.configuredReadArguments.memoryReference === '') {
             // Only update if we have no user configured read arguments
@@ -185,8 +244,8 @@ class App extends React.Component<{}, MemoryAppState> {
         return this.fetchMemory(options);
     }
 
-    protected fetchMemory = async (partialOptions?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void> => this.doFetchMemory(partialOptions);
-    protected async doFetchMemory(partialOptions?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void> {
+    protected fetchMemory = async (partialOptions?: MemoryOptions): Promise<void> => this.doFetchMemory(partialOptions);
+    protected async doFetchMemory(partialOptions?: MemoryOptions): Promise<void> {
         if (this.state.isFrozen) {
             return;
         }
@@ -204,7 +263,8 @@ class App extends React.Component<{}, MemoryAppState> {
                 executor => executor.fetchData(completeOptions)
             ));
 
-            const memory = this.convertMemory(completeOptions, response);
+            const memory = createMemoryFromRead(response);
+
             this.setState(prev => ({
                 ...prev,
                 decorations: decorationService.decorations,
@@ -229,17 +289,6 @@ class App extends React.Component<{}, MemoryAppState> {
             this.setState(prev => ({ ...prev, isMemoryFetching: false }));
         }
 
-    }
-
-    protected convertMemory(request: Required<DebugProtocol.ReadMemoryArguments>, result: DebugProtocol.ReadMemoryResponse['body']): Memory {
-        if (!result?.data) {
-            const message = `No memory provided for address ${request.memoryReference}`
-                + `, offset ${request.offset} and count ${request.count}!`;
-            throw new Error(message);
-        }
-        const address = BigInt(result.address);
-        const bytes = Uint8Array.from(Buffer.from(result.data, 'base64'));
-        return { bytes, address };
     }
 
     protected getEffectiveAddressLength(memory?: Memory): number {
@@ -275,6 +324,14 @@ class App extends React.Component<{}, MemoryAppState> {
     protected getWebviewSelection(): WebviewSelection {
         return this.memoryWidget.current?.getWebviewSelection() ?? {};
     }
+
+    protected storeMemory = async (): Promise<void> => {
+        await messenger.sendRequest(storeMemoryType, HOST_EXTENSION, { ...this.state.activeReadArguments });
+    };
+
+    protected applyMemory = async (): Promise<void> => {
+        await messenger.sendRequest(applyMemoryType, HOST_EXTENSION, undefined);
+    };
 }
 
 const container = document.getElementById('root') as Element;

@@ -2306,6 +2306,11 @@ npm-run-path@^4.0.1:
   dependencies:
     path-key "^3.0.0"
 
+nrf-intel-hex@^1.4.0:
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/nrf-intel-hex/-/nrf-intel-hex-1.4.0.tgz#f14d5d89a09437407536652ca3a377cef915be9e"
+  integrity sha512-q3+GGRIpe0VvCjUP1zaqW5rk6IpCZzhD0lu7Sguo1bgWwFcA9kZRjsaKUb0jBQMnefyOl5o0BBGAxvqMqYx8Sg==
+
 nth-check@^2.0.1:
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/nth-check/-/nth-check-2.1.1.tgz#c9eab428effce36cd6b92c924bdb000ef1f1ed1d"
@@ -3378,6 +3383,11 @@ vscode-messenger@^0.4.3:
   integrity sha512-zOkWT/gXVvksYjtuTfGYWhc2Kn+OFDQl7w2P/LodFufC35tGo6tko28ACSJgvrIFeIhhI11XgMhlCGcT3QZGRA==
   dependencies:
     vscode-messenger-common "^0.4.3"
+
+vscode-uri@^3.0.8:
+  version "3.0.8"
+  resolved "https://registry.yarnpkg.com/vscode-uri/-/vscode-uri-3.0.8.tgz#1770938d3e72588659a172d0fd4642780083ff9f"
+  integrity sha512-AyFQ0EVmsOZOlAnxoFOGOq1SQDWAB7C6aqMGS23svWAllfOaxbuFvcT8D1i8z3Gyn8fraVeZNNmN6e9bxxXkKw==
 
 watchpack@^2.4.0:
   version "2.4.0"

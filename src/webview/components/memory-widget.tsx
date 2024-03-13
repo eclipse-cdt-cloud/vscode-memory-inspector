@@ -14,21 +14,23 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-import { DebugProtocol } from '@vscode/debugprotocol';
 import React from 'react';
 import { ColumnStatus } from '../columns/column-contribution-service';
-import { Decoration, Memory, MemoryDisplayConfiguration, MemoryState } from '../utils/view-types';
+import { Decoration, MemoryDisplayConfiguration, MemoryState } from '../utils/view-types';
 import { MemoryTable } from './memory-table';
 import { OptionsWidget } from './options-widget';
 import { WebviewIdMessageParticipant } from 'vscode-messenger-common';
 import { VscodeContext, createAppVscodeContext } from '../utils/vscode-contexts';
 import { WebviewSelection } from '../../common/messaging';
+import { MemoryOptions, ReadMemoryArguments, SessionContext } from '../../common/messaging';
+import { Memory } from '../../common/memory';
 import { HoverService } from '../hovers/hover-service';
 
 interface MemoryWidgetProps extends MemoryDisplayConfiguration {
     messageParticipant: WebviewIdMessageParticipant;
-    configuredReadArguments: Required<DebugProtocol.ReadMemoryArguments>;
-    activeReadArguments: Required<DebugProtocol.ReadMemoryArguments>;
+    sessionContext: SessionContext;
+    configuredReadArguments: Required<ReadMemoryArguments>;
+    activeReadArguments: Required<ReadMemoryArguments>;
     memory?: Memory;
     title: string;
     decorations: Decoration[];
@@ -43,7 +45,9 @@ interface MemoryWidgetProps extends MemoryDisplayConfiguration {
     updateMemoryDisplayConfiguration: (memoryArguments: Partial<MemoryDisplayConfiguration>) => void;
     resetMemoryDisplayConfiguration: () => void;
     updateTitle: (title: string) => void;
-    fetchMemory(partialOptions?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void>
+    fetchMemory(partialOptions?: MemoryOptions): Promise<void>;
+    storeMemory(): void;
+    applyMemory(): void;
 }
 
 interface MemoryWidgetState {
@@ -67,6 +71,7 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
             showRadixPrefix: this.props.showRadixPrefix,
             showAsciiColumn: visibleColumns.includes('ascii'),
             showVariablesColumn: visibleColumns.includes('variables'),
+            activeReadArguments: this.props.activeReadArguments
         });
 
     }
@@ -75,6 +80,7 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
         return (<div className='flex flex-column h-full' {...this.createVscodeContext()}>
             <OptionsWidget
                 ref={this.optionsWidget}
+                sessionContext={this.props.sessionContext}
                 title={this.props.title}
                 updateTitle={this.props.updateTitle}
                 columnOptions={this.props.columns}
@@ -94,6 +100,8 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 toggleColumn={this.props.toggleColumn}
                 toggleFrozen={this.props.toggleFrozen}
                 isFrozen={this.props.isFrozen}
+                storeMemory={this.props.storeMemory}
+                applyMemory={this.props.applyMemory}
             />
             <MemoryTable
                 ref={this.memoryTable}

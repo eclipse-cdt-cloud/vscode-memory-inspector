@@ -35,10 +35,11 @@
   flex-grow: 1;
 }
 
+.memory-options-widget .p-button {
+  align-self: end;
+}
+
 .memory-options-widget .edit-label-toggle {
-  position: absolute;
-  right: 24px;
-  top: 8px;
   opacity: 0;
   transition: opacity 0.2s;
 }

@@ -17,7 +17,7 @@
 import { ReactNode } from 'react';
 import { BigIntMemoryRange, toOffset } from '../../common/memory-range';
 import { ColumnContribution, TableRenderOptions } from './column-contribution-service';
-import { Memory } from '../utils/view-types';
+import { Memory } from '../../common/memory';
 
 function isPrintableAsAscii(input: number): boolean {
     return input >= 32 && input < (128 - 1);

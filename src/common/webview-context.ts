@@ -16,6 +16,7 @@
 
 import { WebviewIdMessageParticipant } from 'vscode-messenger-common';
 import { VariableMetadata } from './memory-range';
+import { ReadMemoryArguments } from './messaging';
 
 export interface WebviewContext {
     messageParticipant: WebviewIdMessageParticipant,
@@ -23,6 +24,7 @@ export interface WebviewContext {
     showAsciiColumn: boolean
     showVariablesColumn: boolean,
     showRadixPrefix: boolean,
+    activeReadArguments: Required<ReadMemoryArguments>
 }
 
 export interface WebviewCellContext extends WebviewContext {
@@ -47,4 +49,12 @@ export function getVisibleColumns(context: WebviewContext): string[] {
         columns.push('variables');
     }
     return columns;
+}
+
+export function isWebviewContext(args: WebviewContext | unknown): args is WebviewContext {
+    const assumed = args ? args as WebviewContext : undefined;
+    return typeof assumed?.messageParticipant?.type === 'string' && assumed.messageParticipant.type === 'webview' && typeof assumed.messageParticipant.webviewId === 'string'
+        && typeof assumed.webviewSection === 'string' && typeof assumed.showAsciiColumn === 'boolean' && typeof assumed.showVariablesColumn === 'boolean'
+        && typeof assumed.showRadixPrefix === 'boolean' && typeof assumed.activeReadArguments?.count === 'number' && typeof assumed.activeReadArguments?.offset === 'number'
+        && typeof assumed.activeReadArguments?.memoryReference === 'string';
 }

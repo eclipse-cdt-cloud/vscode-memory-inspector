@@ -16,10 +16,21 @@
 
 import * as vscode from 'vscode';
 import { DebugProtocol } from '@vscode/debugprotocol';
-import { AdapterVariableTracker, hexAddress, notADigit } from './adapter-capabilities';
+import { AdapterVariableTracker, extractAddress, notADigit } from './adapter-capabilities';
 import { toHexStringWithRadixMarker, VariableRange } from '../../common/memory-range';
+import { sendRequest } from '../../common/debug-requests';
+
+export namespace CEvaluateExpression {
+    export function sizeOf(expression: string): string {
+        return `sizeof(${expression})`;
+    }
+    export function addressOf(expression: string): string {
+        return `&(${expression})`;
+    }
+};
 
 export class CTracker extends AdapterVariableTracker {
+
     /**
      * Resolves memory location and size using evaluate requests for `$(variable.name)` and `sizeof(variable.name)`
      * Ignores the presence or absence of variable.memoryReference.
@@ -30,26 +41,39 @@ export class CTracker extends AdapterVariableTracker {
                 { noName: !variable.name, noFrame: this.currentFrame === undefined });
             return undefined;
         }
+        let variableAddress = extractAddress(variable.memoryReference);
+        let variableSize: bigint | undefined = undefined;
         try {
-            const [addressResponse, sizeResponse] = await Promise.all([
-                session.customRequest('evaluate', <DebugProtocol.EvaluateArguments>{ expression: `&(${variable.name})`, context: 'watch', frameId: this.currentFrame }),
-                session.customRequest('evaluate', <DebugProtocol.EvaluateArguments>{ expression: `sizeof(${variable.name})`, context: 'watch', frameId: this.currentFrame }),
-            ]) as DebugProtocol.EvaluateResponse['body'][];
-            const addressPart = hexAddress.exec(addressResponse.result);
-            if (!addressPart) { return undefined; }
-            const startAddress = BigInt(addressPart[0]);
-            const endAddress = notADigit.test(sizeResponse.result) ? undefined : startAddress + BigInt(sizeResponse.result);
-            this.logger.debug('Resolved', variable.name, { start: addressPart[0], size: sizeResponse.result });
-            return {
-                name: variable.name,
-                startAddress: toHexStringWithRadixMarker(startAddress),
-                endAddress: endAddress === undefined ? undefined : toHexStringWithRadixMarker(endAddress),
-                value: variable.value,
-                type: variable.type,
-            };
+            [variableAddress, variableSize] = await Promise.all([
+                variableAddress ?? this.getAddressOfVariable(variable.name, session),
+                this.getSizeOfVariable(variable.name, session)
+            ]);
         } catch (err) {
             this.logger.warn('Unable to resolve location and size of', variable.name + (err instanceof Error ? ':\n\t' + err.message : ''));
+            // fall through as we may still have a valid variable address that we can use
+        }
+        if (!variableAddress) {
             return undefined;
         }
+        this.logger.debug('Resolved', variable.name, { start: variableAddress, size: variableSize });
+        const address = BigInt(variableAddress);
+        const variableRange: VariableRange = {
+            name: variable.name,
+            startAddress: toHexStringWithRadixMarker(address),
+            endAddress: variableSize === undefined ? undefined : toHexStringWithRadixMarker(address + variableSize),
+            value: variable.value,
+            type: variable.type,
+        };
+        return variableRange;
+    }
+
+    async getAddressOfVariable(variableName: string, session: vscode.DebugSession): Promise<string | undefined> {
+        const response = await sendRequest(session, 'evaluate', { expression: CEvaluateExpression.addressOf(variableName), context: 'watch', frameId: this.currentFrame });
+        return extractAddress(response.result);
+    }
+
+    async getSizeOfVariable(variableName: string, session: vscode.DebugSession): Promise<bigint | undefined> {
+        const response = await sendRequest(session, 'evaluate', { expression: CEvaluateExpression.sizeOf(variableName), context: 'watch', frameId: this.currentFrame });
+        return notADigit.test(response.result) ? undefined : BigInt(response.result);
     }
 }

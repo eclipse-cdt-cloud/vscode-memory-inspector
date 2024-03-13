@@ -19,3 +19,8 @@ export function tryToNumber(value?: string | number): number | undefined {
     if (value === '' || isNaN(asNumber)) { return undefined; }
     return asNumber;
 }
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function stringifyWithBigInts(object: any, space?: string | number): any {
+    return JSON.stringify(object, (_key, value) => typeof value === 'bigint' ? value.toString() : value, space);
+}

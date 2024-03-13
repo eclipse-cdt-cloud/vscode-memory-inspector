@@ -18,6 +18,7 @@ import * as vscode from 'vscode';
 import { DebugProtocol } from '@vscode/debugprotocol';
 import { VariableRange } from '../../common/memory-range';
 import { Logger } from '../logger';
+import { isDebugRequest, isDebugResponse } from '../../common/debug-requests';
 
 /** Represents capabilities that may be achieved with particular debug adapters but are not part of the DAP */
 export interface AdapterCapabilities {
@@ -25,13 +26,31 @@ export interface AdapterCapabilities {
     getVariables?(session: vscode.DebugSession): Promise<VariableRange[]>;
     /** Resolve symbols resident in the memory at the specified range. Will be preferred to {@link getVariables} if present. */
     getResidents?(session: vscode.DebugSession, params: DebugProtocol.ReadMemoryArguments): Promise<VariableRange[]>;
+    /** Resolves the address of a given variable in bytes withthe current context. */
+    getAddressOfVariable?(session: vscode.DebugSession, variableName: string): Promise<string | undefined>;
+    /** Resolves the size of a given variable in bytes within the current context. */
+    getSizeOfVariable?(session: vscode.DebugSession, variableName: string): Promise<bigint | undefined>;
     initializeAdapterTracker?(session: vscode.DebugSession): vscode.DebugAdapterTracker | undefined;
 }
 
 export type WithChildren<Original> = Original & { children?: Array<WithChildren<DebugProtocol.Variable>> };
 export type VariablesTree = Record<number, WithChildren<DebugProtocol.Scope | DebugProtocol.Variable>>;
 export const hexAddress = /0x[0-9a-f]+/i;
+export const decimalAddress = /[0-9]+/i;
 export const notADigit = /[^0-9]/;
+
+export function extractHexAddress(text?: string): string | undefined {
+    return text ? hexAddress.exec(text)?.[0] : undefined;
+}
+
+export function extractDecimalAddress(text?: string): string | undefined {
+    return text ? decimalAddress.exec(text)?.[0] : undefined;
+}
+
+export function extractAddress(text?: string): string | undefined {
+    // search for hex address first as a hex adress (0x12345678) also matches an integer address (12345678)
+    return text ? extractHexAddress(text) ?? extractDecimalAddress(text) : undefined;
+}
 
 /** This class implements some of the basic elements of tracking adapter sessions in order to maintain a list of variables. */
 export class AdapterVariableTracker implements vscode.DebugAdapterTracker {
@@ -42,9 +61,9 @@ export class AdapterVariableTracker implements vscode.DebugAdapterTracker {
     constructor(protected readonly onEnd: vscode.Disposable, protected logger: Logger) { }
 
     onWillReceiveMessage(message: unknown): void {
-        if (isScopesRequest(message)) {
+        if (isDebugRequest('scopes', message)) {
             this.currentFrame = message.arguments.frameId;
-        } else if (isVariableRequest(message)) {
+        } else if (isDebugRequest('variables', message)) {
             if (message.arguments.variablesReference in this.variablesTree) {
                 this.pendingMessages.set(message.seq, message.arguments.variablesReference);
             }
@@ -53,7 +72,7 @@ export class AdapterVariableTracker implements vscode.DebugAdapterTracker {
 
     /** Produces a two-level tree of scopes and their immediate children. Does not handle expansion of complex variables. */
     onDidSendMessage(message: unknown): void {
-        if (isScopesResponse(message)) {
+        if (isDebugResponse('scopes', message)) {
             this.variablesTree = {}; // Scopes request implies that all scopes will be queried again.
             for (const scope of message.body.scopes) {
                 if (this.isDesiredScope(scope)) {
@@ -62,7 +81,7 @@ export class AdapterVariableTracker implements vscode.DebugAdapterTracker {
                     }
                 }
             }
-        } else if (isVariableResponse(message)) {
+        } else if (isDebugResponse('variables', message)) {
             if (this.pendingMessages.has(message.request_seq)) {
                 const parentReference = this.pendingMessages.get(message.request_seq)!;
                 this.pendingMessages.delete(message.request_seq);
@@ -106,9 +125,15 @@ export class AdapterVariableTracker implements vscode.DebugAdapterTracker {
     protected variableToVariableRange(_variable: DebugProtocol.Variable, _session: vscode.DebugSession): Promise<VariableRange | undefined> {
         throw new Error('To be implemented by derived classes!');
     }
+
+    /** Resolves the address of a given variable in bytes within the current context. */
+    getAddressOfVariable?(variableName: string, session: vscode.DebugSession): Promise<string | undefined>;
+
+    /** Resolves the size of a given variable in bytes within the current context. */
+    getSizeOfVariable?(variableName: string, session: vscode.DebugSession): Promise<bigint | undefined>;
 }
 
-export class VariableTracker {
+export class VariableTracker implements AdapterCapabilities {
     protected sessions = new Map<string, AdapterVariableTracker>();
     protected types: string[];
 
@@ -127,27 +152,15 @@ export class VariableTracker {
         }
     }
 
-    getVariables(session: vscode.DebugSession): Promise<VariableRange[]> {
-        return Promise.resolve(this.sessions.get(session.id)?.getLocals(session) ?? []);
+    async getVariables(session: vscode.DebugSession): Promise<VariableRange[]> {
+        return this.sessions.get(session.id)?.getLocals(session) ?? [];
     }
-}
 
-export function isScopesRequest(message: unknown): message is DebugProtocol.ScopesRequest {
-    const candidate = message as DebugProtocol.ScopesRequest;
-    return !!candidate && candidate.command === 'scopes';
-}
+    async getAddressOfVariable(session: vscode.DebugSession, variableName: string): Promise<string | undefined> {
+        return this.sessions.get(session.id)?.getAddressOfVariable?.(variableName, session);
+    }
 
-export function isVariableRequest(message: unknown): message is DebugProtocol.VariablesRequest {
-    const candidate = message as DebugProtocol.VariablesRequest;
-    return !!candidate && candidate.command === 'variables';
-}
-
-export function isScopesResponse(message: unknown): message is DebugProtocol.ScopesResponse {
-    const candidate = message as DebugProtocol.ScopesResponse;
-    return !!candidate && candidate.command === 'scopes' && Array.isArray(candidate.body.scopes);
-}
-
-export function isVariableResponse(message: unknown): message is DebugProtocol.VariablesResponse {
-    const candidate = message as DebugProtocol.VariablesResponse;
-    return !!candidate && candidate.command === 'variables' && Array.isArray(candidate.body.variables);
+    async getSizeOfVariable(session: vscode.DebugSession, variableName: string): Promise<bigint | undefined> {
+        return this.sessions.get(session.id)?.getSizeOfVariable?.(variableName, session);
+    }
 }

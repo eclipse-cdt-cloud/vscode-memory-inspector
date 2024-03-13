@@ -14,17 +14,13 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-import type { DebugProtocol } from '@vscode/debugprotocol';
 import deepequal from 'fast-deep-equal';
 import type * as React from 'react';
 import { areRangesEqual, BigIntMemoryRange, Endianness, Radix } from '../../common/memory-range';
 import { GroupsPerRowOption } from '../../plugin/manifest';
 import { WebviewIdMessageParticipant } from 'vscode-messenger-common';
-
-export interface Memory {
-    address: bigint;
-    bytes: Uint8Array;
-}
+import { Memory } from '../../common/memory';
+import { ReadMemoryArguments } from '../../common/messaging';
 
 export interface SerializedTableRenderOptions extends MemoryDisplayConfiguration {
     columnOptions: Array<{ label: string, doRender: boolean }>;
@@ -54,17 +50,17 @@ export interface MemoryState {
     /**
      * The user configured memory read arguments
      */
-    configuredReadArguments: Required<DebugProtocol.ReadMemoryArguments>;
+    configuredReadArguments: Required<ReadMemoryArguments>;
     /**
      * The active memory read arguments used to load the memory
      */
-    activeReadArguments: Required<DebugProtocol.ReadMemoryArguments>;
+    activeReadArguments: Required<ReadMemoryArguments>;
     memory?: Memory;
     isMemoryFetching: boolean;
 }
 
 export interface UpdateExecutor {
-    fetchData(currentViewParameters: DebugProtocol.ReadMemoryArguments): Promise<void>;
+    fetchData(currentViewParameters: ReadMemoryArguments): Promise<void>;
 }
 
 export interface StylableNodeAttributes {

@@ -14,9 +14,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-import type { DebugProtocol } from '@vscode/debugprotocol';
 import { HOST_EXTENSION } from 'vscode-messenger-common';
-import { getVariables } from '../../common/messaging';
+import { ReadMemoryArguments, getVariablesType } from '../../common/messaging';
 import { messenger } from '../view-messenger';
 import { Decoration, MemoryState } from '../utils/view-types';
 import { EventEmitter, IEvent } from '../utils/events';
@@ -26,6 +25,7 @@ import { ReactNode } from 'react';
 import { areVariablesEqual, compareBigInt, BigIntMemoryRange, BigIntVariableRange, doOverlap } from '../../common/memory-range';
 import * as React from 'react';
 import { createVariableVscodeContext } from '../utils/vscode-contexts';
+import { stringifyWithBigInts } from '../../common/typescript';
 
 const NON_HC_COLORS = [
     'var(--vscode-terminal-ansiBlue)',
@@ -46,9 +46,9 @@ export class VariableDecorator implements ColumnContribution, Decorator {
 
     get onDidChange(): IEvent<Decoration[]> { return this.onDidChangeEmitter.event; }
 
-    async fetchData(currentViewParameters: DebugProtocol.ReadMemoryArguments): Promise<void> {
+    async fetchData(currentViewParameters: ReadMemoryArguments): Promise<void> {
         if (!this.active || !currentViewParameters.memoryReference || !currentViewParameters.count) { return; }
-        const visibleVariables = (await messenger.sendRequest(getVariables, HOST_EXTENSION, currentViewParameters))
+        const visibleVariables = (await messenger.sendRequest(getVariablesType, HOST_EXTENSION, currentViewParameters))
             .map<BigIntVariableRange>(transmissible => {
                 const startAddress = BigInt(transmissible.startAddress);
                 return {
@@ -136,11 +136,6 @@ export class VariableDecorator implements ColumnContribution, Decorator {
     dispose(): void {
         this.onDidChangeEmitter.dispose();
     }
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function stringifyWithBigInts(object: any): any {
-    return JSON.stringify(object, (_key, value) => typeof value === 'bigint' ? value.toString() : value);
 }
 
 export const variableDecorator = new VariableDecorator();

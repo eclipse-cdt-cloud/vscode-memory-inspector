@@ -37,13 +37,15 @@
     "formik": "^2.4.5",
     "lodash": "^4.17.21",
     "memoize-one": "^6.0.0",
+    "nrf-intel-hex": "^1.4.0",
     "primeflex": "^3.3.1",
     "primereact": "^10.3.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "vscode-messenger": "^0.4.3",
     "vscode-messenger-common": "^0.4.3",
-    "vscode-messenger-webview": "^0.4.3"
+    "vscode-messenger-webview": "^0.4.3",
+    "vscode-uri": "^3.0.8"
   },
   "devDependencies": {
     "@types/lodash": "^4.14.202",
@@ -107,6 +109,18 @@
         "title": "Advanced Display Options",
         "category": "Memory",
         "enablement": "webviewId === memory-inspector.memory"
+      },
+      {
+        "command": "memory-inspector.store-file",
+        "title": "Store Memory to File",
+        "enablement": "memory-inspector.canRead",
+        "category": "Memory"
+      },
+      {
+        "command": "memory-inspector.apply-file",
+        "title": "Apply Memory from File",
+        "enablement": "memory-inspector.canWrite",
+        "category": "Memory"
       }
     ],
     "menus": {
@@ -118,11 +132,21 @@
         {
           "command": "memory-inspector.show-variable",
           "when": "false"
+        },
+        {
+          "command": "memory-inspector.store-file"
+        },
+        {
+          "command": "memory-inspector.apply-file"
         }
       ],
       "debug/variables/context": [
         {
           "command": "memory-inspector.show-variable",
+          "when": "canViewMemory && memory-inspector.canRead"
+        },
+        {
+          "command": "memory-inspector.store-file",
           "when": "canViewMemory && memory-inspector.canRead"
         }
       ],
@@ -130,6 +154,20 @@
         {
           "command": "memory-inspector.show-variable",
           "when": "canViewMemory && memory-inspector.canRead"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "memory-inspector.apply-file",
+          "group": "debug",
+          "when": "memory-inspector.canWrite && resourceExtname === .hex"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "memory-inspector.apply-file",
+          "group": "debug",
+          "when": "memory-inspector.canWrite && resourceExtname === .hex"
         }
       ],
       "webview/context": [
@@ -151,6 +189,16 @@
         {
           "command": "memory-inspector.show-advanced-display-options",
           "group": "display@4",
+          "when": "webviewId === memory-inspector.memory"
+        },
+        {
+          "command": "memory-inspector.store-file",
+          "group": "display@5",
+          "when": "webviewId === memory-inspector.memory"
+        },
+        {
+          "command": "memory-inspector.apply-file",
+          "group": "display@6",
           "when": "webviewId === memory-inspector.memory"
         }
       ]

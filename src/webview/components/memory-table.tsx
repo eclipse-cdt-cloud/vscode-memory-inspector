@@ -14,7 +14,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-import { DebugProtocol } from '@vscode/debugprotocol';
 import memoize from 'memoize-one';
 import { Column } from 'primereact/column';
 import { DataTable, DataTableCellSelection, DataTableProps, DataTableSelectionCellChangeEvent } from 'primereact/datatable';
@@ -22,22 +21,24 @@ import { ProgressSpinner } from 'primereact/progressspinner';
 import { Tooltip } from 'primereact/tooltip';
 import React from 'react';
 import { TableRenderOptions } from '../columns/column-contribution-service';
-import { Decoration, Memory, MemoryDisplayConfiguration, ScrollingBehavior, isTrigger } from '../utils/view-types';
+import { Decoration, MemoryDisplayConfiguration, ScrollingBehavior, isTrigger } from '../utils/view-types';
 import isDeepEqual from 'fast-deep-equal';
 import { classNames } from 'primereact/utils';
 import { tryToNumber } from '../../common/typescript';
 import { DataColumn } from '../columns/data-column';
 import { createColumnVscodeContext, createSectionVscodeContext } from '../utils/vscode-contexts';
 import { WebviewSelection } from '../../common/messaging';
+import { MemoryOptions, ReadMemoryArguments } from '../../common/messaging';
+import { Memory } from '../../common/memory';
 import { debounce } from 'lodash';
 import type { HoverService } from '../hovers/hover-service';
 import { TooltipEvent } from 'primereact/tooltip/tooltipoptions';
 
 export interface MoreMemorySelectProps {
-    activeReadArguments: Required<DebugProtocol.ReadMemoryArguments>;
+    activeReadArguments: Required<ReadMemoryArguments>;
     options: number[];
     direction: 'above' | 'below';
-    fetchMemory(partialOptions?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void>;
+    fetchMemory(partialOptions?: MemoryOptions): Promise<void>;
     disabled: boolean
 }
 
@@ -128,13 +129,13 @@ export const MoreMemorySelect: React.FC<MoreMemoryAboveSelectProps | MoreMemoryB
 };
 
 interface MemoryTableProps extends TableRenderOptions, MemoryDisplayConfiguration {
-    configuredReadArguments: Required<DebugProtocol.ReadMemoryArguments>;
-    activeReadArguments: Required<DebugProtocol.ReadMemoryArguments>;
+    configuredReadArguments: Required<ReadMemoryArguments>;
+    activeReadArguments: Required<ReadMemoryArguments>;
     memory?: Memory;
     decorations: Decoration[];
     effectiveAddressLength: number;
     hoverService: HoverService;
-    fetchMemory(partialOptions?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void>;
+    fetchMemory(partialOptions?: Partial<ReadMemoryArguments>): Promise<void>;
     isMemoryFetching: boolean;
     isFrozen: boolean;
 }
@@ -441,7 +442,7 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
         }
 
         /*
-         * Before opening a context menu for a table cell target we dynamically add the `value` property to the <vscode-data-context.
+         * Before opening a context menu for a table cell target we dynamically add the value property to the vscode-data-context.
          * Using this dynamic approach ensures the the cell value is also set correctly when the menu was opened on empty cell space.
          */
         const value = cell.textContent;

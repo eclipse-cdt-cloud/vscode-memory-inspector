@@ -14,7 +14,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-import type { DebugProtocol } from '@vscode/debugprotocol';
 import { Formik, FormikConfig, FormikErrors, FormikProps } from 'formik';
 import { Button } from 'primereact/button';
 import { Dropdown, DropdownChangeEvent } from 'primereact/dropdown';
@@ -28,22 +27,27 @@ import { MultiSelectWithLabel } from './multi-select';
 import { CONFIG_BYTES_PER_WORD_CHOICES, CONFIG_GROUPS_PER_ROW_CHOICES, CONFIG_WORDS_PER_GROUP_CHOICES } from '../../plugin/manifest';
 import { tryToNumber } from '../../common/typescript';
 import { Checkbox } from 'primereact/checkbox';
+import { MemoryOptions, ReadMemoryArguments, SessionContext } from '../../common/messaging';
+import { validateMemoryReference, validateOffset, validateCount } from '../../common/memory';
 import { Endianness } from '../../common/memory-range';
 import { createSectionVscodeContext } from '../utils/vscode-contexts';
 
 export interface OptionsWidgetProps
     extends Omit<TableRenderOptions, 'scrollingBehavior' | 'effectiveAddressLength'> {
-    configuredReadArguments: Required<DebugProtocol.ReadMemoryArguments>;
-    activeReadArguments: Required<DebugProtocol.ReadMemoryArguments>;
+    sessionContext: SessionContext;
+    configuredReadArguments: Required<ReadMemoryArguments>;
+    activeReadArguments: Required<ReadMemoryArguments>;
     title: string;
     updateRenderOptions: (options: Partial<SerializedTableRenderOptions>) => void;
     resetRenderOptions: () => void;
     updateTitle: (title: string) => void;
     updateMemoryState: (state: Partial<MemoryState>) => void;
-    fetchMemory(partialOptions?: Partial<DebugProtocol.ReadMemoryArguments>): Promise<void>
+    fetchMemory(partialOptions?: MemoryOptions): Promise<void>
     toggleColumn(id: string, isVisible: boolean): void;
     toggleFrozen: () => void;
     isFrozen: boolean;
+    storeMemory(): void;
+    applyMemory(): void;
 }
 
 interface OptionsWidgetState {
@@ -101,36 +105,18 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
 
     protected validate = (values: OptionsForm) => {
         const errors: FormikErrors<OptionsForm> = {};
-
-        if (values.address.trim().length === 0) {
-            errors.address = 'Required';
-        } else {
-            const address = +values.address;
-            if (!isNaN(address) && address < 0) {
-                errors.address = 'Value needs to be >= 0';
-            }
+        const addressError = values.address.trim().length === 0 ? 'Required' : validateMemoryReference(values.address);
+        if (addressError) {
+            errors.address = addressError;
         }
-
-        if (values.offset.trim().length === 0) {
-            errors.offset = 'Required';
-        } else {
-            const offset = +values.offset;
-            if (isNaN(offset)) {
-                errors.offset = 'No number provided';
-            }
+        const offsetError = values.offset.trim().length === 0 ? 'Required' : validateOffset(values.offset);
+        if (offsetError) {
+            errors.offset = offsetError;
         }
-
-        if (values.count.trim().length === 0) {
-            errors.count = 'Required';
-        } else {
-            const count = +values.count;
-            if (isNaN(count)) {
-                errors.count = 'No number provided';
-            } else if (count <= 0) {
-                errors.count = 'Value needs to be > 0';
-            }
+        const countError = values.count.trim().length === 0 ? 'Required' : validateCount(values.count);
+        if (countError) {
+            errors.count = countError;
         }
-
         return errors;
     };
 
@@ -145,6 +131,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
         this.formConfig.initialValues = this.optionsFormValues;
         const isLabelEditing = this.state.isTitleEditing;
         const isFrozen = this.props.isFrozen;
+        const readDisabled = isFrozen || !this.props.sessionContext.canRead;
         const freezeContentToggleTitle = isFrozen ? 'Unfreeze Memory View' : 'Freeze Memory View';
         const activeMemoryReadArgumentHint = (userValue: string | number, memoryValue: string | number): ReactNode | undefined => {
             if (userValue !== memoryValue) {
@@ -176,16 +163,40 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                         <h1 onDoubleClick={this.enableTitleEditing}>{this.props.title}</h1>
                     )}
                     {!isLabelEditing && (
-                        <Button
-                            type='button'
-                            className='edit-label-toggle'
-                            icon='codicon codicon-edit'
-                            onClick={this.enableTitleEditing}
-                            title='Edit view title'
-                            aria-label='Edit view title'
-                            rounded
-                            aria-haspopup
-                        />
+                        <>
+                            <Button
+                                type='button'
+                                className='edit-label-toggle'
+                                icon='codicon codicon-edit'
+                                onClick={this.enableTitleEditing}
+                                title='Edit view title'
+                                aria-label='Edit view title'
+                                rounded
+                                aria-haspopup
+                            />
+                            <Button
+                                type='button'
+                                className='store-file-button'
+                                icon='codicon codicon-save'
+                                onClick={this.props.storeMemory}
+                                disabled={!this.props.sessionContext.canWrite}
+                                title='Store Memory as File'
+                                aria-label='Store Memory as File'
+                                rounded
+                                aria-haspopup
+                            />
+                            <Button
+                                type='button'
+                                className='apply-file-button'
+                                icon='codicon codicon-folder-opened'
+                                onClick={this.props.applyMemory}
+                                disabled={!this.props.sessionContext.canRead}
+                                title='Apply Memory from File'
+                                aria-label='Apply Memory from File'
+                                rounded
+                                aria-haspopup
+                            />
+                        </>
                     )}
                 </div>
                 <div className='core-options py-2' ref={this.coreOptionsDiv}>
@@ -193,7 +204,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                         {formik => (
                             <form onSubmit={formik.handleSubmit} className='form-options'>
                                 <span className={'pm-top-label form-textfield form-texfield-long'}>
-                                    <label htmlFor={InputId.Address} className={`p-inputtext-label ${isFrozen ? 'p-disabled' : ''}`} >
+                                    <label htmlFor={InputId.Address} className={`p-inputtext-label ${readDisabled ? 'p-disabled' : ''}`} >
                                         Address
                                     </label>
                                     <InputText
@@ -202,7 +213,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                         {...formik.getFieldProps('address')}
                                         onKeyDown={this.handleKeyDown}
                                         onBlur={ev => this.doHandleBlur(ev, formik)}
-                                        disabled={isFrozen}
+                                        disabled={readDisabled}
                                     />
                                     {formik.errors.address ?
                                         (<small className='p-invalid'>
@@ -212,7 +223,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                     {activeMemoryReadArgumentHint(this.props.configuredReadArguments.memoryReference, this.props.activeReadArguments.memoryReference)}
                                 </span>
                                 <span className='pm-top-label form-textfield'>
-                                    <label htmlFor={InputId.Offset} className={`p-inputtext-label ${isFrozen ? 'p-disabled' : ''}`}>
+                                    <label htmlFor={InputId.Offset} className={`p-inputtext-label ${readDisabled ? 'p-disabled' : ''}`}>
                                         Offset
                                     </label>
                                     <InputText
@@ -221,7 +232,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                         {...formik.getFieldProps('offset')}
                                         onKeyDown={this.handleKeyDown}
                                         onBlur={ev => this.doHandleBlur(ev, formik)}
-                                        disabled={isFrozen}
+                                        disabled={readDisabled}
                                     />
                                     {formik.errors.offset ?
                                         (<small className='p-invalid'>
@@ -231,7 +242,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                     {activeMemoryReadArgumentHint(this.props.configuredReadArguments.offset, this.props.activeReadArguments.offset)}
                                 </span>
                                 <span className='pm-top-label form-textfield'>
-                                    <label htmlFor={InputId.Length} className={`p-inputtext-label ${isFrozen ? 'p-disabled' : ''}`}>
+                                    <label htmlFor={InputId.Length} className={`p-inputtext-label ${readDisabled ? 'p-disabled' : ''}`}>
                                         Length
                                     </label>
                                     <InputText
@@ -240,7 +251,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                         {...formik.getFieldProps('count')}
                                         onKeyDown={this.handleKeyDown}
                                         onBlur={ev => this.doHandleBlur(ev, formik)}
-                                        disabled={isFrozen}
+                                        disabled={readDisabled}
                                     />
                                     {formik.errors.count ?
                                         (<small className='p-invalid'>
@@ -249,7 +260,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                         : undefined}
                                     {activeMemoryReadArgumentHint(this.props.configuredReadArguments.count, this.props.activeReadArguments.count)}
                                 </span>
-                                <Button type='submit' disabled={!formik.isValid || isFrozen}>
+                                <Button type='submit' disabled={!formik.isValid || readDisabled}>
                                     Go
                                 </Button>
                             </form>
@@ -406,7 +417,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
 
     protected handleKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void = e => this.doHandleKeyDown(e);
     protected doHandleKeyDown(event: KeyboardEvent<HTMLInputElement>): void {
-        if (event.code === 'Enter') {
+        if (event.key === 'Enter') {
             const id = event.currentTarget.id as InputId;
             const value = event.currentTarget.value;
 
