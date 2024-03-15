@@ -15,8 +15,8 @@
  ********************************************************************************/
 
 import * as vscode from 'vscode';
-import { AdapterCapabilities } from './adapter-capabilities';
 import { outputChannelLogger as logger } from '../logger';
+import { AdapterCapabilities } from './adapter-capabilities';
 
 export class AdapterRegistry implements vscode.Disposable {
     protected handlers = new Map<string, AdapterCapabilities>();

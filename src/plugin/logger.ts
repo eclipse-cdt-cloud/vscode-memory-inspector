@@ -15,8 +15,8 @@
  ********************************************************************************/
 
 import * as vscode from 'vscode';
-import * as manifest from './manifest';
 import { stringifyWithBigInts } from '../common/typescript';
+import * as manifest from './manifest';
 
 export enum Verbosity {
     off = 0,

@@ -23,11 +23,11 @@ import {
     validateCount, validateMemoryReference, validateOffset
 } from '../common/memory';
 import { toHexStringWithRadixMarker } from '../common/memory-range';
+import { ApplyMemoryArguments, ApplyMemoryResult, MemoryOptions, StoreMemoryArguments } from '../common/messaging';
+import { isWebviewContext } from '../common/webview-context';
+import { isVariablesContext } from './external-views';
 import * as manifest from './manifest';
 import { MemoryProvider } from './memory-provider';
-import { ApplyMemoryArguments, ApplyMemoryResult, MemoryOptions, StoreMemoryArguments } from '../common/messaging';
-import { isVariablesContext } from './external-views';
-import { isWebviewContext } from '../common/webview-context';
 
 export const StoreCommandType = `${manifest.PACKAGE_NAME}.store-file`;
 export const ApplyCommandType = `${manifest.PACKAGE_NAME}.apply-file`;

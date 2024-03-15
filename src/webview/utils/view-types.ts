@@ -16,11 +16,11 @@
 
 import deepequal from 'fast-deep-equal';
 import type * as React from 'react';
-import { areRangesEqual, BigIntMemoryRange, Endianness, Radix } from '../../common/memory-range';
-import { GroupsPerRowOption } from '../../plugin/manifest';
 import { WebviewIdMessageParticipant } from 'vscode-messenger-common';
 import { Memory } from '../../common/memory';
+import { areRangesEqual, BigIntMemoryRange, Endianness, Radix } from '../../common/memory-range';
 import { ReadMemoryArguments } from '../../common/messaging';
+import { GroupsPerRowOption } from '../../plugin/manifest';
 
 export interface SerializedTableRenderOptions extends MemoryDisplayConfiguration {
     columnOptions: Array<{ label: string, doRender: boolean }>;

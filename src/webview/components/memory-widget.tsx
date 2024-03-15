@@ -15,16 +15,16 @@
  ********************************************************************************/
 
 import React from 'react';
-import { ColumnStatus } from '../columns/column-contribution-service';
-import { Decoration, MemoryDisplayConfiguration, MemoryState } from '../utils/view-types';
-import { MemoryTable } from './memory-table';
-import { OptionsWidget } from './options-widget';
 import { WebviewIdMessageParticipant } from 'vscode-messenger-common';
-import { VscodeContext, createAppVscodeContext } from '../utils/vscode-contexts';
+import { Memory } from '../../common/memory';
 import { WebviewSelection } from '../../common/messaging';
 import { MemoryOptions, ReadMemoryArguments, SessionContext } from '../../common/messaging';
-import { Memory } from '../../common/memory';
+import { ColumnStatus } from '../columns/column-contribution-service';
 import { HoverService } from '../hovers/hover-service';
+import { Decoration, MemoryDisplayConfiguration, MemoryState } from '../utils/view-types';
+import { createAppVscodeContext, VscodeContext } from '../utils/vscode-contexts';
+import { MemoryTable } from './memory-table';
+import { OptionsWidget } from './options-widget';
 
 interface MemoryWidgetProps extends MemoryDisplayConfiguration {
     messageParticipant: WebviewIdMessageParticipant;

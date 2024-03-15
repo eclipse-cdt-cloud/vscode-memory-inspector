@@ -16,10 +16,10 @@
 
 import * as vscode from 'vscode';
 import { AdapterRegistry } from '../../plugin/adapter-registry/adapter-registry';
-import { MemoryProvider } from '../../plugin/memory-provider';
-import { MemoryWebview } from '../../plugin/memory-webview-main';
 import { CAdapter } from '../../plugin/adapter-registry/c-adapter';
+import { MemoryProvider } from '../../plugin/memory-provider';
 import { MemoryStorage } from '../../plugin/memory-storage';
+import { MemoryWebview } from '../../plugin/memory-webview-main';
 
 export const activate = async (context: vscode.ExtensionContext): Promise<AdapterRegistry> => {
     const registry = new AdapterRegistry();
