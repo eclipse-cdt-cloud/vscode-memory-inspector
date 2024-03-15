@@ -16,21 +16,21 @@
 
 import { Formik, FormikConfig, FormikErrors, FormikProps } from 'formik';
 import { Button } from 'primereact/button';
+import { Checkbox } from 'primereact/checkbox';
 import { Dropdown, DropdownChangeEvent } from 'primereact/dropdown';
 import { InputText } from 'primereact/inputtext';
 import { OverlayPanel } from 'primereact/overlaypanel';
 import { classNames } from 'primereact/utils';
 import React, { FocusEventHandler, KeyboardEvent, KeyboardEventHandler, MouseEventHandler, ReactNode } from 'react';
+import { validateCount, validateMemoryReference, validateOffset } from '../../common/memory';
+import { Endianness } from '../../common/memory-range';
+import { MemoryOptions, ReadMemoryArguments, SessionContext } from '../../common/messaging';
+import { tryToNumber } from '../../common/typescript';
+import { CONFIG_BYTES_PER_WORD_CHOICES, CONFIG_GROUPS_PER_ROW_CHOICES, CONFIG_WORDS_PER_GROUP_CHOICES } from '../../plugin/manifest';
 import { TableRenderOptions } from '../columns/column-contribution-service';
 import { AddressPaddingOptions, MemoryState, SerializedTableRenderOptions } from '../utils/view-types';
-import { MultiSelectWithLabel } from './multi-select';
-import { CONFIG_BYTES_PER_WORD_CHOICES, CONFIG_GROUPS_PER_ROW_CHOICES, CONFIG_WORDS_PER_GROUP_CHOICES } from '../../plugin/manifest';
-import { tryToNumber } from '../../common/typescript';
-import { Checkbox } from 'primereact/checkbox';
-import { MemoryOptions, ReadMemoryArguments, SessionContext } from '../../common/messaging';
-import { validateMemoryReference, validateOffset, validateCount } from '../../common/memory';
-import { Endianness } from '../../common/memory-range';
 import { createSectionVscodeContext } from '../utils/vscode-contexts';
+import { MultiSelectWithLabel } from './multi-select';
 
 export interface OptionsWidgetProps
     extends Omit<TableRenderOptions, 'scrollingBehavior' | 'effectiveAddressLength'> {

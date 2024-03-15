@@ -19,37 +19,37 @@ import { Messenger } from 'vscode-messenger';
 import { WebviewIdMessageParticipant } from 'vscode-messenger-common';
 import { Endianness, VariableRange } from '../common/memory-range';
 import {
-    MemoryOptions,
-    ReadMemoryArguments,
-    ReadMemoryResult,
-    SessionContext,
-    StoreMemoryArguments,
-    WebviewSelection,
-    WriteMemoryArguments,
-    WriteMemoryResult,
     applyMemoryType,
     getVariablesType,
     getWebviewSelectionType,
     logMessageType,
+    MemoryOptions,
     memoryWrittenType,
+    ReadMemoryArguments,
+    ReadMemoryResult,
     readMemoryType,
     readyType,
     resetMemoryViewSettingsType,
+    SessionContext,
     sessionContextChangedType,
     setMemoryViewSettingsType,
     setOptionsType,
     setTitleType,
     showAdvancedOptionsType,
+    StoreMemoryArguments,
     storeMemoryType,
+    WebviewSelection,
+    WriteMemoryArguments,
+    WriteMemoryResult,
     writeMemoryType,
 } from '../common/messaging';
-import { WebviewContext, getVisibleColumns } from '../common/webview-context';
+import { getVisibleColumns, WebviewContext } from '../common/webview-context';
 import { AddressPaddingOptions, MemoryViewSettings, ScrollingBehavior } from '../webview/utils/view-types';
+import { isVariablesContext } from './external-views';
 import { outputChannelLogger } from './logger';
 import * as manifest from './manifest';
 import { MemoryProvider } from './memory-provider';
 import { ApplyCommandType, StoreCommandType } from './memory-storage';
-import { isVariablesContext } from './external-views';
 
 enum RefreshEnum {
     off = 0,

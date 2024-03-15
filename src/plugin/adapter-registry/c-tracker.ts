@@ -14,11 +14,11 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-import * as vscode from 'vscode';
 import { DebugProtocol } from '@vscode/debugprotocol';
-import { AdapterVariableTracker, extractAddress, notADigit } from './adapter-capabilities';
-import { toHexStringWithRadixMarker, VariableRange } from '../../common/memory-range';
+import * as vscode from 'vscode';
 import { sendRequest } from '../../common/debug-requests';
+import { toHexStringWithRadixMarker, VariableRange } from '../../common/memory-range';
+import { AdapterVariableTracker, extractAddress, notADigit } from './adapter-capabilities';
 
 export namespace CEvaluateExpression {
     export function sizeOf(expression: string): string {

@@ -14,18 +14,18 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
+import { ReactNode } from 'react';
+import * as React from 'react';
 import { HOST_EXTENSION } from 'vscode-messenger-common';
-import { ReadMemoryArguments, getVariablesType } from '../../common/messaging';
-import { messenger } from '../view-messenger';
-import { Decoration, MemoryState } from '../utils/view-types';
-import { EventEmitter, IEvent } from '../utils/events';
+import { areVariablesEqual, BigIntMemoryRange, BigIntVariableRange, compareBigInt, doOverlap } from '../../common/memory-range';
+import { getVariablesType, ReadMemoryArguments } from '../../common/messaging';
+import { stringifyWithBigInts } from '../../common/typescript';
 import { ColumnContribution } from '../columns/column-contribution-service';
 import { Decorator } from '../decorations/decoration-service';
-import { ReactNode } from 'react';
-import { areVariablesEqual, compareBigInt, BigIntMemoryRange, BigIntVariableRange, doOverlap } from '../../common/memory-range';
-import * as React from 'react';
+import { EventEmitter, IEvent } from '../utils/events';
+import { Decoration, MemoryState } from '../utils/view-types';
 import { createVariableVscodeContext } from '../utils/vscode-contexts';
-import { stringifyWithBigInts } from '../../common/typescript';
+import { messenger } from '../view-messenger';
 
 const NON_HC_COLORS = [
     'var(--vscode-terminal-ansiBlue)',

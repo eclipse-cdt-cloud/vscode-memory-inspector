@@ -17,9 +17,9 @@
 import * as React from 'react';
 import { HOST_EXTENSION } from 'vscode-messenger-common';
 import { logMessageType } from '../../common/messaging';
+import { MemoryAppState } from '../memory-webview-view';
 import { Disposable, MemoryDisplayConfiguration } from '../utils/view-types';
 import { messenger } from '../view-messenger';
-import { MemoryAppState } from '../memory-webview-view';
 
 export interface HoverableDetails {
     columnId: string;

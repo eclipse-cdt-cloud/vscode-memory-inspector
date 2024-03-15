@@ -14,11 +14,11 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-import * as vscode from 'vscode';
 import { DebugProtocol } from '@vscode/debugprotocol';
+import * as vscode from 'vscode';
+import { isDebugRequest, isDebugResponse } from '../../common/debug-requests';
 import { VariableRange } from '../../common/memory-range';
 import { Logger } from '../logger';
-import { isDebugRequest, isDebugResponse } from '../../common/debug-requests';
 
 /** Represents capabilities that may be achieved with particular debug adapters but are not part of the DAP */
 export interface AdapterCapabilities {

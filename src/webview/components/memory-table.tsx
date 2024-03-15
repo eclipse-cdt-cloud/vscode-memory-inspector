@@ -14,25 +14,25 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
+import isDeepEqual from 'fast-deep-equal';
+import { debounce } from 'lodash';
 import memoize from 'memoize-one';
 import { Column } from 'primereact/column';
 import { DataTable, DataTableCellSelection, DataTableProps, DataTableSelectionCellChangeEvent } from 'primereact/datatable';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { Tooltip } from 'primereact/tooltip';
-import React from 'react';
-import { TableRenderOptions } from '../columns/column-contribution-service';
-import { Decoration, MemoryDisplayConfiguration, ScrollingBehavior, isTrigger } from '../utils/view-types';
-import isDeepEqual from 'fast-deep-equal';
+import { TooltipEvent } from 'primereact/tooltip/tooltipoptions';
 import { classNames } from 'primereact/utils';
-import { tryToNumber } from '../../common/typescript';
-import { DataColumn } from '../columns/data-column';
-import { createColumnVscodeContext, createSectionVscodeContext } from '../utils/vscode-contexts';
+import React from 'react';
+import { Memory } from '../../common/memory';
 import { WebviewSelection } from '../../common/messaging';
 import { MemoryOptions, ReadMemoryArguments } from '../../common/messaging';
-import { Memory } from '../../common/memory';
-import { debounce } from 'lodash';
+import { tryToNumber } from '../../common/typescript';
+import { TableRenderOptions } from '../columns/column-contribution-service';
+import { DataColumn } from '../columns/data-column';
 import type { HoverService } from '../hovers/hover-service';
-import { TooltipEvent } from 'primereact/tooltip/tooltipoptions';
+import { Decoration, isTrigger, MemoryDisplayConfiguration, ScrollingBehavior } from '../utils/view-types';
+import { createColumnVscodeContext, createSectionVscodeContext } from '../utils/vscode-contexts';
 
 export interface MoreMemorySelectProps {
     activeReadArguments: Required<ReadMemoryArguments>;

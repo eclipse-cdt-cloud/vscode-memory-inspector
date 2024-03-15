@@ -15,10 +15,10 @@
  ********************************************************************************/
 
 import type * as React from 'react';
-import { BigIntMemoryRange } from '../../common/memory-range';
-import type { Disposable, MemoryState, SerializedTableRenderOptions, UpdateExecutor } from '../utils/view-types';
 import { Memory } from '../../common/memory';
+import { BigIntMemoryRange } from '../../common/memory-range';
 import { ReadMemoryArguments } from '../../common/messaging';
+import type { Disposable, MemoryState, SerializedTableRenderOptions, UpdateExecutor } from '../utils/view-types';
 
 export type ColumnFittingType = 'content-width';
 

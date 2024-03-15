@@ -16,12 +16,12 @@
 
 import { DebugProtocol } from '@vscode/debugprotocol';
 import * as vscode from 'vscode';
+import { isDebugEvent, isDebugRequest, isDebugResponse, sendRequest } from '../common/debug-requests';
+import { stringToBytesMemory } from '../common/memory';
 import { VariableRange, WrittenMemory } from '../common/memory-range';
 import { ReadMemoryResult, SessionContext, WriteMemoryResult } from '../common/messaging';
 import { AdapterRegistry } from './adapter-registry/adapter-registry';
 import * as manifest from './manifest';
-import { isDebugEvent, isDebugRequest, isDebugResponse, sendRequest } from '../common/debug-requests';
-import { stringToBytesMemory } from '../common/memory';
 
 export interface LabeledUint8Array extends Uint8Array {
     label?: string;

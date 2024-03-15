@@ -15,13 +15,13 @@
  ********************************************************************************/
 
 import * as React from 'react';
-import { BigIntMemoryRange, Endianness, toOffset } from '../../common/memory-range';
-import { FullNodeAttributes } from '../utils/view-types';
-import { ColumnContribution, TableRenderOptions } from './column-contribution-service';
-import { decorationService } from '../decorations/decoration-service';
-import type { MemorySizeOptions } from '../components/memory-table';
-import { elementInnerWidth, characterWidthInContainer } from '../utils/window';
 import { Memory } from '../../common/memory';
+import { BigIntMemoryRange, Endianness, toOffset } from '../../common/memory-range';
+import type { MemorySizeOptions } from '../components/memory-table';
+import { decorationService } from '../decorations/decoration-service';
+import { FullNodeAttributes } from '../utils/view-types';
+import { characterWidthInContainer, elementInnerWidth } from '../utils/window';
+import { ColumnContribution, TableRenderOptions } from './column-contribution-service';
 
 export class DataColumn implements ColumnContribution {
     static CLASS_NAME = 'column-data';

@@ -15,7 +15,7 @@
  ********************************************************************************/
 
 import { DebugProtocol } from '@vscode/debugprotocol';
-import { isDebugVariable, isDebugScope, isDebugEvaluateArguments } from '../common/debug-requests';
+import { isDebugEvaluateArguments, isDebugScope, isDebugVariable } from '../common/debug-requests';
 
 export namespace VariablesView {
     // from https://github.com/microsoft/vscode/blob/main/src/vs/workbench/contrib/debug/browser/variablesView.ts

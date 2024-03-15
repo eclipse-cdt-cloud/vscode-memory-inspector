@@ -16,11 +16,11 @@
 
 import type { DebugProtocol } from '@vscode/debugprotocol';
 import type { NotificationType, RequestType } from 'vscode-messenger-common';
-import { MemoryViewSettings } from '../webview/utils/view-types';
-import type { VariableRange, WrittenMemory } from './memory-range';
-import { DebugRequestTypes } from './debug-requests';
 import { URI } from 'vscode-uri';
 import { VariablesView } from '../plugin/external-views';
+import { MemoryViewSettings } from '../webview/utils/view-types';
+import { DebugRequestTypes } from './debug-requests';
+import type { VariableRange, WrittenMemory } from './memory-range';
 import { WebviewContext } from './webview-context';
 
 // convenience types for easier readability and better semantics
