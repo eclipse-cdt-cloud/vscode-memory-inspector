@@ -17,4 +17,4 @@ Contributors guide: https://github.com/eclipse-cdt-cloud/vscode-memory-inspector
 
 #### Reminder for reviewers
 
-- as a reviewer, I agree to behave in accordance with [the code of conduct](https://github.com/theia-ide/theia/blob/master/doc/pull-requests.md#reviewing)
+- as a reviewer, I agree to behave in accordance with [the code of conduct](https://github.com/eclipsesource/vscode-memory-inspector/blob/main/CODE_OF_CONDUCT.md)

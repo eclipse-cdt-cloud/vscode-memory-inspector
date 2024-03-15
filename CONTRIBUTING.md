@@ -37,7 +37,7 @@ behind it.
 
 Before you get started investing significant time in something you want to get
 merged and maintained as part of this project, you should talk with the team
-through an issue. Simply choose the issue you would want to work on, and tell everyone
+by posting on an issue. Simply choose the issue you would want to work on, and tell everyone
 that you are willing to do so and how you would approach it. The team will be
 happy to guide you and give feedback.
 
