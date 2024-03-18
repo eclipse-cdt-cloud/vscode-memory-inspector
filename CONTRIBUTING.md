@@ -29,7 +29,7 @@ reproduce and solve the problem.
 You may want to see a feature or have an idea. You can
 [file a request](https://github.com/eclipse-cdt-cloud/vscode-memory-inspector/issues/new/choose)
 and we can discuss it. If such a feature request already exists, please add a comment
-or some other form of feedback to indicate you are interested too. Also in this
+or some other form of feedback to indicate you are interested, too. Also in this
 case any concrete use case scenario is appreciated to understand the motivation
 behind it.
 

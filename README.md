@@ -6,21 +6,29 @@ A Visual Studio Code extension that provides a powerful and configurable memory 
 
 ## Features
 
-- **Multiple Format Display**: Shows memory data in different formats, provided your debug adapter supports the `ReadMemoryRequest`.
+- **Configurable Memory Display**: Shows memory data with various display options.
 - **Address Navigation**: Easily jump to and scroll through memory addresses.
-- **Variable Highlights**: Marks variable memory ranges.
+- **Variable Highlights**: Colors memory ranges for variables.
+- **Multiple Memory Formats**: Shows memory data on hover in multiple formats.
 - **Edit Memory**: Allows in-place memory editing, if the debug adapter supports the `WriteMemoryRequest`.
-- **Memory Management**: Enables saving and restoring memory data for specific address ranges.
-- **Custom Views**: Create and customize as many memory views as you need.
+- **Memory Management**: Enables saving and restoring memory data for specific address ranges (Intel Hex format).
+- **Customized Views**: Create and customize as many memory views as you need.
 - **Lock Views**: Keep views static, unaffected by updates from the debug session.
 - And much more
 
 ## Getting Started
 
+### Prerequisites
+
 1. **Install**: Add the extension to VS Code.
-2. **Debug Session**: Start with a debug adapter that has the [`ReadMemory` request](https://microsoft.github.io/debug-adapter-protocol/specification#Requests_ReadMemory) capability.
-3. **Open Memory Inspector**: Either run the *Memory: Show Memory Inspector* command or right-click a variable in the Variables view and select *Show in Memory Inspector*.
-4. **Adjust View**: Modify the memory range you're interested in, as needed.
+2. **Verify Debugger Capability**: Ensure the debug adapter supports [`ReadMemory` requests](https://microsoft.github.io/debug-adapter-protocol/specification#Requests_ReadMemory).
+3. **Enable Debug Type**: Enable the Memory Inspector for the debug configuration type (VS Code setting *Debug Types*: `memory-inspector.debugTypes`).
+
+### Use Memory Inspector
+
+1. **Debug Session**: Start a debug session.
+2. **Open Memory Inspector**: Either run the *Memory: Show Memory Inspector* command or right-click a variable in the Variables view and select *Show in Memory Inspector*.
+3. **Adjust View**: Modify the memory range you're interested in, as needed.
 
 ## Configuration
 
