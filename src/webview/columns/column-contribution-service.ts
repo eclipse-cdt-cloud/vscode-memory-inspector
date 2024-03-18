@@ -48,6 +48,7 @@ export interface ColumnStatus {
 
 export interface TableRenderOptions extends Omit<SerializedTableRenderOptions, 'columnOptions'> {
     columnOptions: ColumnStatus[];
+    currentlyEditedRange?: BigIntMemoryRange;
 }
 
 class ColumnContributionService {

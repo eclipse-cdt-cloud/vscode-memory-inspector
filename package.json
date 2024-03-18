@@ -200,6 +200,11 @@
           "command": "memory-inspector.apply-file",
           "group": "display@6",
           "when": "webviewId === memory-inspector.memory"
+        },
+        {
+          "command": "memory-inspector.edit-current-selection",
+          "group": "actions@1",
+          "when": "webviewId === memory-inspector.memory"
         }
       ]
     },
