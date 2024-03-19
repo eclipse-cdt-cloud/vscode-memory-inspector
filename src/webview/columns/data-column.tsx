@@ -15,7 +15,7 @@
  ********************************************************************************/
 
 import * as React from 'react';
-import { BigIntMemoryRange, Endianness, toHexStringWithRadixMarker, toOffset } from '../../common/memory-range';
+import { BigIntMemoryRange, Endianness, isWithin, toHexStringWithRadixMarker, toOffset } from '../../common/memory-range';
 import { FullNodeAttributes } from '../utils/view-types';
 import { ColumnContribution, TableRenderOptions } from './column-contribution-service';
 import { decorationService } from '../decorations/decoration-service';
@@ -63,8 +63,87 @@ export interface EditableDataColumnRowState {
 export class EditableDataColumnRow extends React.Component<EditableDataColumnRowProps, EditableDataColumnRowState> {
     state: EditableDataColumnRowState = {};
     protected inputText = React.createRef<HTMLInputElement>();
-    render() {
 
+    render(): React.ReactNode {
+        return this.renderGroups();
+    }
+
+    protected renderGroups(): React.ReactNode {
+        const { range, options, memory } = this.props;
+        const groups = [];
+        let words: React.ReactNode[] = [];
+        let address = range.startAddress;
+        let groupStartAddress = address;
+        while (address < range.endAddress) {
+            words.push(this.renderWord(memory, options, address));
+            const next = address + 1n;
+            if (words.length % options.wordsPerGroup === 0) {
+                this.applyEndianness(words, options);
+                const isLast = next >= range.endAddress;
+                const style: React.CSSProperties | undefined = isLast ? undefined : DataColumn.Styles.byteGroupStyle;
+                groups.push(this.renderGroup(words, groupStartAddress, next, style));
+                groupStartAddress = next;
+                words = [];
+            }
+            address = next;
+        }
+        if (words.length) { groups.push(this.renderGroup(words, groupStartAddress, range.endAddress)); }
+        return groups;
+    }
+
+    protected renderGroup(words: React.ReactNode, startAddress: bigint, endAddress: bigint, style?: React.CSSProperties): React.ReactNode {
+        return <span
+            className='byte-group hoverable'
+            data-column='data'
+            data-range={`${startAddress}-${endAddress}`}
+            style={style}
+            key={startAddress.toString(16)}
+            onDoubleClick={this.setGroupEdit}
+        >
+            {words}
+        </span>;
+    }
+
+    protected renderWord(memory: Memory, options: TableRenderOptions, currentAddress: bigint): React.ReactNode {
+        if (currentAddress === this.state.editedRange?.startAddress) {
+            return this.renderEditingGroup(this.state.editedRange);
+        } else if (this.state.editedRange && isWithin(currentAddress, this.state.editedRange)) {
+            return;
+        }
+        const initialOffset = toOffset(memory.address, currentAddress, options.bytesPerWord * 8);
+        const finalOffset = initialOffset + options.bytesPerWord;
+        const bytes: React.ReactNode[] = [];
+        for (let i = initialOffset; i < finalOffset; i++) {
+            bytes.push(this.renderEightBits(memory, currentAddress, i));
+        }
+        this.applyEndianness(bytes, options);
+        return <span className='single-word' key={currentAddress.toString(16)}>{bytes}</span>;
+    }
+
+    protected renderEightBits(memory: Memory, currentAddress: bigint, offset: number): React.ReactNode {
+        const { content, className, style, title } = this.getBitAttributes(memory, currentAddress, offset);
+        return <span
+            style={style}
+            key={offset.toString(16)}
+            className={className}
+            data-id={offset}
+            title={title}
+        >
+            {content}
+        </span>;
+    }
+
+    protected getBitAttributes(memory: Memory, currentAdress: bigint, offset: number): FullNodeAttributes {
+        return {
+            className: 'eight-bits',
+            style: decorationService.getDecoration(currentAdress)?.style,
+            content: (memory.bytes[offset] ?? 0).toString(16).padStart(2, '0')
+        };
+    }
+
+    protected applyEndianness<T>(group: T[], options: TableRenderOptions): T[] {
+        // Assume data from the DAP comes in Big Endian so we need to revert the order if we use Little Endian
+        return options.endianness === Endianness.Big ? group : group.reverse();
     }
 
     protected renderEditingGroup(editedRange: BigIntMemoryRange): React.ReactNode {
@@ -113,6 +192,14 @@ export class EditableDataColumnRow extends React.Component<EditableDataColumnRow
         event.stopPropagation();
     };
 
+    protected setGroupEdit: React.MouseEventHandler<HTMLSpanElement> = event => {
+        event.stopPropagation();
+        const range = event.currentTarget.dataset.range;
+        if (!range) { return; }
+        const [startAddress, endAddress] = range.split('-').map(BigInt);
+        this.setState({ editedRange: { startAddress, endAddress } });
+    };
+
     protected disableEdit(): void {
         this.setState({});
     }
@@ -124,7 +211,7 @@ export class EditableDataColumnRow extends React.Component<EditableDataColumnRow
         await messenger.sendRequest(writeMemoryType, HOST_EXTENSION, {
             memoryReference: toHexStringWithRadixMarker(this.state.editedRange.startAddress),
             data: converted
-        });
+        }).catch(() => { });
         this.disableEdit();
     }
 
@@ -137,114 +224,6 @@ export class EditableDataColumnRow extends React.Component<EditableDataColumnRow
         }
 
         return data.padStart(characters, '0');
-    }
-}
-
-export class EditableDataColumnGroup extends React.Component<EditableDataColumnGroupProps, EditableDataColumnGroupState> {
-
-    constructor(props: EditableDataColumnGroupProps) {
-        super(props);
-
-        this.state = {
-            isEdit: false,
-            value: this.asLine(this.props.group)
-        };
-    }
-
-    protected get renderableCharacters(): number {
-        return this.props.options.bytesPerWord * this.props.options.wordsPerGroup * 2;
-    }
-
-    render(): React.ReactNode {
-        if (this.state.isEdit) {
-            return this.renderEditingGroup();
-        }
-
-        return this.renderReadonlyGroup();
-    }
-
-    componentDidUpdate(_prevProps: Readonly<EditableDataColumnGroupProps>, prevState: Readonly<EditableDataColumnGroupState>): void {
-        if (prevState.isEdit === false && this.state.isEdit) {
-            this.setState(prev => ({ ...prev, value: this.asLine(this.props.group) }));
-        }
-    }
-
-    protected asLine(group: DataColumnByteGroup): string {
-        return group.words.flatMap(w => w.bits.flatMap(b => b.value).join('')).join('');
-    }
-
-    protected renderReadonlyGroup(): React.ReactNode {
-        const { startAddress, endAddress, words } = this.props.group;
-        const isLast = endAddress === this.props.range.endAddress;
-        const style: React.CSSProperties | undefined = isLast ? undefined : this.byteGroupStyle;
-        return <span className='byte-group editable' style={style} key={startAddress.toString(16)} onClick={this.enableEdit}>{
-            words.map(w => this.renderWord(w))
-        }</span>;
-    }
-
-    protected renderWord(word: DataColumnWord): React.ReactNode {
-        return <span className='single-word' key={word.address.toString(16)}>{
-            word.bits.map(b => this.renderEightBits(b))
-        }</span>;
-    }
-
-    protected renderEightBits(bit: DataColumnBit): React.ReactNode {
-        const { content, className, style, title } = this.getBitAttributes(bit);
-        return <span
-            style={style}
-            key={bit.offset.toString(16)}
-            className={className}
-            data-id={bit.offset}
-            title={title}
-        >
-            {content}
-        </span>;
-    }
-
-    protected getBitAttributes(bit: DataColumnBit): FullNodeAttributes {
-        return {
-            className: 'eight-bits',
-            style: decorationService.getDecoration(bit.address)?.style,
-            content: bit.value
-        };
-    }
-
-    protected enableEdit: React.MouseEventHandler = event => {
-        this.setState(prev => ({ ...prev, isEdit: true }));
-        event.stopPropagation();
-    };
-
-    protected disableEdit = () => {
-        this.setState(prev => ({ ...prev, isEdit: false, value: this.asLine(this.props.group) }));
-    };
-
-    protected onChange: React.ChangeEventHandler<HTMLInputElement> = event => {
-        this.setState(prev => ({ ...prev, value: event.target.value }));
-    };
-
-    protected async submitChanges(): Promise<void> {
-        const newData = this.processData(this.state.value);
-        const original = this.processData(this.asLine(this.props.group));
-
-        if (newData && newData !== original) {
-            const converted = Buffer.from(newData, 'hex').toString('base64');
-            await this.props.writeMemory?.({
-                memoryReference: toHexStringWithRadixMarker(this.props.group.startAddress),
-                data: converted
-            });
-        }
-
-        this.disableEdit();
-    }
-
-    protected processData(data: string): string {
-        // Revert Endianness
-        if (this.props.options.endianness === Endianness.Little) {
-            const chunks = data.padStart(this.renderableCharacters, '0').match(/.{1,2}/g) || [];
-            return chunks.reverse().join('');
-        }
-
-        return data.padStart(this.renderableCharacters, '0');
     }
 }
 
