@@ -20,6 +20,7 @@ import { WebviewIdMessageParticipant } from 'vscode-messenger-common';
 import { Endianness, VariableRange } from '../common/memory-range';
 import {
     applyMemoryType,
+    editSelectedMemoryType,
     getVariablesType,
     getWebviewSelectionType,
     logMessageType,
@@ -70,6 +71,7 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
     public static ToggleRadixPrefixCommandType = `${manifest.PACKAGE_NAME}.toggle-radix-prefix`;
     public static ShowAdvancedDisplayConfigurationCommandType = `${manifest.PACKAGE_NAME}.show-advanced-display-options`;
     public static GetWebviewSelectionCommandType = `${manifest.PACKAGE_NAME}.get-webview-selection`;
+    public static EditCurrentSelectionCommandType = `${manifest.PACKAGE_NAME}.edit-current-selection`;
 
     protected messenger: Messenger;
     protected refreshOnStop: RefreshEnum;
@@ -110,6 +112,9 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
                 this.messenger.sendNotification(showAdvancedOptionsType, ctx.messageParticipant, undefined);
             }),
             vscode.commands.registerCommand(MemoryWebview.GetWebviewSelectionCommandType, (ctx: WebviewContext) => this.getWebviewSelection(ctx.messageParticipant)),
+            vscode.commands.registerCommand(MemoryWebview.EditCurrentSelectionCommandType, (ctx: WebviewContext) => {
+                this.messenger.sendNotification(editSelectedMemoryType, ctx.messageParticipant, undefined);
+            })
         );
     };
 

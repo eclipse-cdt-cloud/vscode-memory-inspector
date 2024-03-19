@@ -15,45 +15,46 @@
  ********************************************************************************/
 
 import 'primeflex/primeflex.css';
-import { debounce } from 'lodash';
 import { PrimeReactProvider } from 'primereact/api';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { HOST_EXTENSION, WebviewIdMessageParticipant } from 'vscode-messenger-common';
-import { createMemoryFromRead, Memory } from '../common/memory';
-import { BigIntMemoryRange, doOverlap, Endianness, getAddressLength, getAddressString, WrittenMemory } from '../common/memory-range';
+import { Memory, createMemoryFromRead } from '../common/memory';
+import { BigIntMemoryRange, Endianness, WrittenMemory, doOverlap, getAddressLength, getAddressString } from '../common/memory-range';
 import {
+    MemoryOptions,
+    ReadMemoryArguments,
+    WebviewSelection,
     applyMemoryType,
     getWebviewSelectionType,
     logMessageType,
-    MemoryOptions,
     memoryWrittenType,
-    ReadMemoryArguments,
     readMemoryType,
     readyType,
     resetMemoryViewSettingsType,
-    SessionContext,
-    sessionContextChangedType,
     setMemoryViewSettingsType,
     setOptionsType,
     setTitleType,
     showAdvancedOptionsType,
     storeMemoryType,
-    WebviewSelection,
+    sessionContextChangedType,
+    SessionContext,
+    editSelectedMemoryType,
 } from '../common/messaging';
 import { AddressColumn } from './columns/address-column';
 import { AsciiColumn } from './columns/ascii-column';
-import { columnContributionService, ColumnStatus } from './columns/column-contribution-service';
+import { ColumnStatus, columnContributionService } from './columns/column-contribution-service';
 import { DataColumn } from './columns/data-column';
 import { MemoryWidget } from './components/memory-widget';
 import { decorationService } from './decorations/decoration-service';
-import { AddressHover } from './hovers/address-hover';
-import { DataHover } from './hovers/data-hover';
-import { hoverService, HoverService } from './hovers/hover-service';
-import { VariableHover } from './hovers/variable-hover';
 import { Decoration, MemoryDisplayConfiguration, MemoryState } from './utils/view-types';
 import { variableDecorator } from './variables/variable-decorations';
 import { messenger } from './view-messenger';
+import { hoverService, HoverService } from './hovers/hover-service';
+import { AddressHover } from './hovers/address-hover';
+import { DataHover } from './hovers/data-hover';
+import { VariableHover } from './hovers/variable-hover';
+import { debounce } from 'lodash';
 
 export interface MemoryAppState extends MemoryState, MemoryDisplayConfiguration {
     messageParticipant: WebviewIdMessageParticipant;
@@ -135,6 +136,7 @@ class App extends React.Component<{}, MemoryAppState> {
         messenger.onRequest(getWebviewSelectionType, () => this.getWebviewSelection());
         messenger.onNotification(showAdvancedOptionsType, () => this.showAdvancedOptions());
         messenger.sendNotification(readyType, HOST_EXTENSION, undefined);
+        messenger.onNotification(editSelectedMemoryType, () => DataColumn.editCurrentSelection());
     }
 
     public componentDidUpdate(_: {}, prevState: MemoryAppState): void {

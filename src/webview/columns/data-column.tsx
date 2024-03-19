@@ -16,7 +16,7 @@
 
 import * as React from 'react';
 import { BigIntMemoryRange, Endianness, isWithin, toHexStringWithRadixMarker, toOffset } from '../../common/memory-range';
-import { FullNodeAttributes } from '../utils/view-types';
+import { Disposable, FullNodeAttributes } from '../utils/view-types';
 import { ColumnContribution, TableRenderOptions } from './column-contribution-service';
 import { decorationService } from '../decorations/decoration-service';
 import type { MemorySizeOptions } from '../components/memory-table';
@@ -25,28 +25,40 @@ import { Memory } from '../../common/memory';
 import { HOST_EXTENSION } from 'vscode-messenger-common';
 import { messenger } from '../view-messenger';
 import { writeMemoryType } from '../../common/messaging';
-import { DebugProtocol } from '@vscode/debugprotocol';
 import { InputText } from 'primereact/inputtext';
+import { EventEmitter } from '../utils/events';
+
+function getSelectionEdit(): BigIntMemoryRange | undefined {
+    const selectionRange = document.getSelection();
+    if (!selectionRange) { return; }
+    const anchorWord = selectionRange.anchorNode?.parentElement?.closest<HTMLSpanElement>('.single-word');
+    const focusWord = selectionRange.focusNode?.parentElement?.closest<HTMLSpanElement>('.single-word');
+    if (!anchorWord?.dataset.address || !focusWord?.dataset.address) { return; }
+    const anchorAddress = BigInt(anchorWord.dataset.address);
+    const focusAddress = BigInt(focusWord.dataset.address);
+    const startAddress = anchorAddress <= focusAddress ? anchorAddress : focusAddress;
+    const endAddress = (anchorAddress < focusAddress ? focusAddress : anchorAddress) + 1n;
+    return { startAddress, endAddress };
+}
 
 export class DataColumn implements ColumnContribution {
     static CLASS_NAME = 'column-data';
+    private static onEditRequestedEmitter = new EventEmitter<BigIntMemoryRange>();
+    public static onEditRequested = this.onEditRequestedEmitter.event;
 
     readonly id = 'data';
     readonly className = DataColumn.CLASS_NAME;
     readonly label = 'Data';
     readonly priority = 1;
 
-    render(range: BigIntMemoryRange, memory: Memory, options: TableRenderOptions): React.ReactNode {
-        return <EditableDataColumnRow range={range} memory={memory} options={options} />;
+    static editCurrentSelection(): void {
+        const toEdit = getSelectionEdit();
+        if (!toEdit) { return; }
+        this.onEditRequestedEmitter.fire(toEdit);
     }
 
-    protected writeMemory = async (writeArguments: DebugProtocol.WriteMemoryArguments): Promise<void> => {
-        await messenger.sendRequest(writeMemoryType, HOST_EXTENSION, writeArguments);
-    };
-
-    protected applyEndianness<T>(group: T[], options: TableRenderOptions): T[] {
-        // Assume data from the DAP comes in Big Endian so we need to revert the order if we use Little Endian
-        return options.endianness === Endianness.Big ? group : group.reverse();
+    render(range: BigIntMemoryRange, memory: Memory, options: TableRenderOptions): React.ReactNode {
+        return <EditableDataColumnRow range={range} memory={memory} options={options} />;
     }
 }
 
@@ -63,6 +75,15 @@ export interface EditableDataColumnRowState {
 export class EditableDataColumnRow extends React.Component<EditableDataColumnRowProps, EditableDataColumnRowState> {
     state: EditableDataColumnRowState = {};
     protected inputText = React.createRef<HTMLInputElement>();
+    protected toDisposeOnUnmount?: Disposable;
+
+    componentDidMount(): void {
+        this.toDisposeOnUnmount = DataColumn.onEditRequested(this.setSelectionEdit);
+    }
+
+    componentWillUnmount(): void {
+        this.toDisposeOnUnmount?.dispose();
+    }
 
     render(): React.ReactNode {
         return this.renderGroups();
@@ -117,7 +138,7 @@ export class EditableDataColumnRow extends React.Component<EditableDataColumnRow
             bytes.push(this.renderEightBits(memory, currentAddress, i));
         }
         this.applyEndianness(bytes, options);
-        return <span className='single-word' key={currentAddress.toString(16)}>{bytes}</span>;
+        return <span className='single-word' data-address={currentAddress.toString()} key={currentAddress.toString(16)}>{bytes}</span>;
     }
 
     protected renderEightBits(memory: Memory, currentAddress: bigint, offset: number): React.ReactNode {
@@ -168,11 +189,11 @@ export class EditableDataColumnRow extends React.Component<EditableDataColumnRow
             ref={this.inputText}
             maxLength={characters}
             defaultValue={defaultValue}
+            onBlur={this.onBlur}
             onKeyDown={this.onKeyDown}
             autoFocus
             style={style}
-            onBlur={this.onBlur}
-        ></InputText>;
+        />;
     }
 
     protected onBlur: React.FocusEventHandler<HTMLInputElement> = () => {
@@ -200,8 +221,15 @@ export class EditableDataColumnRow extends React.Component<EditableDataColumnRow
         this.setState({ editedRange: { startAddress, endAddress } });
     };
 
+    protected setSelectionEdit = (editedRange: BigIntMemoryRange): void => {
+        if (isWithin(editedRange.startAddress, this.props.range)) {
+            const endAddress = editedRange.endAddress <= this.props.range.endAddress ? editedRange.endAddress : this.props.range.endAddress;
+            this.setState({ editedRange: { startAddress: editedRange.startAddress, endAddress } });
+        }
+    };
+
     protected disableEdit(): void {
-        this.setState({});
+        this.setState({ editedRange: undefined });
     }
 
     protected async submitChanges(): Promise<void> {
