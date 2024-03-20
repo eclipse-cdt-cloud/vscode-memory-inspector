@@ -14,49 +14,123 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
+import { InputText } from 'primereact/inputtext';
 import * as React from 'react';
+import { HOST_EXTENSION } from 'vscode-messenger-common';
 import { Memory } from '../../common/memory';
-import { BigIntMemoryRange, Endianness, toOffset } from '../../common/memory-range';
+import { BigIntMemoryRange, Endianness, isWithin, toHexStringWithRadixMarker, toOffset } from '../../common/memory-range';
+import { writeMemoryType } from '../../common/messaging';
 import type { MemorySizeOptions } from '../components/memory-table';
 import { decorationService } from '../decorations/decoration-service';
-import { FullNodeAttributes } from '../utils/view-types';
+import { EventEmitter } from '../utils/events';
+import { Disposable, FullNodeAttributes } from '../utils/view-types';
 import { characterWidthInContainer, elementInnerWidth } from '../utils/window';
+import { messenger } from '../view-messenger';
 import { ColumnContribution, TableRenderOptions } from './column-contribution-service';
+
+function getSelectionEdit(): BigIntMemoryRange | undefined {
+    const selectionRange = document.getSelection();
+    if (!selectionRange) { return; }
+    const anchorWord = selectionRange.anchorNode?.parentElement?.closest<HTMLSpanElement>('.single-word');
+    const focusWord = selectionRange.focusNode?.parentElement?.closest<HTMLSpanElement>('.single-word');
+    if (!anchorWord?.dataset.address || !focusWord?.dataset.address) { return; }
+    const anchorAddress = BigInt(anchorWord.dataset.address);
+    const focusAddress = BigInt(focusWord.dataset.address);
+    const startAddress = anchorAddress <= focusAddress ? anchorAddress : focusAddress;
+    const endAddress = (anchorAddress < focusAddress ? focusAddress : anchorAddress) + 1n;
+    return { startAddress, endAddress };
+}
 
 export class DataColumn implements ColumnContribution {
     static CLASS_NAME = 'column-data';
+    private static onEditRequestedEmitter = new EventEmitter<BigIntMemoryRange>();
+    public static onEditRequested = this.onEditRequestedEmitter.event;
 
     readonly id = 'data';
     readonly className = DataColumn.CLASS_NAME;
     readonly label = 'Data';
     readonly priority = 1;
 
-    protected byteGroupStyle: React.CSSProperties = {
-        marginRight: `${DataColumn.Styles.MARGIN_RIGHT_PX}px`
-    };
-
-    render(range: BigIntMemoryRange, memory: Memory, options: TableRenderOptions): React.ReactNode {
-        return this.renderGroups(range, memory, options);
+    static editCurrentSelection(): void {
+        const toEdit = getSelectionEdit();
+        if (!toEdit) { return; }
+        this.onEditRequestedEmitter.fire(toEdit);
     }
 
-    protected renderGroups(range: BigIntMemoryRange, memory: Memory, options: TableRenderOptions): React.ReactNode {
+    render(range: BigIntMemoryRange, memory: Memory, options: TableRenderOptions): React.ReactNode {
+        return <EditableDataColumnRow range={range} memory={memory} options={options} />;
+    }
+}
+
+export interface EditableDataColumnRowProps {
+    range: BigIntMemoryRange;
+    memory: Memory;
+    options: TableRenderOptions;
+}
+
+export interface EditableDataColumnRowState {
+    editedRange?: BigIntMemoryRange;
+}
+
+export class EditableDataColumnRow extends React.Component<EditableDataColumnRowProps, EditableDataColumnRowState> {
+    state: EditableDataColumnRowState = {};
+    protected inputText = React.createRef<HTMLInputElement>();
+    protected toDisposeOnUnmount?: Disposable;
+
+    componentDidMount(): void {
+        this.toDisposeOnUnmount = DataColumn.onEditRequested(this.setSelectionEdit);
+    }
+
+    componentWillUnmount(): void {
+        this.toDisposeOnUnmount?.dispose();
+    }
+
+    render(): React.ReactNode {
+        return this.renderGroups();
+    }
+
+    protected renderGroups(): React.ReactNode {
+        const { range, options, memory } = this.props;
         const groups = [];
         let words: React.ReactNode[] = [];
-        for (let address = range.startAddress; address < range.endAddress; address++) {
+        let address = range.startAddress;
+        let groupStartAddress = address;
+        while (address < range.endAddress) {
             words.push(this.renderWord(memory, options, address));
+            const next = address + 1n;
             if (words.length % options.wordsPerGroup === 0) {
                 this.applyEndianness(words, options);
-                const isLast = address + 1n >= range.endAddress;
-                const style: React.CSSProperties | undefined = isLast ? undefined : this.byteGroupStyle;
-                groups.push(<span className='byte-group hoverable' data-column='data' style={style} key={address.toString(16)}>{words}</span>);
+                const isLast = next >= range.endAddress;
+                const style: React.CSSProperties | undefined = isLast ? undefined : DataColumn.Styles.byteGroupStyle;
+                groups.push(this.renderGroup(words, groupStartAddress, next, style));
+                groupStartAddress = next;
                 words = [];
             }
+            address = next;
         }
-        if (words.length) { groups.push(<span className='byte-group hoverable' data-column='data' key={(range.endAddress - BigInt(words.length)).toString(16)}>{words}</span>); }
+        if (words.length) { groups.push(this.renderGroup(words, groupStartAddress, range.endAddress)); }
         return groups;
     }
 
+    protected renderGroup(words: React.ReactNode, startAddress: bigint, endAddress: bigint, style?: React.CSSProperties): React.ReactNode {
+        return <span
+            className='byte-group hoverable'
+            data-column='data'
+            data-range={`${startAddress}-${endAddress}`}
+            style={style}
+            key={startAddress.toString(16)}
+            onDoubleClick={this.setGroupEdit}
+        >
+            {words}
+        </span>;
+    }
+
     protected renderWord(memory: Memory, options: TableRenderOptions, currentAddress: bigint): React.ReactNode {
+        if (currentAddress === this.state.editedRange?.startAddress) {
+            return this.renderEditingGroup(this.state.editedRange);
+        } else if (this.state.editedRange && isWithin(currentAddress, this.state.editedRange)) {
+            return;
+        }
         const initialOffset = toOffset(memory.address, currentAddress, options.bytesPerWord * 8);
         const finalOffset = initialOffset + options.bytesPerWord;
         const bytes: React.ReactNode[] = [];
@@ -64,12 +138,7 @@ export class DataColumn implements ColumnContribution {
             bytes.push(this.renderEightBits(memory, currentAddress, i));
         }
         this.applyEndianness(bytes, options);
-        return <span className='single-word' key={currentAddress.toString(16)}>{bytes}</span>;
-    }
-
-    protected applyEndianness<T>(group: T[], options: TableRenderOptions): T[] {
-        // Assume data from the DAP comes in Big Endian so we need to revert the order if we use Little Endian
-        return options.endianness === Endianness.Big ? group : group.reverse();
+        return <span className='single-word' data-address={currentAddress.toString()} key={currentAddress.toString(16)}>{bytes}</span>;
     }
 
     protected renderEightBits(memory: Memory, currentAddress: bigint, offset: number): React.ReactNode {
@@ -92,11 +161,106 @@ export class DataColumn implements ColumnContribution {
             content: (memory.bytes[offset] ?? 0).toString(16).padStart(2, '0')
         };
     }
+
+    protected applyEndianness<T>(group: T[], options: TableRenderOptions): T[] {
+        // Assume data from the DAP comes in Big Endian so we need to revert the order if we use Little Endian
+        return options.endianness === Endianness.Big ? group : group.reverse();
+    }
+
+    protected renderEditingGroup(editedRange: BigIntMemoryRange): React.ReactNode {
+        const isLast = editedRange.endAddress === this.props.range.endAddress;
+        const bitsPerWord = this.props.options.bytesPerWord * 8;
+        const startOffset = toOffset(this.props.memory.address, editedRange.startAddress, bitsPerWord);
+        const numBytes = toOffset(editedRange.startAddress, editedRange.endAddress, bitsPerWord);
+        const characters = numBytes * 2;
+        const defaultValue = Array.from(this.props.memory.bytes.slice(startOffset, startOffset + numBytes)).map(byte => byte.toString(16).padStart(2, '0')).join('');
+
+        const style: React.CSSProperties = {
+            ...decorationService.getDecoration(editedRange.startAddress)?.style,
+            width: `calc(${characters}ch + 10px)`,
+            padding: '0 4px',
+            marginRight: isLast ? undefined : DataColumn.Styles.byteGroupStyle.marginRight,
+            minHeight: 'unset',
+            border: '1px solid var(--vscode-inputOption-activeBorder)',
+            background: 'unset'
+        };
+
+        return <InputText key={editedRange.startAddress.toString(16)}
+            ref={this.inputText}
+            maxLength={characters}
+            defaultValue={defaultValue}
+            onBlur={this.onBlur}
+            onKeyDown={this.onKeyDown}
+            autoFocus
+            style={style}
+        />;
+    }
+
+    protected onBlur: React.FocusEventHandler<HTMLInputElement> = () => {
+        this.submitChanges();
+    };
+
+    protected onKeyDown: React.KeyboardEventHandler<HTMLInputElement> = event => {
+        switch (event.key) {
+            case 'Escape': {
+                this.disableEdit();
+                break;
+            }
+            case 'Enter': {
+                this.submitChanges();
+            }
+        }
+        event.stopPropagation();
+    };
+
+    protected setGroupEdit: React.MouseEventHandler<HTMLSpanElement> = event => {
+        event.stopPropagation();
+        const range = event.currentTarget.dataset.range;
+        if (!range) { return; }
+        const [startAddress, endAddress] = range.split('-').map(BigInt);
+        this.setState({ editedRange: { startAddress, endAddress } });
+    };
+
+    protected setSelectionEdit = (editedRange: BigIntMemoryRange): void => {
+        if (isWithin(editedRange.startAddress, this.props.range)) {
+            const endAddress = editedRange.endAddress <= this.props.range.endAddress ? editedRange.endAddress : this.props.range.endAddress;
+            this.setState({ editedRange: { startAddress: editedRange.startAddress, endAddress } });
+        }
+    };
+
+    protected disableEdit(): void {
+        this.setState({ editedRange: undefined });
+    }
+
+    protected async submitChanges(): Promise<void> {
+        if (!this.inputText.current || !this.state.editedRange) { return; }
+        const newData = this.processData(this.inputText.current.value, this.state.editedRange);
+        const converted = Buffer.from(newData, 'hex').toString('base64');
+        await messenger.sendRequest(writeMemoryType, HOST_EXTENSION, {
+            memoryReference: toHexStringWithRadixMarker(this.state.editedRange.startAddress),
+            data: converted
+        }).catch(() => { });
+        this.disableEdit();
+    }
+
+    protected processData(data: string, editedRange: BigIntMemoryRange): string {
+        const characters = toOffset(editedRange.startAddress, editedRange.endAddress, this.props.options.bytesPerWord * 8) * 2;
+        // Revert Endianness
+        if (this.props.options.endianness === Endianness.Little) {
+            const chunks = data.padStart(characters, '0').match(/.{1,2}/g) || [];
+            return chunks.reverse().join('');
+        }
+
+        return data.padStart(characters, '0');
+    }
 }
 
 export namespace DataColumn {
     export namespace Styles {
         export const MARGIN_RIGHT_PX = 2;
+        export const byteGroupStyle: React.CSSProperties = {
+            marginRight: `${DataColumn.Styles.MARGIN_RIGHT_PX}px`
+        };
     }
 
     /**

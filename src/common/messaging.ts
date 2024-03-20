@@ -51,6 +51,7 @@ export const resetMemoryViewSettingsType: NotificationType<void> = { method: 're
 export const setTitleType: NotificationType<string> = { method: 'setTitle' };
 export const memoryWrittenType: NotificationType<WrittenMemory> = { method: 'memoryWritten' };
 export const sessionContextChangedType: NotificationType<SessionContext> = { method: 'sessionContextChanged' };
+export const editSelectedMemoryType: NotificationType<void> = { method: 'editSelectedMemory' };
 
 // Requests
 export const setOptionsType: RequestType<MemoryOptions, void> = { method: 'setOptions' };

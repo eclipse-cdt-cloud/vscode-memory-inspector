@@ -24,6 +24,7 @@ import { createMemoryFromRead, Memory } from '../common/memory';
 import { BigIntMemoryRange, doOverlap, Endianness, getAddressLength, getAddressString, WrittenMemory } from '../common/memory-range';
 import {
     applyMemoryType,
+    editSelectedMemoryType,
     getWebviewSelectionType,
     logMessageType,
     MemoryOptions,
@@ -135,6 +136,7 @@ class App extends React.Component<{}, MemoryAppState> {
         messenger.onRequest(getWebviewSelectionType, () => this.getWebviewSelection());
         messenger.onNotification(showAdvancedOptionsType, () => this.showAdvancedOptions());
         messenger.sendNotification(readyType, HOST_EXTENSION, undefined);
+        messenger.onNotification(editSelectedMemoryType, () => DataColumn.editCurrentSelection());
     }
 
     public componentDidUpdate(_: {}, prevState: MemoryAppState): void {

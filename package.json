@@ -121,6 +121,11 @@
         "title": "Apply Memory from File",
         "enablement": "memory-inspector.canWrite",
         "category": "Memory"
+      },
+      {
+        "command": "memory-inspector.edit-current-selection",
+        "title": "Edit currently selected memory",
+        "enablement": "memory-inspector.canWrite && webviewId === memory-inspector.memory"
       }
     ],
     "menus": {
@@ -199,6 +204,11 @@
         {
           "command": "memory-inspector.apply-file",
           "group": "display@6",
+          "when": "webviewId === memory-inspector.memory"
+        },
+        {
+          "command": "memory-inspector.edit-current-selection",
+          "group": "actions@1",
           "when": "webviewId === memory-inspector.memory"
         }
       ]

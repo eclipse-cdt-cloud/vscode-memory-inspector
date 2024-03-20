@@ -121,7 +121,11 @@ export function areVariablesEqual(one: BigIntVariableRange, other: BigIntVariabl
         && one.type === other.type
         && one.value === other.value;
 }
-
+/**
+ * @param wordSize Size of an addressable unit in bits
+ *
+ * Computes the number of 8-bit bytes between two addresses
+ */
 export function toOffset(startAddress: bigint, targetAddress: bigint, wordSize: number): number {
     return Number(targetAddress - startAddress) * (wordSize / 8);
 }
