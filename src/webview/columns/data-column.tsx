@@ -14,19 +14,19 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-import * as React from 'react';
-import { BigIntMemoryRange, Endianness, isWithin, toHexStringWithRadixMarker, toOffset } from '../../common/memory-range';
-import { Disposable, FullNodeAttributes } from '../utils/view-types';
-import { ColumnContribution, TableRenderOptions } from './column-contribution-service';
-import { decorationService } from '../decorations/decoration-service';
-import type { MemorySizeOptions } from '../components/memory-table';
-import { elementInnerWidth, characterWidthInContainer } from '../utils/window';
-import { Memory } from '../../common/memory';
-import { HOST_EXTENSION } from 'vscode-messenger-common';
-import { messenger } from '../view-messenger';
-import { writeMemoryType } from '../../common/messaging';
 import { InputText } from 'primereact/inputtext';
+import * as React from 'react';
+import { HOST_EXTENSION } from 'vscode-messenger-common';
+import { Memory } from '../../common/memory';
+import { BigIntMemoryRange, Endianness, isWithin, toHexStringWithRadixMarker, toOffset } from '../../common/memory-range';
+import { writeMemoryType } from '../../common/messaging';
+import type { MemorySizeOptions } from '../components/memory-table';
+import { decorationService } from '../decorations/decoration-service';
 import { EventEmitter } from '../utils/events';
+import { Disposable, FullNodeAttributes } from '../utils/view-types';
+import { characterWidthInContainer, elementInnerWidth } from '../utils/window';
+import { messenger } from '../view-messenger';
+import { ColumnContribution, TableRenderOptions } from './column-contribution-service';
 
 function getSelectionEdit(): BigIntMemoryRange | undefined {
     const selectionRange = document.getSelection();
