@@ -35,6 +35,24 @@ A Visual Studio Code extension that provides a powerful and configurable memory 
 Use the gear symbol in each memory view to customize the individual settings like columns, grouping, and formats.
 Default settings can be adjusted in the VS Code settings of this extension.
 
+### Memory Format Settings
+
+The Memory Format settings allow to configure how data that is read from the target system is interpreted and displayed.
+Use the following to retarget the view to your needs and the inspected memory architecture:
+
+1. **Bytes per MAU**: The number of *Bytes* that form the Minimum Addressable Unit. It commonly is fixed number for a specific target hardware. Use for example a value of `1` for byte-addressable architectures.
+2. **MAUs per Group**: The number of *MAUs* that form a *Group* considering the selected *Endianess*. Use for example a value of `2` to form a 4-byte value consisting of `2` 2-byte MAUs.
+3. **Groups per Row**: Number of *Groups* to display in a row. This can be a fixed number of *Groups*. Or the value `Autofit` to let the Memory Inspector calculate the best utilization of space in the `Data` column.
+4. **Group Endianess**: The order of *MAUs* within a *Group*. The value can be `Little Endian` or `Big Endian`.
+
+The following terminology is used:
+
+- **Byte**: A data unit of 8 Bits.
+- **MAU (Minimum Addressable Unit)**: A Minimum Addressable Unit of memory. It consists of one or more *Bytes* represented by a single address.
+- **Group**: A group of *MAUs* that forms a data value. *Groups* are the Memory Inspector's default granularity to edit memory contents.
+- **Row**: A row in the Memory Inspector display containing multiple *Groups*.
+- **Endianess**: The order of displaying *MAUs* within a *Group*.
+
 ## Contributing
 
 We welcome contributions on [GitHub](https://github.com/eclipse-cdt-cloud/vscode-memory-inspector).
