@@ -42,12 +42,7 @@ export class MemoryProvider {
 
     protected readonly sessionDebugCapabilities = new Map<string, DebugProtocol.Capabilities | undefined>();
     protected readonly sessionClientCapabilities = new Map<string, DebugProtocol.InitializeRequestArguments | undefined>();
-
-    /**
-     * Debug adapters can use the 'memory' event to indicate that the contents of a memory range has changed due to some request but do not specify which requests.
-     * We therefore track explicitly whether the debug adapter actually sends 'memory' events to know whether we should mimic the event ourselves.
-     */
-    protected adapterSupportsMemoryEvent = false;
+    protected scheduledOnDidMemoryWriteEvents: { [memoryReference: string]: ((response: WriteMemoryResult) => void) | undefined } = {};
 
     constructor(protected adapterRegistry: AdapterRegistry) {
     }
@@ -76,7 +71,7 @@ export class MemoryProvider {
                     } else if (isDebugEvent('stopped', message)) {
                         this._onDidStopDebug.fire(session);
                     } else if (isDebugEvent('memory', message)) {
-                        this.adapterSupportsMemoryEvent = true;
+                        delete this.scheduledOnDidMemoryWriteEvents[message.body.memoryReference];
                         this._onDidWriteMemory.fire(message.body);
                     }
                     contributedTracker?.onDidSendMessage?.(message);
@@ -154,14 +149,18 @@ export class MemoryProvider {
 
     public async writeMemory(args: DebugProtocol.WriteMemoryArguments): Promise<WriteMemoryResult> {
         const session = this.assertCapability('supportsWriteMemoryRequest', 'write memory');
+        // Schedule a emit in case we don't retrieve a memory event
+        this.scheduledOnDidMemoryWriteEvents[args.memoryReference] = response => {
+            // We only send out a custom event if we don't expect the client to handle the memory event
+            // since our client is VS Code we can assume that they will always support this but better to be safe
+            const offset = response?.offset ? (args.offset ?? 0) + response.offset : args.offset;
+            const count = response?.bytesWritten ?? stringToBytesMemory(args.data).length;
+            this._onDidWriteMemory.fire({ memoryReference: args.memoryReference, offset, count });
+        };
+
         return sendRequest(session, 'writeMemory', args).then(response => {
-            if (!this.adapterSupportsMemoryEvent || !this.hasClientCapabilitiy(session, 'supportsMemoryEvent')) {
-                // we only send out a custom event if we don't expect the client to handle the memory event
-                // since our client is VS Code we can assume that they will always support this but better to be safe
-                const offset = response?.offset ? (args.offset ?? 0) + response.offset : args.offset;
-                const count = response?.bytesWritten ?? stringToBytesMemory(args.data).length;
-                this._onDidWriteMemory.fire({ memoryReference: args.memoryReference, offset, count });
-            }
+            // The memory event is handled before we got here, if the scheduled event still exists, we need to handle it
+            this.scheduledOnDidMemoryWriteEvents[args.memoryReference]?.(response);
             return response;
         });
     }

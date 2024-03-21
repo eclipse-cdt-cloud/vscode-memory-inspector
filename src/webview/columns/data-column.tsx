@@ -219,7 +219,7 @@ export class EditableDataColumnRow extends React.Component<EditableDataColumnRow
         const characters = toOffset(editedRange.startAddress, editedRange.endAddress, this.props.options.bytesPerWord * 8) * 2;
         // Revert Endianness
         if (this.props.options.endianness === Endianness.Little) {
-            const chunks = data.padStart(characters, '0').match(/.{1,2}/g) || [];
+            const chunks = data.padStart(characters, '0').match(/.{2}/g) || [];
             return chunks.reverse().join('');
         }
 
