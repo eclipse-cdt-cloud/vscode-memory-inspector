@@ -2,7 +2,7 @@
 
 A Visual Studio Code extension that provides a powerful and configurable memory viewer that works with debug adapters.
 
-![Screenshot of the Memory Inspector](https://raw.githubusercontent.com/eclipse-cdt-cloud/vscode-memory-inspector/master/media/memory-inspector-screenshot.png)
+![Screenshot of the Memory Inspector](https://raw.githubusercontent.com/eclipse-cdt-cloud/vscode-memory-inspector/main/media/memory-inspector-screenshot.png)
 
 ## Features
 
