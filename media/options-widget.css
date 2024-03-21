@@ -137,3 +137,12 @@
   background-color: transparent;
   cursor: pointer;
 }
+
+.no-text-decoration {
+  text-decoration: none;
+}
+
+.option-help-icon {
+  color: var(--vscode-button-background);
+  margin-left: 0.2em;
+}

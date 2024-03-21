@@ -255,7 +255,7 @@
           "default": "on",
           "description": "Refresh memory views when debugger stops"
         },
-        "memory-inspector.groupings.bytesPerWord": {
+        "memory-inspector.groupings.bytesPerMAU": {
           "type": "number",
           "enum": [
             1,
@@ -265,9 +265,9 @@
             16
           ],
           "default": 1,
-          "description": "Default bytes per word"
+          "description": "Default bytes per MAU (Minimum Addressable Unit)"
         },
-        "memory-inspector.groupings.wordsPerGroup": {
+        "memory-inspector.groupings.MAUsPerGroup": {
           "type": "number",
           "enum": [
             1,
@@ -277,7 +277,7 @@
             16
           ],
           "default": 1,
-          "description": "Default words per group"
+          "description": "Default MAUs (Minimum Addressable Units) per group"
         },
         "memory-inspector.groupings.groupsPerRow": {
           "type": [

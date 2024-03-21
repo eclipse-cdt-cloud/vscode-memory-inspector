@@ -23,20 +23,20 @@ export class VariableHover implements HoverContribution {
     priority = 0;
 
     async render(
-        { columnId, bytesPerWord, extraData }: MemoryDetails,
+        { columnId, bytesPerMau, extraData }: MemoryDetails,
     ): Promise<React.ReactNode> {
         if (columnId !== 'variables') { return; }
 
         const { type, startAddress, endAddress, name } = extraData as VariableRange;
         const start = '0x' + parseInt(startAddress).toString(16);
         const end = '0x' + parseInt(endAddress || '0').toString(16);
-        const words = (startAddress && endAddress) ? parseInt(endAddress) - parseInt(startAddress) : undefined;
-        const bytes = words ? words * bytesPerWord : undefined;
+        const maus = (startAddress && endAddress) ? parseInt(endAddress) - parseInt(startAddress) : undefined;
+        const bytes = maus ? maus * bytesPerMau : undefined;
 
         const hoverItem = (
             <table className='variable-hover'>
                 <caption className='variable-hover-name'>{name}</caption>
-                {Object.entries({ type, start, end, words, bytes }).map(([label, value]) =>
+                {Object.entries({ type, start, end, MAUs: maus, bytes }).map(([label, value]) =>
                     value
                         ? <tr className='label-value-pair'>
                             <td className={`label ${label}`}>{label}</td>

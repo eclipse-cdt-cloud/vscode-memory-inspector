@@ -255,8 +255,8 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
 
     protected getMemoryViewSettings(messageParticipant: WebviewIdMessageParticipant, title: string): MemoryViewSettings {
         const memoryInspectorConfiguration = vscode.workspace.getConfiguration(manifest.PACKAGE_NAME);
-        const bytesPerWord = memoryInspectorConfiguration.get<number>(manifest.CONFIG_BYTES_PER_WORD, manifest.DEFAULT_BYTES_PER_WORD);
-        const wordsPerGroup = memoryInspectorConfiguration.get<number>(manifest.CONFIG_WORDS_PER_GROUP, manifest.DEFAULT_WORDS_PER_GROUP);
+        const bytesPerMau = memoryInspectorConfiguration.get<number>(manifest.CONFIG_BYTES_PER_MAU, manifest.DEFAULT_BYTES_PER_MAU);
+        const mausPerGroup = memoryInspectorConfiguration.get<number>(manifest.CONFIG_MAUS_PER_GROUP, manifest.DEFAULT_MAUS_PER_GROUP);
         const groupsPerRow = memoryInspectorConfiguration.get<manifest.GroupsPerRowOption>(manifest.CONFIG_GROUPS_PER_ROW, manifest.DEFAULT_GROUPS_PER_ROW);
         const endianness = memoryInspectorConfiguration.get<Endianness>(manifest.CONFIG_ENDIANNESS, manifest.DEFAULT_ENDIANNESS);
         const scrollingBehavior = memoryInspectorConfiguration.get<ScrollingBehavior>(manifest.CONFIG_SCROLLING_BEHAVIOR, manifest.DEFAULT_SCROLLING_BEHAVIOR);
@@ -267,7 +267,7 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
         const addressRadix = memoryInspectorConfiguration.get<number>(manifest.CONFIG_ADDRESS_RADIX, manifest.DEFAULT_ADDRESS_RADIX);
         const showRadixPrefix = memoryInspectorConfiguration.get<boolean>(manifest.CONFIG_SHOW_RADIX_PREFIX, manifest.DEFAULT_SHOW_RADIX_PREFIX);
         return {
-            messageParticipant, title, bytesPerWord, wordsPerGroup, groupsPerRow,
+            messageParticipant, title, bytesPerMau, mausPerGroup, groupsPerRow,
             endianness, scrollingBehavior, visibleColumns, addressPadding, addressRadix, showRadixPrefix
         };
     }

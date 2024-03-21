@@ -87,8 +87,8 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 configuredReadArguments={this.props.configuredReadArguments}
                 activeReadArguments={this.props.activeReadArguments}
                 endianness={this.props.endianness}
-                bytesPerWord={this.props.bytesPerWord}
-                wordsPerGroup={this.props.wordsPerGroup}
+                bytesPerMau={this.props.bytesPerMau}
+                mausPerGroup={this.props.mausPerGroup}
                 groupsPerRow={this.props.groupsPerRow}
                 updateMemoryState={this.props.updateMemoryState}
                 updateRenderOptions={this.props.updateMemoryDisplayConfiguration}
@@ -112,8 +112,8 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 columnOptions={this.props.columns.filter(candidate => candidate.active)}
                 memory={this.props.memory}
                 endianness={this.props.endianness}
-                bytesPerWord={this.props.bytesPerWord}
-                wordsPerGroup={this.props.wordsPerGroup}
+                bytesPerMau={this.props.bytesPerMau}
+                mausPerGroup={this.props.mausPerGroup}
                 groupsPerRow={this.props.groupsPerRow}
                 effectiveAddressLength={this.props.effectiveAddressLength}
                 fetchMemory={this.props.fetchMemory}

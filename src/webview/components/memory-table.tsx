@@ -142,8 +142,8 @@ interface MemoryTableProps extends TableRenderOptions, MemoryDisplayConfiguratio
 
 interface MemoryRowListOptions {
     numRows: number;
-    wordsPerRow: number;
-    bigWordsPerRow: bigint;
+    mausPerRow: number;
+    bigMausPerRow: bigint;
 }
 
 interface MemoryRowData {
@@ -165,14 +165,14 @@ interface MemoryTableState {
     hoverContent: React.ReactNode;
 }
 
-export type MemorySizeOptions = Pick<MemoryTableProps, 'bytesPerWord' | 'wordsPerGroup'> & { groupsPerRow: number };
+export type MemorySizeOptions = Pick<MemoryTableProps, 'bytesPerMau' | 'mausPerGroup'> & { groupsPerRow: number };
 export namespace MemorySizeOptions {
     export function create(props: MemoryTableProps, state: MemoryTableState): MemorySizeOptions {
-        const { bytesPerWord, wordsPerGroup } = props;
+        const { bytesPerMau, mausPerGroup } = props;
         return {
-            bytesPerWord,
+            bytesPerMau,
             groupsPerRow: tryToNumber(props.groupsPerRow) ?? state.groupsPerRowToRender,
-            wordsPerGroup
+            mausPerGroup
         };
     }
 }
@@ -234,7 +234,7 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
             || prevProps.activeReadArguments.offset !== this.props.activeReadArguments.offset
             || prevProps.activeReadArguments.count !== this.props.activeReadArguments.count;
 
-        const hasOptionsChanged = prevProps.wordsPerGroup !== this.props.wordsPerGroup || prevProps.groupsPerRow !== this.props.groupsPerRow;
+        const hasOptionsChanged = prevProps.mausPerGroup !== this.props.mausPerGroup || prevProps.groupsPerRow !== this.props.groupsPerRow;
 
         // Reset selection
         const selection = this.state.selection;
@@ -388,7 +388,7 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
         if (!this.isLoading && this.props.memory !== undefined) {
             const memorySizeOptions = MemorySizeOptions.create(this.props, this.state);
             const options = this.createMemoryRowListOptions(this.props.memory, memorySizeOptions);
-            const newCount = this.props.activeReadArguments.count + options.wordsPerRow * MemoryTable.renderableRowsAtOnceCountForWrapper(this.datatableWrapper);
+            const newCount = this.props.activeReadArguments.count + options.mausPerRow * MemoryTable.renderableRowsAtOnceCountForWrapper(this.datatableWrapper);
             this.props.fetchMemory({ count: newCount });
         }
     }
@@ -510,7 +510,7 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
     protected createTableRows = memoize((memory: Memory, options: MemoryRowListOptions): MemoryRowData[] => {
         const rows: MemoryRowData[] = [];
         for (let i = 0; i < options.numRows; i++) {
-            const startAddress = memory.address + options.bigWordsPerRow * BigInt(i);
+            const startAddress = memory.address + options.bigMausPerRow * BigInt(i);
             rows.push(this.createMemoryRow(i, startAddress, options));
         }
 
@@ -518,22 +518,18 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
     }, isDeepEqual);
 
     protected createMemoryRowListOptions(memory: Memory, options: MemorySizeOptions): MemoryRowListOptions {
-        const wordsPerRow = options.wordsPerGroup * options.groupsPerRow;
-        const numRows = Math.ceil((memory.bytes.length) / (wordsPerRow * options.bytesPerWord));
-        const bigWordsPerRow = BigInt(wordsPerRow);
+        const mausPerRow = options.mausPerGroup * options.groupsPerRow;
+        const numRows = Math.ceil((memory.bytes.length) / (mausPerRow * options.bytesPerMau));
+        const bigMausPerRow = BigInt(mausPerRow);
 
-        return {
-            numRows,
-            wordsPerRow,
-            bigWordsPerRow
-        };
+        return { numRows, mausPerRow, bigMausPerRow };
     };
 
     protected createMemoryRow(rowIndex: number, startAddress: bigint, memoryTableOptions: MemoryRowListOptions): MemoryRowData {
         return {
             rowIndex,
             startAddress,
-            endAddress: startAddress + memoryTableOptions.bigWordsPerRow
+            endAddress: startAddress + memoryTableOptions.bigMausPerRow
         };
     }
 

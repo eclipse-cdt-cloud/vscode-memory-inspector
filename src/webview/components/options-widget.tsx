@@ -26,7 +26,7 @@ import { validateCount, validateMemoryReference, validateOffset } from '../../co
 import { Endianness } from '../../common/memory-range';
 import { MemoryOptions, ReadMemoryArguments, SessionContext } from '../../common/messaging';
 import { tryToNumber } from '../../common/typescript';
-import { CONFIG_BYTES_PER_WORD_CHOICES, CONFIG_GROUPS_PER_ROW_CHOICES, CONFIG_WORDS_PER_GROUP_CHOICES } from '../../plugin/manifest';
+import { CONFIG_BYTES_PER_MAU_CHOICES, CONFIG_GROUPS_PER_ROW_CHOICES, CONFIG_MAUS_PER_GROUP_CHOICES } from '../../plugin/manifest';
 import { TableRenderOptions } from '../columns/column-contribution-service';
 import { AddressPaddingOptions, MemoryState, SerializedTableRenderOptions } from '../utils/view-types';
 import { createSectionVscodeContext } from '../utils/vscode-contexts';
@@ -58,8 +58,8 @@ const enum InputId {
     Address = 'address',
     Offset = 'offset',
     Length = 'length',
-    BytesPerWord = 'word-size',
-    WordsPerGroup = 'words-per-group',
+    BytesPerMau = 'mau-size',
+    MausPerGroup = 'maus-per-group',
     GroupsPerRow = 'groups-per-row',
     EndiannessId = 'endianness',
     AddressPadding = 'address-padding',
@@ -304,31 +304,38 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                 />
                             )}
 
-                            <h2>Memory Format</h2>
+                            <h2>Memory Format
+                                <a
+                                    href='https://github.com/eclipse-cdt-cloud/vscode-memory-inspector?tab=readme-ov-file#memory-format-settings'
+                                    className='no-text-decoration'
+                                >
+                                    <span className='codicon codicon-question option-help-icon'></span>
+                                </a>
+                            </h2>
                             <label
-                                htmlFor={InputId.BytesPerWord}
+                                htmlFor={InputId.BytesPerMau}
                                 className='advanced-options-label mt-1'
                             >
-                                Bytes per Word
+                                Bytes per <abbr className='no-text-decoration' title='Minimum Addressable Unit'>MAU</abbr>
                             </label>
                             <Dropdown
-                                id={InputId.BytesPerWord}
-                                value={this.props.bytesPerWord}
+                                id={InputId.BytesPerMau}
+                                value={this.props.bytesPerMau}
                                 onChange={this.handleAdvancedOptionsDropdownChange}
-                                options={[...CONFIG_BYTES_PER_WORD_CHOICES]}
+                                options={[...CONFIG_BYTES_PER_MAU_CHOICES]}
                                 className='advanced-options-dropdown' />
 
                             <label
-                                htmlFor={InputId.WordsPerGroup}
+                                htmlFor={InputId.MausPerGroup}
                                 className='advanced-options-label mt-1'
                             >
-                                Words per Group
+                                <abbr className='no-text-decoration' title='Minimum Addressable Units'>MAUs</abbr> per Group
                             </label>
                             <Dropdown
-                                id={InputId.WordsPerGroup}
-                                value={this.props.wordsPerGroup}
+                                id={InputId.MausPerGroup}
+                                value={this.props.mausPerGroup}
                                 onChange={this.handleAdvancedOptionsDropdownChange}
-                                options={[...CONFIG_WORDS_PER_GROUP_CHOICES]}
+                                options={[...CONFIG_MAUS_PER_GROUP_CHOICES]}
                                 className='advanced-options-dropdown' />
                             <label
                                 htmlFor={InputId.GroupsPerRow}
@@ -466,11 +473,11 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
         const id = event.target.id as InputId;
         const value = event.target.value;
         switch (id) {
-            case InputId.BytesPerWord:
-                this.props.updateRenderOptions({ bytesPerWord: Number(value) });
+            case InputId.BytesPerMau:
+                this.props.updateRenderOptions({ bytesPerMau: Number(value) });
                 break;
-            case InputId.WordsPerGroup:
-                this.props.updateRenderOptions({ wordsPerGroup: Number(value) });
+            case InputId.MausPerGroup:
+                this.props.updateRenderOptions({ mausPerGroup: Number(value) });
                 break;
             case InputId.GroupsPerRow:
                 this.props.updateRenderOptions({ groupsPerRow: tryToNumber(value) ?? value });

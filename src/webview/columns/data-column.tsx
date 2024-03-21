@@ -41,30 +41,30 @@ export class DataColumn implements ColumnContribution {
 
     protected renderGroups(range: BigIntMemoryRange, memory: Memory, options: TableRenderOptions): React.ReactNode {
         const groups = [];
-        let words: React.ReactNode[] = [];
+        let maus: React.ReactNode[] = [];
         for (let address = range.startAddress; address < range.endAddress; address++) {
-            words.push(this.renderWord(memory, options, address));
-            if (words.length % options.wordsPerGroup === 0) {
-                this.applyEndianness(words, options);
+            maus.push(this.renderMau(memory, options, address));
+            if (maus.length % options.mausPerGroup === 0) {
+                this.applyEndianness(maus, options);
                 const isLast = address + 1n >= range.endAddress;
                 const style: React.CSSProperties | undefined = isLast ? undefined : this.byteGroupStyle;
-                groups.push(<span className='byte-group hoverable' data-column='data' style={style} key={address.toString(16)}>{words}</span>);
-                words = [];
+                groups.push(<span className='byte-group hoverable' data-column='data' style={style} key={address.toString(16)}>{maus}</span>);
+                maus = [];
             }
         }
-        if (words.length) { groups.push(<span className='byte-group hoverable' data-column='data' key={(range.endAddress - BigInt(words.length)).toString(16)}>{words}</span>); }
+        if (maus.length) { groups.push(<span className='byte-group hoverable' data-column='data' key={(range.endAddress - BigInt(maus.length)).toString(16)}>{maus}</span>); }
         return groups;
     }
 
-    protected renderWord(memory: Memory, options: TableRenderOptions, currentAddress: bigint): React.ReactNode {
-        const initialOffset = toOffset(memory.address, currentAddress, options.bytesPerWord * 8);
-        const finalOffset = initialOffset + options.bytesPerWord;
+    protected renderMau(memory: Memory, options: TableRenderOptions, currentAddress: bigint): React.ReactNode {
+        const initialOffset = toOffset(memory.address, currentAddress, options.bytesPerMau * 8);
+        const finalOffset = initialOffset + options.bytesPerMau;
         const bytes: React.ReactNode[] = [];
         for (let i = initialOffset; i < finalOffset; i++) {
             bytes.push(this.renderEightBits(memory, currentAddress, i));
         }
         this.applyEndianness(bytes, options);
-        return <span className='single-word' key={currentAddress.toString(16)}>{bytes}</span>;
+        return <span className='single-mau' key={currentAddress.toString(16)}>{bytes}</span>;
     }
 
     protected applyEndianness<T>(group: T[], options: TableRenderOptions): T[] {
@@ -118,8 +118,8 @@ export namespace DataColumn {
         const charactersWidth = Math.round((characterWidthInContainer(element, '0') + Number.EPSILON) * 100) / 100;
         const groupWidth = charactersWidth
             * 2 // characters per byte
-            * options.bytesPerWord
-            * options.wordsPerGroup
+            * options.bytesPerMau
+            * options.mausPerGroup
             + Styles.MARGIN_RIGHT_PX;
         // Accommodate the non-existent margin of the final element.
         const maxGroups = Math.max((columnWidth + Styles.MARGIN_RIGHT_PX) / groupWidth, 1);
