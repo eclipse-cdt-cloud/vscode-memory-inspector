@@ -27,6 +27,10 @@
   white-space: nowrap;
 }
 
+.memory-inspector-table .column-data .byte-group.editable:hover {
+  border-bottom: 1px dotted var(--vscode-editorHoverWidget-border);
+}
+
 /* == MoreMemorySelect == */
 
 .bytes-select {
