@@ -166,7 +166,11 @@ export class EditableDataColumnRow extends React.Component<EditableDataColumnRow
         const bitsPerWord = this.props.options.bytesPerWord * 8;
         const startOffset = toOffset(this.props.memory.address, editedRange.startAddress, bitsPerWord);
         const numBytes = toOffset(editedRange.startAddress, editedRange.endAddress, bitsPerWord);
-        return Array.from(this.props.memory.bytes.slice(startOffset, startOffset + numBytes)).map(byte => byte.toString(16).padStart(2, '0')).join('');
+
+        const area = Array.from(this.props.memory.bytes.slice(startOffset, startOffset + numBytes));
+        this.applyEndianness(area, this.props.options);
+
+        return area.map(byte => byte.toString(16).padStart(2, '0')).join('');
     }
 
     protected onBlur: React.FocusEventHandler<HTMLInputElement> = () => {
@@ -201,11 +205,10 @@ export class EditableDataColumnRow extends React.Component<EditableDataColumnRow
     protected async submitChanges(): Promise<void> {
         if (!this.inputText.current || !this.state.editedRange) { return; }
 
-        const newData = this.processData(this.inputText.current.value, this.state.editedRange);
         const originalData = this.createEditingGroupDefaultValue(this.state.editedRange);
-
-        if (originalData !== newData) {
-            const converted = Buffer.from(newData, 'hex').toString('base64');
+        if (originalData !== this.inputText.current.value) {
+            const newMemoryValue = this.processData(this.inputText.current.value, this.state.editedRange);
+            const converted = Buffer.from(newMemoryValue, 'hex').toString('base64');
             await messenger.sendRequest(writeMemoryType, HOST_EXTENSION, {
                 memoryReference: toHexStringWithRadixMarker(this.state.editedRange.startAddress),
                 data: converted
