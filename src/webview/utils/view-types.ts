@@ -81,8 +81,8 @@ export interface MemoryViewSettings extends ColumnVisibilityStatus, MemoryDispla
 
 /** The memory display configuration that can be specified for the memory widget. */
 export interface MemoryDisplayConfiguration {
-    bytesPerWord: number;
-    wordsPerGroup: number;
+    bytesPerMau: number;
+    mausPerGroup: number;
     groupsPerRow: GroupsPerRowOption;
     endianness: Endianness;
     scrollingBehavior: ScrollingBehavior;

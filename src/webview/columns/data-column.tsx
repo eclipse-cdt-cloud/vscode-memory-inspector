@@ -62,27 +62,27 @@ export class EditableDataColumnRow extends React.Component<EditableDataColumnRow
     protected renderGroups(): React.ReactNode {
         const { range, options, memory } = this.props;
         const groups = [];
-        let words: React.ReactNode[] = [];
+        let maus: React.ReactNode[] = [];
         let address = range.startAddress;
         let groupStartAddress = address;
         while (address < range.endAddress) {
-            words.push(this.renderWord(memory, options, address));
+            maus.push(this.renderMau(memory, options, address));
             const next = address + 1n;
-            if (words.length % options.wordsPerGroup === 0) {
-                this.applyEndianness(words, options);
+            if (maus.length % options.mausPerGroup === 0) {
+                this.applyEndianness(maus, options);
                 const isLast = next >= range.endAddress;
                 const style: React.CSSProperties | undefined = isLast ? undefined : DataColumn.Styles.byteGroupStyle;
-                groups.push(this.renderGroup(words, groupStartAddress, next, style));
+                groups.push(this.renderGroup(maus, groupStartAddress, next, style));
                 groupStartAddress = next;
-                words = [];
+                maus = [];
             }
             address = next;
         }
-        if (words.length) { groups.push(this.renderGroup(words, groupStartAddress, range.endAddress)); }
+        if (maus.length) { groups.push(this.renderGroup(maus, groupStartAddress, range.endAddress)); }
         return groups;
     }
 
-    protected renderGroup(words: React.ReactNode, startAddress: bigint, endAddress: bigint, style?: React.CSSProperties): React.ReactNode {
+    protected renderGroup(maus: React.ReactNode, startAddress: bigint, endAddress: bigint, style?: React.CSSProperties): React.ReactNode {
         return <span
             className='byte-group hoverable'
             data-column='data'
@@ -91,24 +91,24 @@ export class EditableDataColumnRow extends React.Component<EditableDataColumnRow
             key={startAddress.toString(16)}
             onDoubleClick={this.setGroupEdit}
         >
-            {words}
+            {maus}
         </span>;
     }
 
-    protected renderWord(memory: Memory, options: TableRenderOptions, currentAddress: bigint): React.ReactNode {
+    protected renderMau(memory: Memory, options: TableRenderOptions, currentAddress: bigint): React.ReactNode {
         if (currentAddress === this.state.editedRange?.startAddress) {
             return this.renderEditingGroup(this.state.editedRange);
         } else if (this.state.editedRange && isWithin(currentAddress, this.state.editedRange)) {
             return;
         }
-        const initialOffset = toOffset(memory.address, currentAddress, options.bytesPerWord * 8);
-        const finalOffset = initialOffset + options.bytesPerWord;
+        const initialOffset = toOffset(memory.address, currentAddress, options.bytesPerMau * 8);
+        const finalOffset = initialOffset + options.bytesPerMau;
         const bytes: React.ReactNode[] = [];
         for (let i = initialOffset; i < finalOffset; i++) {
             bytes.push(this.renderEightBits(memory, currentAddress, i));
         }
         this.applyEndianness(bytes, options);
-        return <span className='single-word' data-address={currentAddress.toString()} key={currentAddress.toString(16)}>{bytes}</span>;
+        return <span className='single-mau' data-address={currentAddress.toString()} key={currentAddress.toString(16)}>{bytes}</span>;
     }
 
     protected renderEightBits(memory: Memory, currentAddress: bigint, offset: number): React.ReactNode {
@@ -163,9 +163,9 @@ export class EditableDataColumnRow extends React.Component<EditableDataColumnRow
     }
 
     protected createEditingGroupDefaultValue(editedRange: BigIntMemoryRange): string {
-        const bitsPerWord = this.props.options.bytesPerWord * 8;
-        const startOffset = toOffset(this.props.memory.address, editedRange.startAddress, bitsPerWord);
-        const numBytes = toOffset(editedRange.startAddress, editedRange.endAddress, bitsPerWord);
+        const bitsPerMau = this.props.options.bytesPerMau * 8;
+        const startOffset = toOffset(this.props.memory.address, editedRange.startAddress, bitsPerMau);
+        const numBytes = toOffset(editedRange.startAddress, editedRange.endAddress, bitsPerMau);
 
         const area = Array.from(this.props.memory.bytes.slice(startOffset, startOffset + numBytes));
         this.applyEndianness(area, this.props.options);
@@ -219,7 +219,7 @@ export class EditableDataColumnRow extends React.Component<EditableDataColumnRow
     }
 
     protected processData(data: string, editedRange: BigIntMemoryRange): string {
-        const characters = toOffset(editedRange.startAddress, editedRange.endAddress, this.props.options.bytesPerWord * 8) * 2;
+        const characters = toOffset(editedRange.startAddress, editedRange.endAddress, this.props.options.bytesPerMau * 8) * 2;
         // Revert Endianness
         if (this.props.options.endianness === Endianness.Little) {
             const chunks = data.padStart(characters, '0').match(/.{2}/g) || [];
@@ -257,8 +257,8 @@ export namespace DataColumn {
         const charactersWidth = Math.round((characterWidthInContainer(element, '0') + Number.EPSILON) * 100) / 100;
         const groupWidth = charactersWidth
             * 2 // characters per byte
-            * options.bytesPerWord
-            * options.wordsPerGroup
+            * options.bytesPerMau
+            * options.mausPerGroup
             + Styles.MARGIN_RIGHT_PX;
         // Accommodate the non-existent margin of the final element.
         const maxGroups = Math.max((columnWidth + Styles.MARGIN_RIGHT_PX) / groupWidth, 1);

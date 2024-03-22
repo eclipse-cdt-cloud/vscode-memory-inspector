@@ -72,8 +72,8 @@ const DEFAULT_SESSION_CONTEXT: SessionContext = {
 };
 
 const MEMORY_DISPLAY_CONFIGURATION_DEFAULTS: MemoryDisplayConfiguration = {
-    bytesPerWord: 1,
-    wordsPerGroup: 1,
+    bytesPerMau: 1,
+    mausPerGroup: 1,
     groupsPerRow: 4,
     endianness: Endianness.Little,
     scrollingBehavior: 'Paginate',
@@ -163,7 +163,7 @@ class App extends React.Component<{}, MemoryAppState> {
         try {
             // If we are dealing with numeric addresses (and not expressions) then we can determine the overlap.
             // Note that we use big int arithmetic here to determine the overlap for (start address + length) vs (memory state address + length), i.e.,
-            // we do not actually determine the end address may need to consider the size of a word in bytes
+            // we do not actually determine the end address may need to consider the size of a MAU in bytes
             const written: BigIntMemoryRange = {
                 startAddress: BigInt(writtenMemory.memoryReference),
                 endAddress: BigInt(writtenMemory.memoryReference) + BigInt(writtenMemory.count ?? 0)
@@ -212,10 +212,10 @@ class App extends React.Component<{}, MemoryAppState> {
                 isFrozen={this.state.isFrozen}
                 fetchMemory={this.fetchMemory}
                 isMemoryFetching={this.state.isMemoryFetching}
-                bytesPerWord={this.state.bytesPerWord}
+                bytesPerMau={this.state.bytesPerMau}
                 groupsPerRow={this.state.groupsPerRow}
                 endianness={this.state.endianness}
-                wordsPerGroup={this.state.wordsPerGroup}
+                mausPerGroup={this.state.mausPerGroup}
                 scrollingBehavior={this.state.scrollingBehavior}
                 addressPadding={this.state.addressPadding}
                 addressRadix={this.state.addressRadix}
@@ -300,7 +300,7 @@ class App extends React.Component<{}, MemoryAppState> {
         if (memory === undefined || this.state.groupsPerRow === 'Autofit') {
             return 0;
         }
-        const rowLength = this.state.bytesPerWord * this.state.wordsPerGroup * this.state.groupsPerRow;
+        const rowLength = this.state.bytesPerMau * this.state.mausPerGroup * this.state.groupsPerRow;
         const rows = Math.ceil(memory.bytes.length / rowLength);
         const finalAddress = memory.address + BigInt(((rows - 1) * rowLength));
         return getAddressString(finalAddress, this.state.addressRadix).length;

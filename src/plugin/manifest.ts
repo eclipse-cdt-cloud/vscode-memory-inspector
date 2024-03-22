@@ -29,16 +29,16 @@ export const DEFAULT_DEBUG_TYPES = ['gdb', 'embedded-debug', 'arm-debugger'];
 export const CONFIG_REFRESH_ON_STOP = 'refreshOnStop';
 export const DEFAULT_REFRESH_ON_STOP = 'on';
 
-// Words
-// - Bytes per Word
-export const CONFIG_BYTES_PER_WORD = 'groupings.bytesPerWord';
-export const CONFIG_BYTES_PER_WORD_CHOICES = [1, 2, 4, 8, 16] as const;
-export const DEFAULT_BYTES_PER_WORD = 1;
+// MAUs (Minimum Addressable Units)
+// - Bytes per MAU
+export const CONFIG_BYTES_PER_MAU = 'groupings.bytesPerMAU';
+export const CONFIG_BYTES_PER_MAU_CHOICES = [1, 2, 4, 8, 16] as const;
+export const DEFAULT_BYTES_PER_MAU = 1;
 
-// - Words per Group
-export const CONFIG_WORDS_PER_GROUP = 'groupings.wordsPerGroup';
-export const CONFIG_WORDS_PER_GROUP_CHOICES = [1, 2, 4, 8, 16] as const;
-export const DEFAULT_WORDS_PER_GROUP = 1;
+// - MAU per Group
+export const CONFIG_MAUS_PER_GROUP = 'groupings.MAUsPerGroup';
+export const CONFIG_MAUS_PER_GROUP_CHOICES = [1, 2, 4, 8, 16] as const;
+export const DEFAULT_MAUS_PER_GROUP = 1;
 
 // - Groups per Row
 export const CONFIG_GROUPS_PER_ROW = 'groupings.groupsPerRow';
