@@ -40,7 +40,7 @@ Default settings can be adjusted in the VS Code settings of this extension.
 The Memory Format settings allow to configure how data that is read from the target system is interpreted and displayed.
 Use the following to retarget the view to your needs and the inspected memory architecture:
 
-1. **Bytes per MAU**: The number of *Bytes* that form the Minimum Addressable Unit. It commonly is fixed number for a specific target hardware. Use for example a value of `1` for byte-addressable architectures.
+1. **Bytes per MAU**: The number of *Bytes* that form the Minimum Addressable Unit. It commonly is a fixed number for a specific target hardware. Use for example a value of `1` for byte-addressable architectures.
 2. **MAUs per Group**: The number of *MAUs* that form a *Group* considering the selected *Endianess*. Use for example a value of `2` to form a 4-byte value consisting of `2` 2-byte MAUs.
 3. **Groups per Row**: Number of *Groups* to display in a row. This can be a fixed number of *Groups*. Or the value `Autofit` to let the Memory Inspector calculate the best utilization of space in the `Data` column.
 4. **Group Endianess**: The order of *MAUs* within a *Group*. The value can be `Little Endian` or `Big Endian`.
