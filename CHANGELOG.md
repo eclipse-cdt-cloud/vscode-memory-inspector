@@ -8,7 +8,7 @@
 - Changed Memory Inspector `Output` channel to only show on first log message.
 - Changed usage of `Word` to `MAU (Minimum Addressable Unit)` to honor the different meaning of `Word` in different memory architectures.
 - Changed `Infinite` scrolling option to `Grow` to remove confusion about its meaning.
-- Changed used GUI framework library to [Primereact](https://primereact.org/).
+- Changed GUI framework library to [Primereact](https://primereact.org/).
 - Added Memory Inspector **window instance renaming**.
 - Added Memory Inspector **table column resizing**.
 - Added hover-over tooltip **display of common data representations**.
