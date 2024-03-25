@@ -1,9 +1,8 @@
 {
   "name": "memory-inspector",
   "displayName": "Memory Inspector",
-  "description": "A set of widgets for viewing memory in different ways",
+  "description": "A powerful and configurable memory viewer that works with debug adapters",
   "version": "1.1.0",
-  "preview": true,
   "publisher": "eclipse-cdt",
   "author": "Rob Moran <rob.moran@arm.com>",
   "license": "EPL-2.0",
