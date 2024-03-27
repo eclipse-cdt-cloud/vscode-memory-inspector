@@ -44,9 +44,10 @@ export class CTracker extends AdapterVariableTracker {
         let variableAddress = extractAddress(variable.memoryReference);
         let variableSize: bigint | undefined = undefined;
         try {
+            const evaluateName = variable.evaluateName ?? variable.name;
             [variableAddress, variableSize] = await Promise.all([
-                variableAddress ?? this.getAddressOfVariable(variable.name, session),
-                this.getSizeOfVariable(variable.name, session)
+                variableAddress ?? this.getAddressOfVariable(evaluateName, session),
+                this.getSizeOfVariable(evaluateName, session)
             ]);
         } catch (err) {
             this.logger.warn('Unable to resolve location and size of', variable.name + (err instanceof Error ? ':\n\t' + err.message : ''));
