@@ -74,7 +74,7 @@ export class AdapterVariableTracker implements vscode.DebugAdapterTracker {
     onDidSendMessage(message: unknown): void {
         if (isDebugResponse('scopes', message)) {
             this.variablesTree = {}; // Scopes request implies that all scopes will be queried again.
-            for (const scope of message.body.scopes) {
+            for (const scope of message.body?.scopes) {
                 if (this.isDesiredScope(scope)) {
                     if (!this.variablesTree[scope.variablesReference] || this.variablesTree[scope.variablesReference].name !== scope.name) {
                         this.variablesTree[scope.variablesReference] = { ...scope };
@@ -86,7 +86,7 @@ export class AdapterVariableTracker implements vscode.DebugAdapterTracker {
                 const parentReference = this.pendingMessages.get(message.request_seq)!;
                 this.pendingMessages.delete(message.request_seq);
                 if (parentReference in this.variablesTree) {
-                    this.variablesTree[parentReference].children = message.body.variables;
+                    this.variablesTree[parentReference].children = message.body?.variables;
                 }
             }
         }

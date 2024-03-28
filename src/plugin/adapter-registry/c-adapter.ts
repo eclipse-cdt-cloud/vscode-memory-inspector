@@ -15,8 +15,8 @@
  ********************************************************************************/
 
 import * as vscode from 'vscode';
+import * as manifest from '../../common/manifest';
 import { outputChannelLogger } from '../logger';
-import * as manifest from '../manifest';
 import { VariableTracker } from './adapter-capabilities';
 import { AdapterRegistry } from './adapter-registry';
 import { CTracker } from './c-tracker';
