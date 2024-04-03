@@ -28,7 +28,24 @@ export interface VscodeContext {
 export type WebviewSection = 'optionsWidget' | 'advancedOptionsOverlay' | 'memoryTable';
 
 export function createVscodeContext<C extends {}>(context: C): VscodeContext {
-    return { 'data-vscode-context': JSON.stringify(context) };
+    return { 'data-vscode-context': JSON.stringify(includeFlatKeys(context)) };
+}
+
+function includeFlatKeys(src: object): Record<string, unknown> {
+    return { ...src, ...flattenKeys(src) };
+}
+
+// VSCode context cannot make use of nested keys in 'when' clauses.
+function flattenKeys(src: object, dst: Record<string, unknown> = {}, prefix = 'memory-inspector.'): Record<string, unknown> {
+    if (!src || typeof src !== 'object') { return dst; }
+    for (const [key, value] of Object.entries(src)) {
+        if (value && typeof value === 'object' && !Array.isArray(value)) {
+            flattenKeys(value, dst, `${prefix}${key}.`);
+        } else {
+            dst[`${prefix}${key}`] = value;
+        }
+    }
+    return dst;
 }
 
 export function createSectionVscodeContext(webviewSection: WebviewSection): VscodeContext {
@@ -44,7 +61,7 @@ export function createAppVscodeContext(context: Omit<WebviewContext, 'webviewSec
 }
 
 export function createVariableVscodeContext(variable: BigIntVariableRange): VscodeContext {
-    const { name, type, value } = variable;
-    return createVscodeContext({ variable: { name, type, value } });
+    const { name, type, value, isPointer } = variable;
+    return createVscodeContext({ variable: { name, type, value, isPointer } });
 }
 

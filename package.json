@@ -86,6 +86,11 @@
         "category": "Memory"
       },
       {
+        "command": "memory-inspector.follow-pointer",
+        "title": "Follow Pointer",
+        "category": "Memory"
+      },
+      {
         "command": "memory-inspector.toggle-variables-column",
         "title": "Toggle Variables Column",
         "category": "Memory",
@@ -199,6 +204,11 @@
           "command": "memory-inspector.apply-file",
           "group": "display@6",
           "when": "webviewId === memory-inspector.memory"
+        },
+        {
+          "command": "memory-inspector.follow-pointer",
+          "group": "display@7",
+          "when": "webviewId === memory-inspector.memory && memory-inspector.variable.isPointer"
         }
       ]
     },

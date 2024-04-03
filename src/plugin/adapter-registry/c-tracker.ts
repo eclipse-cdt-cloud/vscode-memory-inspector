@@ -64,6 +64,7 @@ export class CTracker extends AdapterVariableTracker {
             endAddress: variableSize === undefined ? undefined : toHexStringWithRadixMarker(address + variableSize),
             value: variable.value,
             type: variable.type,
+            isPointer: this.isPointer(variable),
         };
         return variableRange;
     }
@@ -76,5 +77,9 @@ export class CTracker extends AdapterVariableTracker {
     async getSizeOfVariable(variableName: string, session: vscode.DebugSession): Promise<bigint | undefined> {
         const response = await sendRequest(session, 'evaluate', { expression: CEvaluateExpression.sizeOf(variableName), context: 'watch', frameId: this.currentFrame });
         return notADigit.test(response.result) ? undefined : BigInt(response.result);
+    }
+
+    protected isPointer(variable: DebugProtocol.Variable): boolean {
+        return (!variable.type || variable.type.endsWith('*')) && (`0x${Number(variable.value).toString(16)}` === variable.value);
     }
 }
