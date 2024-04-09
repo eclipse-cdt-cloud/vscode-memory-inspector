@@ -14,7 +14,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-import type { DebugProtocol } from '@vscode/debugprotocol';
 import * as vscode from 'vscode';
 import { Messenger } from 'vscode-messenger';
 import { WebviewIdMessageParticipant } from 'vscode-messenger-common';
@@ -95,37 +94,8 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
             vscode.commands.registerCommand(MemoryWebview.ShowCommandType, () => this.show()),
             vscode.commands.registerCommand(MemoryWebview.VariableCommandType, async args => {
                 if (isVariablesContext(args)) {
-                    let maybeError;
-                    /*
-                    Use the first available address from this list.
-                    1. The variable's memoryReference if it exists.
-                    2. Try to get the address for the variable name.
-                        2.1. Use the final component of the evaluateName, which handles arrays correctly (e.g. "my_char[2]")
-                        2.2. Fall back to using the simple name if there is no evaluateName
-                    3. If the container value appears to be a memory address, use that.
-                    4. Lastly, if the container has its own address, use that.
-                    */
-                    let memoryReference = args.variable.memoryReference;                            // #1
-
-                    try {
-                        memoryReference ??= await this.memoryProvider.getAddressOfVariable(
-                            args.variable.evaluateName?.split('.').pop()                            // #2.1
-                            ?? args.variable.name                                                   // #2.2
-                        );
-                    } catch (e) { maybeError = e; }
-
-                    const containerValue = (args.container as DebugProtocol.Variable).value;
-                    if (`0x${Number(containerValue).toString(16)}` === containerValue) {
-                        memoryReference ??= containerValue;                                         // #3
-                    }
-
-                    memoryReference ??= (args.container as DebugProtocol.Variable).memoryReference; // #4
-
-                    if (memoryReference) {
-                        this.show({ memoryReference });
-                    } else if (maybeError) {
-                        throw maybeError;
-                    }
+                    const memoryReference = args.variable.memoryReference ?? await this.memoryProvider.getAddressOfVariable(args.variable.name);
+                    this.show({ memoryReference });
                 }
             }),
             vscode.commands.registerCommand(MemoryWebview.FollowPointerCommandtype, async args => {
