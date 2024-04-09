@@ -86,8 +86,8 @@
         "category": "Memory"
       },
       {
-        "command": "memory-inspector.follow-pointer",
-        "title": "Follow Pointer",
+        "command": "memory-inspector.go-to-address-value",
+        "title": "Go to value in Memory Inspector",
         "category": "Memory"
       },
       {
@@ -150,6 +150,10 @@
           "when": "canViewMemory && memory-inspector.canRead"
         },
         {
+          "command": "memory-inspector.go-to-address-value",
+          "when": "canViewMemory && memory-inspector.canRead && memory-inspector.variable.isPointer"
+        },
+        {
           "command": "memory-inspector.store-file",
           "when": "canViewMemory && memory-inspector.canRead"
         }
@@ -206,7 +210,7 @@
           "when": "webviewId === memory-inspector.memory"
         },
         {
-          "command": "memory-inspector.follow-pointer",
+          "command": "memory-inspector.go-to-address-value",
           "group": "display@7",
           "when": "webviewId === memory-inspector.memory && memory-inspector.variable.isPointer"
         }

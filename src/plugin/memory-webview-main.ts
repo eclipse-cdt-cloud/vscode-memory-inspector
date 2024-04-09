@@ -65,7 +65,7 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
     public static ViewType = `${manifest.PACKAGE_NAME}.memory`;
     public static ShowCommandType = `${manifest.PACKAGE_NAME}.show`;
     public static VariableCommandType = `${manifest.PACKAGE_NAME}.show-variable`;
-    public static FollowPointerCommandtype = `${manifest.PACKAGE_NAME}.follow-pointer`;
+    public static GoToAddressValueCommandType = `${manifest.PACKAGE_NAME}.go-to-address-value`;
     public static ToggleAsciiColumnCommandType = `${manifest.PACKAGE_NAME}.toggle-ascii-column`;
     public static ToggleVariablesColumnCommandType = `${manifest.PACKAGE_NAME}.toggle-variables-column`;
     public static ToggleRadixPrefixCommandType = `${manifest.PACKAGE_NAME}.toggle-radix-prefix`;
@@ -98,12 +98,9 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
                     this.show({ memoryReference });
                 }
             }),
-            vscode.commands.registerCommand(MemoryWebview.FollowPointerCommandtype, async args => {
+            vscode.commands.registerCommand(MemoryWebview.GoToAddressValueCommandType, async args => {
                 if (isWebviewVariableContext(args) && args.variable.isPointer) {
-                    const memoryReference = args.variable.value;
-                    if (memoryReference) {
-                        this.show({ memoryReference });
-                    }
+                    this.show({ memoryReference: args.variable.value });
                 }
             }),
             vscode.commands.registerCommand(MemoryWebview.ToggleVariablesColumnCommandType, (ctx: WebviewContext) => {

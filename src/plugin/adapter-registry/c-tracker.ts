@@ -16,9 +16,9 @@
 
 import { DebugProtocol } from '@vscode/debugprotocol';
 import * as vscode from 'vscode';
-import { sendRequest } from '../../common/debug-requests';
+import { isDebugEvent, sendRequest } from '../../common/debug-requests';
 import { toHexStringWithRadixMarker, VariableRange } from '../../common/memory-range';
-import { AdapterVariableTracker, extractAddress, notADigit } from './adapter-capabilities';
+import { AdapterVariableTracker, decimalAddress, extractAddress, hexAddress, notADigit } from './adapter-capabilities';
 
 export namespace CEvaluateExpression {
     export function sizeOf(expression: string): string {
@@ -47,7 +47,7 @@ export class CTracker extends AdapterVariableTracker {
             const evaluateName = variable.evaluateName ?? variable.name;
             [variableAddress, variableSize] = await Promise.all([
                 variableAddress ?? this.getAddressOfVariable(evaluateName, session),
-                this.getSizeOfVariable(evaluateName, session)
+                this.getSizeOfVariable(evaluateName, session),
             ]);
         } catch (err) {
             this.logger.warn('Unable to resolve location and size of', variable.name + (err instanceof Error ? ':\n\t' + err.message : ''));
@@ -58,15 +58,43 @@ export class CTracker extends AdapterVariableTracker {
         }
         this.logger.debug('Resolved', variable.name, { start: variableAddress, size: variableSize });
         const address = BigInt(variableAddress);
+        const startAddress = toHexStringWithRadixMarker(address);
+        const isPointer = this.isMaybePointer(variable, startAddress);
         const variableRange: VariableRange = {
             name: variable.name,
-            startAddress: toHexStringWithRadixMarker(address),
+            startAddress,
             endAddress: variableSize === undefined ? undefined : toHexStringWithRadixMarker(address + variableSize),
             value: variable.value,
             type: variable.type,
-            isPointer: this.isPointer(variable),
+            isPointer,
         };
         return variableRange;
+    }
+
+    override async getLocals(session: vscode.DebugSession): Promise<VariableRange[]> {
+        this.getAddressSpaces(session);
+        return super.getLocals(session);
+    }
+
+    async getAddressSpaces(session: vscode.DebugSession): Promise<void> {
+        // The REPL output is not returned, only sent as a message & captured by onDidSendMessage below.
+        return session.customRequest('evaluate', { expression: '> info proc mappings', context: 'repl', frameId: this.currentFrame });
+    }
+
+    protected addressSpaces: [number, number][] = [];
+
+    override onDidSendMessage(message: unknown): void {
+        super.onDidSendMessage(message);
+        if (isDebugEvent('output', message) && 'output' in message.body) {
+            if (message.body.output.startsWith('Mapped address spaces')) {
+                this.addressSpaces = [];
+                return;
+            }
+            const terms = message.body.output.split(/\s+/g);
+            if (hexAddress.test(terms[1]) && hexAddress.test(terms[2])) {
+                this.addressSpaces.push([Number(terms[1]), Number(terms[2])]);
+            }
+        }
     }
 
     async getAddressOfVariable(variableName: string, session: vscode.DebugSession): Promise<string | undefined> {
@@ -79,7 +107,12 @@ export class CTracker extends AdapterVariableTracker {
         return notADigit.test(response.result) ? undefined : BigInt(response.result);
     }
 
-    protected isPointer(variable: DebugProtocol.Variable): boolean {
-        return (!variable.type || variable.type.endsWith('*')) && (`0x${Number(variable.value).toString(16)}` === variable.value);
+    protected isMaybePointer({ value, type }: DebugProtocol.Variable, startAddress: string): boolean {
+        if (type?.endsWith('*')) { return true; } // Definitely a pointer
+
+        // Might reasonably get cast as a pointer
+        return (value !== startAddress)
+            && (hexAddress.test(value) || decimalAddress.test(value))
+            && (!this.addressSpaces.length || this.addressSpaces.some(([start, end]) => start <= Number(value) && Number(value) < end));
     }
 }
