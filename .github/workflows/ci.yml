@@ -25,7 +25,7 @@ jobs:
       - name: Build
         run: |
           yarn install --ignore-scripts
-          yarn build
+          yarn check
           yarn package
       - uses: actions/upload-artifact@v3
         with:

@@ -15,6 +15,8 @@
  ********************************************************************************/
 
 import 'primeflex/primeflex.css';
+import '../style/index.css';
+import '@vscode/codicons/dist/codicon.css';
 import { debounce } from 'lodash';
 import { PrimeReactProvider } from 'primereact/api';
 import React from 'react';

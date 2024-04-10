@@ -1,8 +1,11 @@
-.github
-.vscode
-src
-*.vsix
-dist/**/*.js.map
-node_modules
-!node_modules/@vscode/codicons/dist/codicon.css
-!node_modules/@vscode/codicons/dist/codicon.ttf
+# Exclude everything
+*
+*/
+
+# Include the following:
+!dist/
+!media/
+!package.json
+!CHANGELOG.md
+!README.md
+!LICENSE.md

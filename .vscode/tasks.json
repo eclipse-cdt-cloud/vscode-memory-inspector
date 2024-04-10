@@ -10,7 +10,7 @@
 			},
 			"problemMatcher": [],
 			"label": "npm: watch",
-			"detail": "webpack -w"
+			"detail": "Watch with ESBuild"
 		}
 	]
 }
