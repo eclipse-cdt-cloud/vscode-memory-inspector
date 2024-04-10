@@ -3365,24 +3365,24 @@ vary@~1.1.2:
   resolved "https://registry.yarnpkg.com/vary/-/vary-1.1.2.tgz#2299f02c6ded30d4a5961b0b9f74524a18f634fc"
   integrity sha512-BNGbWLfd0eUPabhkXUVm0j8uuvREyTh5ovRa/dyow/BqAbZJyC+5fU+IzQOzmAKzYqYRAISoRhdQr3eIZ/PXqg==
 
-vscode-messenger-common@^0.4.3:
-  version "0.4.3"
-  resolved "https://registry.yarnpkg.com/vscode-messenger-common/-/vscode-messenger-common-0.4.3.tgz#362e19eba84906c94521fab41522462b548c5f8c"
-  integrity sha512-6P7OlT7UthfMHe1IcSgv/5f7iELIAXUQ1wCQbciurJo6gwLHFAFqzg/F6TA7wJL5L1/0tyLSKMUWFa0HT/q0GA==
+vscode-messenger-common@^0.4.5:
+  version "0.4.5"
+  resolved "https://registry.yarnpkg.com/vscode-messenger-common/-/vscode-messenger-common-0.4.5.tgz#bc49a25d28808db9cc322cde029fed518c8fa382"
+  integrity sha512-opA+BEYTWdy1fFC3oOw30b0zc/KEuMtw+1pOiH5fEp+BGeA5xff7omSQTZeZJSDJszM471Vi+YY/ipRdRglAlQ==
 
-vscode-messenger-webview@^0.4.3:
-  version "0.4.3"
-  resolved "https://registry.yarnpkg.com/vscode-messenger-webview/-/vscode-messenger-webview-0.4.3.tgz#80b45af2ee3df5bdef11a80042c8ab63fd8490b1"
-  integrity sha512-/gyU6tDXI/rUFPDkKY7a5al7Y8Pv4OFrnqETcR3hex6o/LjAo6R41n6xmx5J7SC1OXYMjKzqs2og/5KZ09M/gA==
+vscode-messenger-webview@^0.4.5:
+  version "0.4.5"
+  resolved "https://registry.yarnpkg.com/vscode-messenger-webview/-/vscode-messenger-webview-0.4.5.tgz#89767aee50038acb6a706f5427e0fc72d5aec7f5"
+  integrity sha512-pzGB6HoTfPszMF4HQG+u5WMJ959iGLmow6ehYVTZnZjZ+phBKEBtpTYAjJSNotyUfZJ58NCdq5+ZSvMgkAuAJw==
   dependencies:
-    vscode-messenger-common "^0.4.3"
+    vscode-messenger-common "^0.4.5"
 
-vscode-messenger@^0.4.3:
-  version "0.4.3"
-  resolved "https://registry.yarnpkg.com/vscode-messenger/-/vscode-messenger-0.4.3.tgz#9e07b16ef11335a9a0c21e75a338a5623e639c78"
-  integrity sha512-zOkWT/gXVvksYjtuTfGYWhc2Kn+OFDQl7w2P/LodFufC35tGo6tko28ACSJgvrIFeIhhI11XgMhlCGcT3QZGRA==
+vscode-messenger@^0.4.5:
+  version "0.4.5"
+  resolved "https://registry.yarnpkg.com/vscode-messenger/-/vscode-messenger-0.4.5.tgz#decf7475568ce3a3912479c29ff1e6eac61c7470"
+  integrity sha512-a6e54dpPRi/ITmVex49LGU6YXlqcuxGPlDPauvZig20G1D1/QD2E8GfhtvlTj3ml5aU/QV3LHghyepq3riy7sw==
   dependencies:
-    vscode-messenger-common "^0.4.3"
+    vscode-messenger-common "^0.4.5"
 
 vscode-uri@^3.0.8:
   version "3.0.8"

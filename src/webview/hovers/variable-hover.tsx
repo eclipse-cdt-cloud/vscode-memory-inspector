@@ -36,14 +36,16 @@ export class VariableHover implements HoverContribution {
         const hoverItem = (
             <table className='variable-hover'>
                 <caption className='variable-hover-name'>{name}</caption>
-                {Object.entries({ type, start, end, MAUs: maus, bytes }).map(([label, value]) =>
-                    value
-                        ? <tr className='label-value-pair'>
-                            <td className={`label ${label}`}>{label}</td>
-                            <td className={`value ${label}`}>{value}</td>
-                        </tr>
-                        : ''
-                )}
+                <tbody>
+                    {Object.entries({ type, start, end, MAUs: maus, bytes }).map(([label, value]) =>
+                        value
+                            ? <tr className='label-value-pair' key={label}>
+                                <td className={`label ${label}`}>{label}</td>
+                                <td className={`value ${label}`}>{value}</td>
+                            </tr>
+                            : ''
+                    )}
+                </tbody>
             </table>
         );
 

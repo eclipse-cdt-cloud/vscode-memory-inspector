@@ -74,14 +74,16 @@ export class AddressHover implements HoverContribution {
 
         const hoverItem = (
             <table className='address-hover'>
-                {Object.entries({ binary, octal, decimal, hexadecimal, utf8 }).map(([label, value]) =>
-                    value
-                        ? <tr className={`label-value-pair ${label === primaryRadix ? 'primary' : ''}`}>
-                            <td className={`label ${label}`}>{label}</td>
-                            <td className={`value ${label}`}>{value}</td>
-                        </tr>
-                        : ''
-                )}
+                <tbody>
+                    {Object.entries({ binary, octal, decimal, hexadecimal, utf8 }).map(([label, value]) =>
+                        value
+                            ? <tr className={`label-value-pair ${label === primaryRadix ? 'primary' : ''}`} key={label}>
+                                <td className={`label ${label}`}>{label}</td>
+                                <td className={`value ${label}`}>{value}</td>
+                            </tr>
+                            : ''
+                    )}
+                </tbody>
             </table>
         );
         return hoverItem;
