@@ -73,7 +73,7 @@ export class HoverService {
             } catch (err) {
                 messenger.sendRequest(logMessageType, HOST_EXTENSION, `Error in hover contribution ${contribution.id}: ${err}`);
             }
-            return hoverPart;
+            return hoverPart && <div key={contribution.id}>{hoverPart}</div>;
         });
         const nodes = (await Promise.all(promises)).filter(node => !!node);
         if (nodes.length > 0) {

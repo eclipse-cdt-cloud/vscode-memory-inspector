@@ -36,14 +36,16 @@ export class DataHover implements HoverContribution {
 
         const hoverItem = (
             <table className='data-hover'>
-                {Object.entries({ binary, octal, decimal, hexadecimal, utf8 }).map(([label, value]) =>
-                    value
-                        ? <tr className='label-value-pair'>
-                            <td className={`label ${label}`}>{label}</td>
-                            <td className={`value ${label}`}>{value}</td>
-                        </tr>
-                        : ''
-                )}
+                <tbody>
+                    {Object.entries({ binary, octal, decimal, hexadecimal, utf8 }).map(([label, value]) =>
+                        value
+                            ? <tr className='label-value-pair' key={label}>
+                                <td className={`label ${label}`}>{label}</td>
+                                <td className={`value ${label}`}>{value}</td>
+                            </tr>
+                            : ''
+                    )}
+                </tbody>
             </table>
         );
         return hoverItem;
