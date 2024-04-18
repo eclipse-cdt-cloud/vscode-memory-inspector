@@ -18,9 +18,9 @@ import type { DebugProtocol } from '@vscode/debugprotocol';
 import type { NotificationType, RequestType } from 'vscode-messenger-common';
 import { URI } from 'vscode-uri';
 import { VariablesView } from '../plugin/external-views';
-import { MemoryViewSettings } from '../webview/utils/view-types';
 import { DebugRequestTypes } from './debug-requests';
 import type { VariableRange, WrittenMemory } from './memory-range';
+import { MemoryViewSettings } from './webview-configuration';
 import { WebviewContext } from './webview-context';
 
 // convenience types for easier readability and better semantics

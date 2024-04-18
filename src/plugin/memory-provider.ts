@@ -18,7 +18,6 @@ import { DebugProtocol } from '@vscode/debugprotocol';
 import * as vscode from 'vscode';
 import { sendRequest } from '../common/debug-requests';
 import { stringToBytesMemory } from '../common/memory';
-import { MemoryDisplaySettingsContribution } from '../common/memory-display-settings';
 import { VariableRange } from '../common/memory-range';
 import { ReadMemoryResult, WriteMemoryResult } from '../common/messaging';
 import { AdapterRegistry } from './adapter-registry/adapter-registry';
@@ -96,11 +95,5 @@ export class MemoryProvider {
         const session = this.sessionTracker.assertActiveSession('get address of variable');
         const handler = this.adapterRegistry?.getHandlerForSession(session.type);
         return handler?.getSizeOfVariable?.(session, variableName);
-    }
-
-    public async getMemoryDisplaySettingsContribution(): Promise<MemoryDisplaySettingsContribution> {
-        const session = this.sessionTracker.assertActiveSession('get settings of variable');
-        const handler = this.adapterRegistry?.getHandlerForSession(session.type);
-        return handler?.getMemoryDisplaySettings?.(session) ?? {};
     }
 }

@@ -46,8 +46,8 @@ import {
     WriteMemoryResult,
     writeMemoryType,
 } from '../common/messaging';
+import { MemoryViewSettings, ScrollingBehavior } from '../common/webview-configuration';
 import { getVisibleColumns, WebviewContext } from '../common/webview-context';
-import type { MemoryViewSettings, ScrollingBehavior } from '../webview/utils/view-types';
 import { isVariablesContext } from './external-views';
 import { outputChannelLogger } from './logger';
 import { MemoryProvider } from './memory-provider';

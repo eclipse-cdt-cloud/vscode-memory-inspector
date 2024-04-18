@@ -46,6 +46,7 @@ import {
     WebviewSelection,
 } from '../common/messaging';
 import { Change, hasChanged, hasChangedTo } from '../common/typescript';
+import { MemoryDisplayConfiguration } from '../common/webview-configuration';
 import { AddressColumn } from './columns/address-column';
 import { AsciiColumn } from './columns/ascii-column';
 import { columnContributionService, ColumnStatus } from './columns/column-contribution-service';
@@ -56,7 +57,7 @@ import { AddressHover } from './hovers/address-hover';
 import { DataHover } from './hovers/data-hover';
 import { HoverService, hoverService } from './hovers/hover-service';
 import { VariableHover } from './hovers/variable-hover';
-import { Decoration, MemoryDisplayConfiguration, MemoryState } from './utils/view-types';
+import { Decoration, MemoryState } from './utils/view-types';
 import { variableDecorator } from './variables/variable-decorations';
 import { messenger } from './view-messenger';
 
@@ -303,7 +304,7 @@ class App extends React.Component<{}, MemoryAppState> {
             // may happen when we initialize empty
             return;
         }
-        this.doFetchMemory(completeOptions);
+        return this.doFetchMemory(completeOptions);
     };
 
     protected async doFetchMemory(memoryOptions: Required<MemoryOptions>): Promise<void> {

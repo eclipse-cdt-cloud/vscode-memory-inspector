@@ -16,11 +16,11 @@
 
 import deepequal from 'fast-deep-equal';
 import type * as React from 'react';
-import { WebviewIdMessageParticipant } from 'vscode-messenger-common';
-import { AutoRefresh, Endianness, GroupsPerRowOption } from '../../common/manifest';
+import { Endianness } from '../../common/manifest';
 import { Memory } from '../../common/memory';
-import { areRangesEqual, BigIntMemoryRange, Radix } from '../../common/memory-range';
+import { areRangesEqual, BigIntMemoryRange } from '../../common/memory-range';
 import { ReadMemoryArguments } from '../../common/messaging';
+import { MemoryDisplayConfiguration } from '../../common/webview-configuration';
 
 export interface SerializedTableRenderOptions extends MemoryDisplayConfiguration {
     columnOptions: Array<{ label: string, doRender: boolean }>;
@@ -73,38 +73,12 @@ export interface FullNodeAttributes extends StylableNodeAttributes {
     content: string;
 }
 
-/** All settings related to memory view that can be specified for the webview from the extension "main". */
-export interface MemoryViewSettings extends ColumnVisibilityStatus, MemoryDisplayConfiguration {
-    title: string
-    messageParticipant: WebviewIdMessageParticipant;
-}
-
-/** The memory display configuration that can be specified for the memory widget. */
-export interface MemoryDisplayConfiguration {
-    bytesPerMau: number;
-    mausPerGroup: number;
-    groupsPerRow: GroupsPerRowOption;
-    endianness: Endianness;
-    scrollingBehavior: ScrollingBehavior;
-    addressPadding: AddressPadding;
-    addressRadix: Radix;
-    showRadixPrefix: boolean;
-    autoRefresh: AutoRefresh;
-    autoRefreshDelay: number;
-}
-export type ScrollingBehavior = 'Paginate' | 'Grow' | 'Auto-Append';
-
-export type AddressPadding = 'Minimal' | number;
 export const AddressPaddingOptions = {
     'Minimal': 'Minimal',
     'Unpadded': 0,
     '32bit': 32,
     '64bit': 64,
 } as const;
-
-export interface ColumnVisibilityStatus {
-    visibleColumns: string[];
-}
 
 export type ReactInteraction<E extends Element = Element> = React.MouseEvent<E> | React.KeyboardEvent<E>;
 

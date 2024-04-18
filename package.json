@@ -259,7 +259,7 @@
           ],
           "enumDescriptions": [
             "Refresh when the debugger stops (e.g. a breakpoint is hit)",
-            "Refresh automatically when the view is newly focussed.",
+            "Refresh automatically each time the view receives focus.",
             "Refresh automatically after the configured `#memory-inspector.autoRefreshDelay#`",
             "Memory Inspector needs to be manually refreshed by the user"
           ],
