@@ -111,13 +111,13 @@
       },
       {
         "command": "memory-inspector.store-file",
-        "title": "Store Memory to File",
+        "title": "Store Memory to File...",
         "enablement": "memory-inspector.canRead",
         "category": "Memory"
       },
       {
         "command": "memory-inspector.apply-file",
-        "title": "Apply Memory from File",
+        "title": "Apply Memory from File...",
         "enablement": "memory-inspector.canWrite",
         "category": "Memory"
       }
@@ -172,32 +172,32 @@
       "webview/context": [
         {
           "command": "memory-inspector.toggle-variables-column",
-          "group": "display@1",
+          "group": "a_display@1",
           "when": "webviewId === memory-inspector.memory"
         },
         {
           "command": "memory-inspector.toggle-ascii-column",
-          "group": "display@2",
+          "group": "a_display@2",
           "when": "webviewId === memory-inspector.memory"
         },
         {
           "command": "memory-inspector.toggle-radix-prefix",
-          "group": "display@3",
-          "when": "webviewId === memory-inspector.memory"
-        },
-        {
-          "command": "memory-inspector.show-advanced-display-options",
-          "group": "display@4",
+          "group": "a_display@3",
           "when": "webviewId === memory-inspector.memory"
         },
         {
           "command": "memory-inspector.store-file",
-          "group": "display@5",
+          "group": "c_store-and-restore@1",
           "when": "webviewId === memory-inspector.memory"
         },
         {
           "command": "memory-inspector.apply-file",
-          "group": "display@6",
+          "group": "c_store-and-restore@2",
+          "when": "webviewId === memory-inspector.memory"
+        },
+        {
+          "command": "memory-inspector.show-advanced-display-options",
+          "group": "z_more",
           "when": "webviewId === memory-inspector.memory"
         }
       ]
