@@ -29,12 +29,6 @@ export namespace CEvaluateExpression {
     }
 };
 
-enum AddressSpaceMappingState {
-    GDB,
-    ArmDebugger,
-    Done,
-};
-
 export class CTracker extends AdapterVariableTracker {
 
     /**
@@ -106,41 +100,26 @@ export class CTracker extends AdapterVariableTracker {
     }
 
     protected addressSpaces: [number, number][] = [];
-    protected addressSpaceMappingState = AddressSpaceMappingState.Done;
 
     protected mapAddressSpaces(message: unknown): void {
         if (!isDebugEvent('output', message) || !('output' in message.body)) { return; }
 
-        if (this.addressSpaceMappingState === AddressSpaceMappingState.Done) {
-            if (message.body.output.startsWith('Mapped address spaces')) {
-                this.addressSpaceMappingState = AddressSpaceMappingState.GDB;
-                this.addressSpaces = [];
-            } else if (/Num\s+Enb\s+Low\s+Addr\s+High\s+Addr/.test(message.body.output)) {
-                this.addressSpaceMappingState = AddressSpaceMappingState.ArmDebugger;
-                this.addressSpaces = [];
-            }
-            return;
+        // GDB format
+        if (message.body.output.startsWith('Mapped address spaces')) {
+            this.addressSpaces = [];
+        }
+        const terms = message.body.output.split(/\s+/g);
+        if (hexAddress.test(terms[1]) && hexAddress.test(terms[2])) {
+            this.addressSpaces.push([Number(terms[1]), Number(terms[2])]);
         }
 
-        if (this.addressSpaceMappingState === AddressSpaceMappingState.GDB) {
-            const terms = message.body.output.split(/\s+/g);
-            if (hexAddress.test(terms[1]) && hexAddress.test(terms[2])) {
-                this.addressSpaces.push([Number(terms[1]), Number(terms[2])]);
-            } else {
-                this.addressSpaceMappingState = AddressSpaceMappingState.Done;
-            }
-            return;
+        // ARM debugger format
+        if (/Num\s+Enb\s+Low\s+Addr\s+High\s+Addr/.test(message.body.output)) {
+            this.addressSpaces = [];
         }
-
-        if (this.addressSpaceMappingState === AddressSpaceMappingState.ArmDebugger) {
-            const terms = message.body.output.split(/\s+/g);
-            const prefixedHexAddressRegexp = /[A-Z_0-9]+:0x[0-9a-fA-F]+/;
-            if (prefixedHexAddressRegexp.test(terms[2]) && prefixedHexAddressRegexp.test(terms[3])) {
-                this.addressSpaces.push([Number(terms[2].split(':')[1]), Number(terms[3].split(':')[1])]);
-            } else {
-                this.addressSpaceMappingState = AddressSpaceMappingState.Done;
-            }
-            return;
+        const prefixedHexAddressRegexp = /[A-Z_0-9]+:0x[0-9a-fA-F]+/;
+        if (prefixedHexAddressRegexp.test(terms[2]) && prefixedHexAddressRegexp.test(terms[3])) {
+            this.addressSpaces.push([Number(terms[2].split(':')[1]), Number(terms[3].split(':')[1])]);
         }
     }
 
