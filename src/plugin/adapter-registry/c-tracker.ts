@@ -29,6 +29,12 @@ export namespace CEvaluateExpression {
     }
 };
 
+enum AddressSpaceMappingState {
+    GDB,
+    ArmDebugger,
+    Done,
+};
+
 export class CTracker extends AdapterVariableTracker {
 
     /**
@@ -72,28 +78,69 @@ export class CTracker extends AdapterVariableTracker {
     }
 
     override async getLocals(session: vscode.DebugSession): Promise<VariableRange[]> {
-        this.getAddressSpaces(session);
+        await this.getAddressSpaces(session);
         return super.getLocals(session);
     }
 
     async getAddressSpaces(session: vscode.DebugSession): Promise<void> {
-        // The REPL output is not returned, only sent as a message & captured by onDidSendMessage below.
-        return session.customRequest('evaluate', { expression: '> info proc mappings', context: 'repl', frameId: this.currentFrame });
-    }
+        let expression = '';
+        switch (session.type) {
+            case 'gdb':
+                expression = '> info proc mappings';
+                break;
+            case 'arm-debugger':
+                expression = '> info memory';
+                break;
+            case 'embedded-debug': // I haven't found documentation on what commands to use for this.
+            default:
+                return;
+        }
 
-    protected addressSpaces: [number, number][] = [];
+        // The REPL output is not returned, only sent as a message & captured by onDidSendMessage below.
+        await sendRequest(session, 'evaluate', { expression, context: 'repl', frameId: this.currentFrame });
+    }
 
     override onDidSendMessage(message: unknown): void {
         super.onDidSendMessage(message);
-        if (isDebugEvent('output', message) && 'output' in message.body) {
+        this.mapAddressSpaces(message);
+    }
+
+    protected addressSpaces: [number, number][] = [];
+    protected addressSpaceMappingState = AddressSpaceMappingState.Done;
+
+    protected mapAddressSpaces(message: unknown): void {
+        if (!isDebugEvent('output', message) || !('output' in message.body)) { return; }
+
+        if (this.addressSpaceMappingState === AddressSpaceMappingState.Done) {
             if (message.body.output.startsWith('Mapped address spaces')) {
+                this.addressSpaceMappingState = AddressSpaceMappingState.GDB;
                 this.addressSpaces = [];
-                return;
+            } else if (/Num\s+Enb\s+Low\s+Addr\s+High\s+Addr/.test(message.body.output)) {
+                this.addressSpaceMappingState = AddressSpaceMappingState.ArmDebugger;
+                this.addressSpaces = [];
             }
+            return;
+        }
+
+        if (this.addressSpaceMappingState === AddressSpaceMappingState.GDB) {
             const terms = message.body.output.split(/\s+/g);
             if (hexAddress.test(terms[1]) && hexAddress.test(terms[2])) {
                 this.addressSpaces.push([Number(terms[1]), Number(terms[2])]);
+            } else {
+                this.addressSpaceMappingState = AddressSpaceMappingState.Done;
             }
+            return;
+        }
+
+        if (this.addressSpaceMappingState === AddressSpaceMappingState.ArmDebugger) {
+            const terms = message.body.output.split(/\s+/g);
+            const prefixedHexAddressRegexp = /[A-Z_0-9]+:0x[0-9a-fA-F]+/;
+            if (prefixedHexAddressRegexp.test(terms[2]) && prefixedHexAddressRegexp.test(terms[3])) {
+                this.addressSpaces.push([Number(terms[2].split(':')[1]), Number(terms[3].split(':')[1])]);
+            } else {
+                this.addressSpaceMappingState = AddressSpaceMappingState.Done;
+            }
+            return;
         }
     }
 
