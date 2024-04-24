@@ -16,7 +16,7 @@
 
 import { DebugProtocol } from '@vscode/debugprotocol';
 import * as vscode from 'vscode';
-import { isDebugEvent, sendRequest } from '../../common/debug-requests';
+import { sendRequest } from '../../common/debug-requests';
 import { toHexStringWithRadixMarker, VariableRange } from '../../common/memory-range';
 import { AdapterVariableTracker, decimalAddress, extractAddress, hexAddress, notADigit } from './adapter-capabilities';
 
@@ -71,58 +71,6 @@ export class CTracker extends AdapterVariableTracker {
         return variableRange;
     }
 
-    override async getLocals(session: vscode.DebugSession): Promise<VariableRange[]> {
-        await this.getAddressSpaces(session);
-        return super.getLocals(session);
-    }
-
-    async getAddressSpaces(session: vscode.DebugSession): Promise<void> {
-        let expression = '';
-        switch (session.type) {
-            case 'gdb':
-                expression = '> info proc mappings';
-                break;
-            case 'arm-debugger':
-                expression = '> info memory';
-                break;
-            case 'embedded-debug': // I haven't found documentation on what commands to use for this.
-            default:
-                return;
-        }
-
-        // The REPL output is not returned, only sent as a message & captured by onDidSendMessage below.
-        await sendRequest(session, 'evaluate', { expression, context: 'repl', frameId: this.currentFrame });
-    }
-
-    override onDidSendMessage(message: unknown): void {
-        super.onDidSendMessage(message);
-        this.mapAddressSpaces(message);
-    }
-
-    protected addressSpaces: [number, number][] = [];
-
-    protected mapAddressSpaces(message: unknown): void {
-        if (!isDebugEvent('output', message) || !('output' in message.body)) { return; }
-
-        // GDB format
-        if (message.body.output.startsWith('Mapped address spaces')) {
-            this.addressSpaces = [];
-        }
-        const terms = message.body.output.split(/\s+/g);
-        if (hexAddress.test(terms[1]) && hexAddress.test(terms[2])) {
-            this.addressSpaces.push([Number(terms[1]), Number(terms[2])]);
-        }
-
-        // ARM debugger format
-        if (/Num\s+Enb\s+Low\s+Addr\s+High\s+Addr/.test(message.body.output)) {
-            this.addressSpaces = [];
-        }
-        const prefixedHexAddressRegexp = /[A-Z_0-9]+:0x[0-9a-fA-F]+/;
-        if (prefixedHexAddressRegexp.test(terms[2]) && prefixedHexAddressRegexp.test(terms[3])) {
-            this.addressSpaces.push([Number(terms[2].split(':')[1]), Number(terms[3].split(':')[1])]);
-        }
-    }
-
     async getAddressOfVariable(variableName: string, session: vscode.DebugSession): Promise<string | undefined> {
         const response = await sendRequest(session, 'evaluate', { expression: CEvaluateExpression.addressOf(variableName), context: 'watch', frameId: this.currentFrame });
         return extractAddress(response.result);
@@ -137,8 +85,6 @@ export class CTracker extends AdapterVariableTracker {
         if (type?.endsWith('*')) { return true; } // Definitely a pointer
 
         // Might reasonably get cast as a pointer
-        return (value !== startAddress)
-            && (hexAddress.test(value) || decimalAddress.test(value))
-            && (!this.addressSpaces.length || this.addressSpaces.some(([start, end]) => start <= Number(value) && Number(value) < end));
+        return (value !== startAddress) && (hexAddress.test(value) || decimalAddress.test(value));
     }
 }
