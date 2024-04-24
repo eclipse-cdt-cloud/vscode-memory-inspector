@@ -122,17 +122,17 @@ export class MemoryProvider {
     /** Returns the session if the capability is present, otherwise throws. */
     protected assertCapability(capability: keyof DebugProtocol.Capabilities, action: string): vscode.DebugSession {
         const session = this.assertActiveSession(action);
-        if (!this.hasDebugCapabilitiy(session, capability)) {
+        if (!this.hasDebugCapability(session, capability)) {
             throw new Error(`Cannot ${action}. Session does not have capability ${capability}.`);
         }
         return session;
     }
 
-    protected hasDebugCapabilitiy(session: vscode.DebugSession, capability: keyof DebugProtocol.Capabilities): boolean {
+    protected hasDebugCapability(session: vscode.DebugSession, capability: keyof DebugProtocol.Capabilities): boolean {
         return !!this.sessionDebugCapabilities.get(session.id)?.[capability];
     }
 
-    protected hasClientCapabilitiy(session: vscode.DebugSession, capability: keyof DebugProtocol.InitializeRequestArguments): boolean {
+    protected hasClientCapability(session: vscode.DebugSession, capability: keyof DebugProtocol.InitializeRequestArguments): boolean {
         return !!this.sessionClientCapabilities.get(session.id)?.[capability];
     }
 
