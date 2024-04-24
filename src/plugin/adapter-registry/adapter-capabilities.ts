@@ -26,7 +26,7 @@ export interface AdapterCapabilities {
     getVariables?(session: vscode.DebugSession): Promise<VariableRange[]>;
     /** Resolve symbols resident in the memory at the specified range. Will be preferred to {@link getVariables} if present. */
     getResidents?(session: vscode.DebugSession, params: DebugProtocol.ReadMemoryArguments): Promise<VariableRange[]>;
-    /** Resolves the address of a given variable in bytes withthe current context. */
+    /** Resolves the address of a given variable in bytes with the current context. */
     getAddressOfVariable?(session: vscode.DebugSession, variableName: string): Promise<string | undefined>;
     /** Resolves the size of a given variable in bytes within the current context. */
     getSizeOfVariable?(session: vscode.DebugSession, variableName: string): Promise<bigint | undefined>;
@@ -48,7 +48,7 @@ export function extractDecimalAddress(text?: string): string | undefined {
 }
 
 export function extractAddress(text?: string): string | undefined {
-    // search for hex address first as a hex adress (0x12345678) also matches an integer address (12345678)
+    // search for hex address first as a hex address (0x12345678) also matches an integer address (12345678)
     return text ? extractHexAddress(text) ?? extractDecimalAddress(text) : undefined;
 }
 

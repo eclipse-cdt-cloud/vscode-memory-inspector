@@ -28,7 +28,7 @@ export interface ColumnContribution {
     readonly label: string;
     /** Depending on the supported fitting mode, the column will be rendered differently */
     fittingType?: ColumnFittingType;
-    /** Sorted low to high. If ommitted, sorted alphabetically by ID after all contributions with numbers. */
+    /** Sorted low to high. If omitted, sorted alphabetically by ID after all contributions with numbers. */
     priority?: number;
     render(range: BigIntMemoryRange, memory: Memory, options: TableRenderOptions): React.ReactNode
     /** Called when fetching new memory or when activating the column. */
@@ -54,7 +54,7 @@ class ColumnContributionService {
     protected columnArray = new Array<ColumnStatus>();
     protected registeredColumns = new Map<string, ColumnStatus>;
     /**
-     * @param configurable - if `false`, the column will always be dispayled.
+     * @param configurable - if `false`, the column will always be displayed.
      * @param defaultActive if {@link configurable} is `false`, this field will default to `true` and be ignored. Otherwise defaults to `false`.
      */
     register(contribution: ColumnContribution, configurable = true, defaultActive?: boolean): Disposable {
