@@ -199,7 +199,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                         </>
                     )}
                 </div>
-                <div className='core-options py-2' ref={this.coreOptionsDiv}>
+                <div className='core-options' ref={this.coreOptionsDiv}>
                     <Formik {...this.formConfig}>
                         {formik => (
                             <form onSubmit={formik.handleSubmit} className='form-options'>
@@ -263,22 +263,22 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                 <Button type='submit' disabled={!formik.isValid || readDisabled}>
                                     Go
                                 </Button>
+                                <Button
+                                    className='advanced-options-toggle'
+                                    icon='codicon codicon-gear'
+                                    onClick={event =>
+                                        this.extendedOptions?.current?.toggle(event)
+                                    }
+                                    type='button'
+                                    title='Advanced Display Options'
+                                    rounded
+                                    aria-label='Advanced Display Options'
+                                    aria-haspopup
+                                ></Button>
                             </form>
                         )}
                     </Formik>
-                    <Button
-                        className='advanced-options-toggle'
-                        icon='codicon codicon-gear'
-                        onClick={event =>
-                            this.extendedOptions?.current?.toggle(event)
-                        }
-                        type='button'
-                        title='Advanced Display Options'
-                        rounded
-                        aria-label='Advanced Display Options'
-                        aria-haspopup
-                    ></Button>
-                    <OverlayPanel ref={this.extendedOptions} {...this.advancedOptionsContext}>
+                    <OverlayPanel className='advanced-options-panel' ref={this.extendedOptions} {...this.advancedOptionsContext}>
                         <Button
                             icon='codicon codicon-discard'
                             className='reset-advanced-options-icon'
@@ -314,7 +314,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                             </h2>
                             <label
                                 htmlFor={InputId.BytesPerMau}
-                                className='advanced-options-label mt-1'
+                                className='advanced-options-label'
                             >
                                 Bytes per <abbr className='no-text-decoration' title='Minimum Addressable Unit'>MAU</abbr>
                             </label>
@@ -327,7 +327,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
 
                             <label
                                 htmlFor={InputId.MausPerGroup}
-                                className='advanced-options-label mt-1'
+                                className='advanced-options-label'
                             >
                                 <abbr className='no-text-decoration' title='Minimum Addressable Units'>MAUs</abbr> per Group
                             </label>
@@ -352,7 +352,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
 
                             <label
                                 htmlFor={InputId.EndiannessId}
-                                className='advanced-options-label mt-1'
+                                className='advanced-options-label'
                             >
                                 Group Endianness
                             </label>
@@ -369,7 +369,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                 htmlFor={InputId.AddressPadding}
                                 className='advanced-options-label'
                             >
-                                Address Padding
+                                Padding
                             </label>
                             <Dropdown
                                 id={InputId.AddressPadding}
@@ -396,7 +396,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                 ]}
                                 className="advanced-options-dropdown" />
 
-                            <div className='flex align-items-center'>
+                            <div className='flex align-items-center mt-2'>
                                 <Checkbox
                                     id={InputId.ShowRadixPrefix}
                                     onChange={this.handleAdvancedOptionsDropdownChange}

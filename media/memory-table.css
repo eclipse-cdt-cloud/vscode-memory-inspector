@@ -139,7 +139,8 @@
 
 /* Colors for the hover fields */
 .memory-hover .label-value-pair>.label {
-  color: var(--vscode-debugTokenExpression-string);
+    color: var(--vscode-debugTokenExpression-string);
+    white-space: nowrap;
 }
 .memory-hover .label-value-pair>.value {
   color: var(--vscode-debugTokenExpression-number);
