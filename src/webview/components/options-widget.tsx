@@ -23,7 +23,7 @@ import { InputText } from 'primereact/inputtext';
 import { OverlayPanel } from 'primereact/overlaypanel';
 import { classNames } from 'primereact/utils';
 import React, { FocusEventHandler, KeyboardEvent, KeyboardEventHandler, MouseEventHandler, ReactNode } from 'react';
-import { AUTO_REFRESH_CHOICES, CONFIG_BYTES_PER_MAU_CHOICES, CONFIG_GROUPS_PER_ROW_CHOICES, CONFIG_MAUS_PER_GROUP_CHOICES, ENDIANNESS_CHOICES } from '../../common/manifest';
+import { CONFIG_BYTES_PER_MAU_CHOICES, CONFIG_GROUPS_PER_ROW_CHOICES, CONFIG_MAUS_PER_GROUP_CHOICES, ENDIANNESS_CHOICES, PERIODIC_REFRESH_CHOICES } from '../../common/manifest';
 import { validateCount, validateMemoryReference, validateOffset } from '../../common/memory';
 import { MemoryOptions, ReadMemoryArguments, SessionContext } from '../../common/messaging';
 import { tryToNumber } from '../../common/typescript';
@@ -53,7 +53,7 @@ export interface OptionsWidgetProps
 
 interface OptionsWidgetState {
     isTitleEditing: boolean;
-    isEnablingAutoRefreshDelay: boolean;
+    isEnablingPeriodicRefresh: boolean;
 }
 
 const enum InputId {
@@ -67,8 +67,9 @@ const enum InputId {
     AddressPadding = 'address-padding',
     AddressRadix = 'address-radix',
     ShowRadixPrefix = 'show-radix-prefix',
-    AutoRefresh = 'auto-refresh',
-    AutoRefreshDelay = 'auto-refresh-delay',
+    RefreshOnStop = 'refresh-on-stop',
+    PeriodicRefresh = 'periodic-refresh',
+    PeriodicRefreshInterval = 'periodic-refresh-interval',
 }
 
 interface OptionsForm {
@@ -103,7 +104,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
             validate: this.validate,
             onSubmit: () => this.props.fetchMemory(this.props.configuredReadArguments),
         };
-        this.state = { isTitleEditing: false, isEnablingAutoRefreshDelay: false };
+        this.state = { isTitleEditing: false, isEnablingPeriodicRefresh: false };
     }
 
     protected validate = (values: OptionsForm) => {
@@ -128,7 +129,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
             this.labelEditInput.current?.focus();
             this.labelEditInput.current?.select();
         }
-        if (!prevState.isEnablingAutoRefreshDelay && this.state.isEnablingAutoRefreshDelay) {
+        if (!prevState.isEnablingPeriodicRefresh && this.state.isEnablingPeriodicRefresh) {
             const input = this.refreshRateInput.current?.getElement().getElementsByTagName('input')[0];
             input?.focus();
             input?.select();
@@ -413,40 +414,39 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                 <label htmlFor={InputId.ShowRadixPrefix} className='ml-2'>Display Radix Prefix</label>
                             </div>
 
-                            <h2>Auto-Refresh</h2>
-                            <label
-                                htmlFor={InputId.AutoRefresh}
-                                className='advanced-options-label'
-                            >
-                                Mode
-                            </label>
+                            <h2>Refresh</h2>
+                            <div className='flex align-items-center'>
+                                <Checkbox
+                                    id={InputId.RefreshOnStop}
+                                    onChange={this.handleAdvancedOptionsDropdownChange}
+                                    checked={this.props.refreshOnStop === 'on'}
+                                />
+                                <label htmlFor={InputId.ShowRadixPrefix} className='ml-2'>Refresh On Stop</label>
+                            </div>
+
+                            <label htmlFor={InputId.PeriodicRefresh} className='advanced-options-label'>Periodic Refresh</label>
                             <Dropdown
-                                id={InputId.AutoRefresh}
-                                value={this.props.autoRefresh}
+                                id={InputId.PeriodicRefresh}
+                                value={this.props.periodicRefresh}
                                 onChange={this.handleAdvancedOptionsDropdownChange}
-                                options={[...AUTO_REFRESH_CHOICES]}
+                                options={[...PERIODIC_REFRESH_CHOICES]}
                                 className="advanced-options-dropdown" />
-                            <label
-                                htmlFor={InputId.AutoRefreshDelay}
-                                className='advanced-options-label'
-                            >
-                                Delay
-                            </label>
+
                             <div className='flex align-items-center'>
                                 <InputNumber
-                                    id={InputId.AutoRefreshDelay}
+                                    id={InputId.PeriodicRefreshInterval}
                                     ref={this.refreshRateInput}
-                                    disabled={this.props.autoRefresh !== 'After Delay'}
-                                    value={this.props.autoRefreshDelay}
-                                    placeholder='Delay in ms'
+                                    disabled={this.props.periodicRefresh === 'off'}
+                                    value={this.props.periodicRefreshInterval}
+                                    placeholder='Interval in ms'
                                     inputClassName='advanced-options-input'
                                     min={500}
                                     step={250}
                                     maxFractionDigits={0}
                                     useGrouping={false}
-                                    onBlur={this.handleRefreshRateChange}
-                                    onKeyDown={this.handleRefreshRateChange} />
-                                <label htmlFor={InputId.AutoRefreshDelay} className='ml-2'>ms</label>
+                                    onBlur={this.handlePeriodicRefreshIntervalChange}
+                                    onKeyDown={this.handlePeriodicRefreshIntervalChange} />
+                                <label htmlFor={InputId.PeriodicRefreshInterval} className='ml-2'>ms</label>
                             </div>
                         </div>
                     </OverlayPanel>
@@ -538,9 +538,12 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
             case InputId.ShowRadixPrefix:
                 this.props.updateRenderOptions({ showRadixPrefix: !!event.target.checked });
                 break;
-            case InputId.AutoRefresh:
-                this.props.updateRenderOptions({ autoRefresh: value });
-                this.setState({ isEnablingAutoRefreshDelay: value === 'After Delay' });
+            case InputId.RefreshOnStop:
+                this.props.updateRenderOptions({ refreshOnStop: !!event.target.checked ? 'on' : 'off' });
+                break;
+            case InputId.PeriodicRefresh:
+                this.props.updateRenderOptions({ periodicRefresh: value });
+                this.setState({ isEnablingPeriodicRefresh: value !== 'off' });
                 break;
             default: {
                 throw new Error(`${id} can not be handled. Did you call the correct method?`);
@@ -557,11 +560,12 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
         }
     }
 
-    protected handleRefreshRateChange: (event: React.FocusEvent<HTMLInputElement> | React.KeyboardEvent<HTMLInputElement>) => void = event => this.doHandleRefreshRateChange(event);
-    doHandleRefreshRateChange(event: React.FocusEvent<HTMLInputElement> | React.KeyboardEvent<HTMLInputElement>): void {
+    protected handlePeriodicRefreshIntervalChange: (event: React.FocusEvent<HTMLInputElement> | React.KeyboardEvent<HTMLInputElement>) => void =
+        event => this.doHandlePeriodicRefreshIntervalChange(event);
+    doHandlePeriodicRefreshIntervalChange(event: React.FocusEvent<HTMLInputElement> | React.KeyboardEvent<HTMLInputElement>): void {
         if (!('key' in event) || event.key === 'Enter') {
-            const autoRefreshDelay = tryToNumber(event.currentTarget.value) ?? DEFAULT_MEMORY_DISPLAY_CONFIGURATION.autoRefreshDelay;
-            this.props.updateRenderOptions({ autoRefreshDelay });
+            const periodicRefreshInterval = tryToNumber(event.currentTarget.value) ?? DEFAULT_MEMORY_DISPLAY_CONFIGURATION.periodicRefreshInterval;
+            this.props.updateRenderOptions({ periodicRefreshInterval });
         }
     }
 

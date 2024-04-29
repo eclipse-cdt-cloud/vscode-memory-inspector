@@ -14,7 +14,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 import { WebviewIdMessageParticipant } from 'vscode-messenger-common';
-import { AutoRefresh, Endianness, GroupsPerRowOption } from './manifest';
+import { Endianness, GroupsPerRowOption, PeriodicRefresh, RefreshOnStop } from './manifest';
 import { Radix } from './memory-range';
 
 /** The memory display configuration that can be specified for the memory widget. */
@@ -27,8 +27,9 @@ export interface MemoryDisplayConfiguration {
     addressPadding: AddressPadding;
     addressRadix: Radix;
     showRadixPrefix: boolean;
-    autoRefresh: AutoRefresh;
-    autoRefreshDelay: number;
+    refreshOnStop: RefreshOnStop;
+    periodicRefresh: PeriodicRefresh;
+    periodicRefreshInterval: number;
 }
 
 export type ScrollingBehavior = 'Paginate' | 'Grow' | 'Auto-Append';

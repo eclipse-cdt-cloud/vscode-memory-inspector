@@ -245,12 +245,13 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
         const addressPadding = memoryInspectorConfiguration.get(manifest.CONFIG_ADDRESS_PADDING, manifest.DEFAULT_ADDRESS_PADDING);
         const addressRadix = memoryInspectorConfiguration.get<number>(manifest.CONFIG_ADDRESS_RADIX, manifest.DEFAULT_ADDRESS_RADIX);
         const showRadixPrefix = memoryInspectorConfiguration.get<boolean>(manifest.CONFIG_SHOW_RADIX_PREFIX, manifest.DEFAULT_SHOW_RADIX_PREFIX);
-        const autoRefresh = memoryInspectorConfiguration.get<manifest.AutoRefresh>(manifest.CONFIG_AUTO_REFRESH, manifest.DEFAULT_AUTO_REFRESH);
-        const autoRefreshDelay = memoryInspectorConfiguration.get<number>(manifest.CONFIG_AUTO_REFRESH_DELAY, manifest.DEFAULT_AUTO_REFRESH_DELAY);
+        const refreshOnStop = memoryInspectorConfiguration.get<manifest.RefreshOnStop>(manifest.CONFIG_REFRESH_ON_STOP, manifest.DEFAULT_REFRESH_ON_STOP);
+        const periodicRefresh = memoryInspectorConfiguration.get<manifest.PeriodicRefresh>(manifest.CONFIG_PERIODIC_REFRESH, manifest.DEFAULT_PERIODIC_REFRESH);
+        const periodicRefreshInterval = memoryInspectorConfiguration.get<number>(manifest.CONFIG_PERIODIC_REFRESH_INTERVAL, manifest.DEFAULT_PERIODIC_REFRESH_INTERVAL);
         return {
             messageParticipant, title, bytesPerMau, mausPerGroup, groupsPerRow,
             endianness, scrollingBehavior, visibleColumns, addressPadding, addressRadix, showRadixPrefix,
-            autoRefresh, autoRefreshDelay
+            refreshOnStop, periodicRefresh, periodicRefreshInterval
         };
     }
 

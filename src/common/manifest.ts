@@ -49,13 +49,19 @@ export const ENDIANNESS_CHOICES = ['Little Endian', 'Big Endian'] as const;
 export type Endianness = (typeof ENDIANNESS_CHOICES)[number];
 export const DEFAULT_ENDIANNESS: Endianness = 'Little Endian';
 
-// Auto Refresh
-export const CONFIG_AUTO_REFRESH = 'autoRefresh';
-export const AUTO_REFRESH_CHOICES = ['On Stop', 'On Focus', 'After Delay', 'Off'] as const;
-export type AutoRefresh = (typeof AUTO_REFRESH_CHOICES)[number];
-export const DEFAULT_AUTO_REFRESH: AutoRefresh = 'On Stop';
-export const CONFIG_AUTO_REFRESH_DELAY = 'autoRefreshDelay';
-export const DEFAULT_AUTO_REFRESH_DELAY = 500;
+// Refresh: On Stop
+export const CONFIG_REFRESH_ON_STOP = 'refreshOnStop';
+export const REFRESH_ON_STOP = ['on', 'off'] as const;
+export type RefreshOnStop = (typeof REFRESH_ON_STOP)[number];
+export const DEFAULT_REFRESH_ON_STOP = 'on';
+
+// Refresh: Periodic
+export const CONFIG_PERIODIC_REFRESH = 'periodicRefresh';
+export const PERIODIC_REFRESH_CHOICES = ['always', 'while running', 'off'] as const;
+export type PeriodicRefresh = (typeof PERIODIC_REFRESH_CHOICES)[number];
+export const DEFAULT_PERIODIC_REFRESH: PeriodicRefresh = 'always';
+export const CONFIG_PERIODIC_REFRESH_INTERVAL = 'periodicRefreshInterval';
+export const DEFAULT_PERIODIC_REFRESH_INTERVAL = 500;
 
 // Scroll
 export const CONFIG_SCROLLING_BEHAVIOR = 'scrollingBehavior';

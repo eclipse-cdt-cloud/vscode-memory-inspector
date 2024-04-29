@@ -201,13 +201,6 @@
           "group": "z_more",
           "when": "webviewId === memory-inspector.memory"
         }
-      ],
-      "editor/title": [
-        {
-          "command": "memory-inspector.show",
-          "group": "navigation",
-          "when": "memory-inspector.canRead && (resourceLangId === c || resourceLangId === cpp)"
-        }
       ]
     },
     "customEditors": [
@@ -249,28 +242,39 @@
           ],
           "description": "C-based debuggers to activate (requires debug session restart)"
         },
-        "memory-inspector.autoRefresh": {
+        "memory-inspector.refreshOnStop": {
           "type": "string",
           "enum": [
-            "On Stop",
-            "On Focus",
-            "After Delay",
-            "Off"
+            "on",
+            "off"
           ],
           "enumDescriptions": [
-            "Refresh when the debugger stops (e.g. a breakpoint is hit)",
-            "Refresh automatically each time the view receives focus.",
-            "Refresh automatically after the configured `#memory-inspector.autoRefreshDelay#`",
-            "Memory Inspector needs to be manually refreshed by the user"
+            "Refresh Memory Inspector when the debugger stops (e.g. a breakpoint is hit)",
+            "Do not automatically refresh when the debugger stops"
           ],
-          "default": "On Stop",
-          "description": "Controls when the Memory Inspector is refreshed."
+          "default": "on",
+          "description": "Refresh Memory Inspectors when the debugger stops"
         },
-        "memory-inspector.autoRefreshDelay": {
+        "memory-inspector.periodicRefresh": {
+          "type": "string",
+          "enum": [
+            "always",
+            "while running",
+            "off"
+          ],
+          "markdownEnumDescriptions": [
+            "Always refresh automatically after the configured `#memory-inspector.periodicRefreshInterval#`",
+            "Refresh automatically after the configured `#memory-inspector.periodicRefreshInterval#` while the CPU is running",
+            "Do not automatically refresh after the configured delay"
+          ],
+          "default": "off",
+          "description": "Refresh Memory Inspectors after the configured delay"
+        },
+        "memory-inspector.periodicRefreshInterval": {
           "type": "number",
           "default": 500,
           "minimum": 500,
-          "markdownDescription": "Controls the delay in milliseconds after which a Memory Inspector is refrehsed automatically. Only applies when `#memory-inspector.autoRefresh#` is set to `afterDelay`."
+          "markdownDescription": "Controls the delay in milliseconds after which a Memory Inspector is refrehsed automatically. Only applies when `#memory-inspector.periodicRefresh#` is set to `on`."
         },
         "memory-inspector.groupings.bytesPerMAU": {
           "type": "number",

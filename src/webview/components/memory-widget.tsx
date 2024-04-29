@@ -91,8 +91,9 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 bytesPerMau={this.props.bytesPerMau}
                 mausPerGroup={this.props.mausPerGroup}
                 groupsPerRow={this.props.groupsPerRow}
-                autoRefresh={this.props.autoRefresh}
-                autoRefreshDelay={this.props.autoRefreshDelay}
+                refreshOnStop={this.props.refreshOnStop}
+                periodicRefresh={this.props.periodicRefresh}
+                periodicRefreshInterval={this.props.periodicRefreshInterval}
                 updateMemoryState={this.props.updateMemoryState}
                 updateRenderOptions={this.props.updateMemoryDisplayConfiguration}
                 resetRenderOptions={this.props.resetMemoryDisplayConfiguration}
@@ -118,8 +119,9 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 bytesPerMau={this.props.bytesPerMau}
                 mausPerGroup={this.props.mausPerGroup}
                 groupsPerRow={this.props.groupsPerRow}
-                autoRefresh={this.props.autoRefresh}
-                autoRefreshDelay={this.props.autoRefreshDelay}
+                refreshOnStop={this.props.refreshOnStop}
+                periodicRefresh={this.props.periodicRefresh}
+                periodicRefreshInterval={this.props.periodicRefreshInterval}
                 effectiveAddressLength={this.props.effectiveAddressLength}
                 fetchMemory={this.props.fetchMemory}
                 isMemoryFetching={this.props.isMemoryFetching}

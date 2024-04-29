@@ -92,8 +92,9 @@ export const DEFAULT_MEMORY_DISPLAY_CONFIGURATION: MemoryDisplayConfiguration = 
     addressPadding: manifest.DEFAULT_ADDRESS_PADDING,
     addressRadix: manifest.DEFAULT_ADDRESS_RADIX,
     showRadixPrefix: manifest.DEFAULT_SHOW_RADIX_PREFIX,
-    autoRefresh: manifest.DEFAULT_AUTO_REFRESH,
-    autoRefreshDelay: manifest.DEFAULT_AUTO_REFRESH_DELAY
+    refreshOnStop: manifest.DEFAULT_REFRESH_ON_STOP,
+    periodicRefresh: manifest.DEFAULT_PERIODIC_REFRESH,
+    periodicRefreshInterval: manifest.DEFAULT_PERIODIC_REFRESH_INTERVAL
 };
 
 export const DEFAULT_READ_ARGUMENTS: Required<ReadMemoryArguments> = {
@@ -152,14 +153,13 @@ class App extends React.Component<{}, MemoryAppState> {
         messenger.onRequest(getWebviewSelectionType, () => this.getWebviewSelection());
         messenger.onNotification(showAdvancedOptionsType, () => this.showAdvancedOptions());
         messenger.sendNotification(readyType, HOST_EXTENSION, undefined);
-        this.updateAutoRefresh();
+        this.updatePeriodicRefresh();
     }
 
     public componentDidUpdate(_: {}, from: MemoryAppState): void {
         const current = this.state;
         const stateChange: Change<MemoryAppState> = { from, to: current };
         const sessionContextChange: Change<SessionContext> = { from: from.sessionContext, to: current.sessionContext };
-        const viewStateChange: Change<ViewState> = { from: from.viewState, to: current.viewState };
 
         if (hasChanged(stateChange, 'addressPadding') || (this.state.addressPadding === 'Minimal' && hasChanged(stateChange, 'memory'))) {
             const effectiveAddressLength = this.getEffectiveAddressLength(this.state.memory);
@@ -167,14 +167,18 @@ class App extends React.Component<{}, MemoryAppState> {
                 this.setState({ effectiveAddressLength });
             }
         }
-        if (hasChanged(stateChange, 'autoRefresh') || hasChanged(stateChange, 'autoRefreshDelay')) {
-            this.updateAutoRefresh();
+        if (hasChanged(stateChange, 'periodicRefresh') || hasChanged(stateChange, 'periodicRefreshInterval') || hasChanged(sessionContextChange, 'stopped')) {
+            this.updatePeriodicRefresh();
         }
 
-        if (current.autoRefresh === 'On Stop' && hasChangedTo(sessionContextChange, 'stopped', true) ||
-            current.autoRefresh === 'On Focus' && hasChangedTo(viewStateChange, 'active', true)) {
+        if (current.refreshOnStop === 'on' && hasChangedTo(sessionContextChange, 'stopped', true)) {
             this.fetchMemory();
         }
+        // activate the code below if you want to refresh the memory when the view becomes active (focussed)
+        // const viewStateChange: Change<ViewState> = { from: from.viewState, to: current.viewState };
+        // if (hasChangedTo(viewStateChange, 'active', true)) {
+        //     this.fetchMemory();
+        // }
 
         hoverService.setMemoryState(this.state);
     }
@@ -183,14 +187,15 @@ class App extends React.Component<{}, MemoryAppState> {
         clearTimeout(this.refreshTimer);
     }
 
-    protected updateAutoRefresh = (): void => {
+    protected updatePeriodicRefresh = (): void => {
         clearTimeout(this.refreshTimer);
 
-        if (this.state.autoRefresh === 'After Delay' && this.state.autoRefreshDelay && this.state.autoRefreshDelay > 0) {
+        if (this.state.periodicRefreshInterval && this.state.periodicRefreshInterval > 0 &&
+            this.state.periodicRefresh === 'always' || (this.state.periodicRefresh === 'while running' && !this.state.sessionContext.stopped)) {
             // we do not use an interval here as we only want to schedule another refresh AFTER the previous execution AND the delay has passed
             // and not strictly every n milliseconds. Even if 'fetchMemory' fails here, we schedule another auto-refresh.
-            const scheduleRefresh = () => this.fetchMemory().finally(() => this.updateAutoRefresh());
-            this.refreshTimer = setTimeout(scheduleRefresh, this.state.autoRefreshDelay);
+            const scheduleRefresh = () => this.fetchMemory().finally(() => this.updatePeriodicRefresh());
+            this.refreshTimer = setTimeout(scheduleRefresh, this.state.periodicRefreshInterval);
         }
     };
 
@@ -270,8 +275,9 @@ class App extends React.Component<{}, MemoryAppState> {
                 showRadixPrefix={this.state.showRadixPrefix}
                 storeMemory={this.storeMemory}
                 applyMemory={this.applyMemory}
-                autoRefresh={this.state.autoRefresh}
-                autoRefreshDelay={this.state.autoRefreshDelay}
+                refreshOnStop={this.state.refreshOnStop}
+                periodicRefresh={this.state.periodicRefresh}
+                periodicRefreshInterval={this.state.periodicRefreshInterval}
             />
         </PrimeReactProvider>;
     }
