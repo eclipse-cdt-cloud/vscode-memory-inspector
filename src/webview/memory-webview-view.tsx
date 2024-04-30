@@ -82,7 +82,7 @@ const MEMORY_DISPLAY_CONFIGURATION_DEFAULTS: MemoryDisplayConfiguration = {
     showRadixPrefix: true,
 };
 
-const DEFAULT_READ_ARGUMENTS: Required<ReadMemoryArguments> = {
+export const DEFAULT_READ_ARGUMENTS: Required<ReadMemoryArguments> = {
     memoryReference: '',
     offset: 0,
     count: 256,
@@ -249,12 +249,18 @@ class App extends React.Component<{}, MemoryAppState> {
         if (this.state.isFrozen) {
             return;
         }
-        this.setState(prev => ({ ...prev, isMemoryFetching: true }));
         const completeOptions = {
             memoryReference: partialOptions?.memoryReference || this.state.activeReadArguments.memoryReference,
             offset: partialOptions?.offset ?? this.state.activeReadArguments.offset,
             count: partialOptions?.count ?? this.state.activeReadArguments.count
         };
+
+        // Don't fetch memory if we have an incomplete memory reference
+        if (completeOptions.memoryReference === '') {
+            return;
+        }
+
+        this.setState(prev => ({ ...prev, isMemoryFetching: true }));
 
         try {
             const response = await messenger.sendRequest(readMemoryType, HOST_EXTENSION, completeOptions);

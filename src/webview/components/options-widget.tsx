@@ -28,6 +28,7 @@ import { MemoryOptions, ReadMemoryArguments, SessionContext } from '../../common
 import { tryToNumber } from '../../common/typescript';
 import { CONFIG_BYTES_PER_MAU_CHOICES, CONFIG_GROUPS_PER_ROW_CHOICES, CONFIG_MAUS_PER_GROUP_CHOICES } from '../../plugin/manifest';
 import { TableRenderOptions } from '../columns/column-contribution-service';
+import { DEFAULT_READ_ARGUMENTS } from '../memory-webview-view';
 import { AddressPaddingOptions, MemoryState, SerializedTableRenderOptions } from '../utils/view-types';
 import { createSectionVscodeContext } from '../utils/vscode-contexts';
 import { MultiSelectWithLabel } from './multi-select';
@@ -120,10 +121,13 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
         return errors;
     };
 
-    componentDidUpdate(_: Readonly<OptionsWidgetProps>, prevState: Readonly<OptionsWidgetState>): void {
+    componentDidUpdate(prevProps: Readonly<OptionsWidgetProps>, prevState: Readonly<OptionsWidgetState>): void {
         if (!prevState.isTitleEditing && this.state.isTitleEditing) {
             this.labelEditInput.current?.focus();
             this.labelEditInput.current?.select();
+        }
+        if (prevProps.activeReadArguments === DEFAULT_READ_ARGUMENTS) {
+            this.formConfig.initialErrors = this.validate(this.optionsFormValues);
         }
     }
 
