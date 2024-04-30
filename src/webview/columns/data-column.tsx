@@ -70,9 +70,7 @@ export class EditableDataColumnRow extends React.Component<EditableDataColumnRow
             const next = address + 1n;
             if (maus.length % options.mausPerGroup === 0) {
                 this.applyEndianness(maus, options);
-                const isLast = next >= range.endAddress;
-                const style: React.CSSProperties | undefined = isLast ? undefined : DataColumn.Styles.byteGroupStyle;
-                groups.push(this.renderGroup(maus, groupStartAddress, next, style));
+                groups.push(this.renderGroup(maus, groupStartAddress, next));
                 groupStartAddress = next;
                 maus = [];
             }
@@ -82,12 +80,11 @@ export class EditableDataColumnRow extends React.Component<EditableDataColumnRow
         return groups;
     }
 
-    protected renderGroup(maus: React.ReactNode, startAddress: bigint, endAddress: bigint, style?: React.CSSProperties): React.ReactNode {
+    protected renderGroup(maus: React.ReactNode, startAddress: bigint, endAddress: bigint): React.ReactNode {
         return <span
             className='byte-group hoverable'
             data-column='data'
             data-range={`${startAddress}-${endAddress}`}
-            style={style}
             key={startAddress.toString(16)}
             onDoubleClick={this.setGroupEdit}
         >
@@ -138,21 +135,16 @@ export class EditableDataColumnRow extends React.Component<EditableDataColumnRow
     }
 
     protected renderEditingGroup(editedRange: BigIntMemoryRange): React.ReactNode {
-        const isLast = editedRange.endAddress === this.props.range.endAddress;
         const defaultValue = this.createEditingGroupDefaultValue(editedRange);
 
         const style: React.CSSProperties = {
             ...decorationService.getDecoration(editedRange.startAddress)?.style,
-            width: `calc(${defaultValue.length}ch + 10px)`,
-            padding: '0 4px',
-            marginRight: isLast ? undefined : DataColumn.Styles.byteGroupStyle.marginRight,
-            minHeight: 'unset',
-            border: '1px solid var(--vscode-inputOption-activeBorder)',
-            background: 'unset'
+            width: `calc(${defaultValue.length}ch + 2px)` // we balance the two pixels with padding on the group
         };
 
         return <InputText key={editedRange.startAddress.toString(16)}
             ref={this.inputText}
+            className='data-edit'
             maxLength={defaultValue.length}
             defaultValue={defaultValue}
             onBlur={this.onBlur}
@@ -233,9 +225,6 @@ export class EditableDataColumnRow extends React.Component<EditableDataColumnRow
 export namespace DataColumn {
     export namespace Styles {
         export const MARGIN_RIGHT_PX = 2;
-        export const byteGroupStyle: React.CSSProperties = {
-            marginRight: `${DataColumn.Styles.MARGIN_RIGHT_PX}px`
-        };
     }
 
     /**

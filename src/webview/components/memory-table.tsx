@@ -243,7 +243,11 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
             this.setState(prev => ({ ...prev, selection: null }));
         }
 
-        this.ensureGroupsPerRowToRenderIsSet();
+        const hasDisplayChanged = prevProps.bytesPerMau !== this.props.bytesPerMau || prevProps.mausPerGroup !== this.props.mausPerGroup ||
+            (prevProps.groupsPerRow !== 'Autofit' && this.props.groupsPerRow === 'Autofit');
+        if (hasDisplayChanged) {
+            this.ensureGroupsPerRowToRenderIsSet();
+        }
         if (this.props.memory !== undefined && this.props.scrollingBehavior === 'Auto-Append') {
             this.ensureSufficientVisibleRowsForScrollbar();
 
