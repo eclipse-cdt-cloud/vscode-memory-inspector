@@ -90,7 +90,11 @@ export class AmalgamatorGdbVariableTransformer extends AdapterVariableTracker {
     }
 
     async getCurrentConnectionContext(_session: vscode.DebugSession): Promise<ConnectionContext | undefined> {
-        return Promise.resolve(this.currentConnectionContext);
+        const curConnectionContext = this.connectionContexts?.length ?
+            (this.connectionContexts?.filter(context => context.id === this.currentConnectionContext?.id).shift() ??
+                this.currentConnectionContext) :
+            this.currentConnectionContext;
+        return Promise.resolve(curConnectionContext);
     }
 
     readMemory(session: vscode.DebugSession, args: ReadMemoryArguments, context: ConnectionContext): Promise<ReadMemoryResult> {
