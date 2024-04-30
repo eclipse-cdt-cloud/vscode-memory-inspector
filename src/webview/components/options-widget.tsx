@@ -26,7 +26,7 @@ import { classNames } from 'primereact/utils';
 import React, { FocusEventHandler, KeyboardEvent, KeyboardEventHandler, ReactNode } from 'react';
 import { CONFIG_BYTES_PER_MAU_CHOICES, CONFIG_GROUPS_PER_ROW_CHOICES, CONFIG_MAUS_PER_GROUP_CHOICES, ENDIANNESS_CHOICES, PERIODIC_REFRESH_CHOICES } from '../../common/manifest';
 import { validateCount, validateMemoryReference, validateOffset } from '../../common/memory';
-import { MemoryOptions, ReadMemoryArguments, SessionContext } from '../../common/messaging';
+import { ConnectionContext, MemoryOptions, ReadMemoryArguments, SessionContext } from '../../common/messaging';
 import { tryToNumber } from '../../common/typescript';
 import { TableRenderOptions } from '../columns/column-contribution-service';
 import { DEFAULT_MEMORY_DISPLAY_CONFIGURATION } from '../memory-webview-view';
@@ -50,6 +50,9 @@ export interface OptionsWidgetProps
     isFrozen: boolean;
     storeMemory(): void;
     applyMemory(): void;
+    connectionContexts: ConnectionContext[];
+    connectionContext?: ConnectionContext;
+    setConnectionContext: (context: ConnectionContext) => void;
 }
 
 interface OptionsWidgetState {
@@ -74,6 +77,7 @@ const enum InputId {
     RefreshOnStop = 'refresh-on-stop',
     PeriodicRefresh = 'periodic-refresh',
     PeriodicRefreshInterval = 'periodic-refresh-interval',
+    Contexts = 'connection-contexts'
 }
 
 interface OptionsForm {
@@ -150,6 +154,30 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
             this.formConfig.initialErrors = this.validate(this.optionsFormValues);
         }
     }
+
+    private onContextDropdownChange = (e: DropdownChangeEvent) => {
+        const { setConnectionContext, connectionContexts } = this.props;
+        setConnectionContext(connectionContexts.filter(context => context.id === Number(e.value))[0]);
+    };
+
+    protected showContexts(): React.ReactNode {
+        if (this.props.connectionContexts.length === 0) {
+            return undefined;
+        }
+        return (
+            <span className='pm-top-label'>
+                <label htmlFor={InputId.Contexts} className='p-inputtext-label'>
+                    Context
+                </label>
+                <Dropdown
+                    id={InputId.Contexts}
+                    value={this.props.connectionContext?.id}
+                    options={this.props.connectionContexts}
+                    optionLabel="name"
+                    optionValue="id"
+                    onChange={this.onContextDropdownChange} />
+            </span>);
+    };
 
     override render(): React.ReactNode {
         this.formConfig.initialValues = this.optionsFormValues;
@@ -229,6 +257,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                     <Formik {...this.formConfig}>
                         {formik => (
                             <form onSubmit={formik.handleSubmit} className='form-options'>
+                                {this.showContexts()}
                                 <span className={'pm-top-label form-textfield form-texfield-long'}>
                                     <label htmlFor={InputId.Address} className={`p-inputtext-label ${readDisabled ? 'p-disabled' : ''}`} >
                                         Address
