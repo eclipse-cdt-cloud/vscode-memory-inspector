@@ -18,7 +18,7 @@ import React from 'react';
 import { WebviewIdMessageParticipant } from 'vscode-messenger-common';
 import * as manifest from '../../common/manifest';
 import { Memory } from '../../common/memory';
-import { WebviewSelection } from '../../common/messaging';
+import { ConnectionContext, WebviewSelection } from '../../common/messaging';
 import { MemoryOptions, ReadMemoryArguments, SessionContext } from '../../common/messaging';
 import { MemoryDataDisplaySettings } from '../../common/webview-configuration';
 import { ColumnStatus } from '../columns/column-contribution-service';
@@ -51,6 +51,9 @@ interface MemoryWidgetProps extends MemoryDataDisplaySettings {
     fetchMemory(partialOptions?: MemoryOptions): Promise<void>;
     storeMemory(): void;
     applyMemory(): void;
+    connectionContexts: ConnectionContext[];
+    connectionContext?: ConnectionContext;
+    setConnectionContext: (context: ConnectionContext) => void;
 }
 
 interface MemoryWidgetState {
@@ -112,6 +115,9 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 isFrozen={this.props.isFrozen}
                 storeMemory={this.props.storeMemory}
                 applyMemory={this.props.applyMemory}
+                connectionContexts={this.props.connectionContexts}
+                connectionContext={this.props.connectionContext}
+                setConnectionContext={this.props.setConnectionContext}
             />
             <MemoryTable
                 ref={this.memoryTable}

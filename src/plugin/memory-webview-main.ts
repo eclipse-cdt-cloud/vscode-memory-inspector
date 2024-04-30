@@ -21,7 +21,10 @@ import { isVariablesContext } from '../common/external-views';
 import * as manifest from '../common/manifest';
 import { VariableRange } from '../common/memory-range';
 import {
+    ApplyMemoryArguments,
     applyMemoryType,
+    ConnectionContext,
+    connectionContextChangedType,
     getVariablesType,
     getWebviewSelectionType,
     logMessageType,
@@ -56,6 +59,9 @@ const CONFIGURABLE_COLUMNS = [
     manifest.CONFIG_SHOW_ASCII_COLUMN,
     manifest.CONFIG_SHOW_VARIABLES_COLUMN,
 ];
+
+type ReadMemoryWithContext = [ReadMemoryArguments, ConnectionContext?];
+type WriteMemoryWithContext = [WriteMemoryArguments, ConnectionContext?];
 
 export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
     public static ViewType = `${manifest.PACKAGE_NAME}.memory`;
@@ -206,6 +212,7 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
             this.messenger.onNotification(readyType, async () => {
                 this.setSessionContext(participant, this.createContext());
                 await this.setMemoryDisplaySettings(participant, panel.title);
+                await this.setConnectionContext(participant);
                 this.refresh(participant, options);
             }, { sender: participant }),
             this.messenger.onRequest(setOptionsType, newOptions => { options = { ...options, ...newOptions }; }, { sender: participant }),
@@ -215,9 +222,17 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
             this.messenger.onRequest(getVariablesType, request => this.getVariables(request), { sender: participant }),
             this.messenger.onNotification(setTitleType, title => { panel.title = title; }, { sender: participant }),
             this.messenger.onRequest(storeMemoryType, args => this.storeMemory(args), { sender: participant }),
-            this.messenger.onRequest(applyMemoryType, () => this.applyMemory(), { sender: participant }),
+            this.messenger.onRequest(applyMemoryType, args => this.applyMemory(args), { sender: participant }),
             this.sessionTracker.onSessionEvent(event => this.handleSessionEvent(participant, event))
         ];
+        let panelHasBeenVisible = false;
+        panel.onDidChangeViewState(newState => {
+            // Skip on first appearance.
+            if (panelHasBeenVisible && newState.webviewPanel.visible) {
+                this.refresh(participant, options);
+            }
+            panelHasBeenVisible ||= newState.webviewPanel.visible;
+        });
         panel.onDidDispose(() => disposables.forEach(disposable => disposable.dispose()));
     }
 
@@ -244,6 +259,12 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
 
     protected setSessionContext(webviewParticipant: WebviewIdMessageParticipant, context: SessionContext): void {
         this.messenger.sendNotification(sessionContextChangedType, webviewParticipant, context);
+    }
+
+    protected async setConnectionContext(webviewParticipant: WebviewIdMessageParticipant): Promise<void> {
+        const connectionContexts = await this.getConnectionContexts();  // Read available Connection Contexts first.
+        await this.messenger.sendRequest(connectionContextChangedType, webviewParticipant,
+            [await this.getCurrentConnectionContext(), connectionContexts]);
     }
 
     protected getDefaultMemoryDisplaySettings(): MemoryDisplaySettings {
@@ -302,25 +323,28 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
         };
     }
 
-    protected async readMemory(request: ReadMemoryArguments): Promise<ReadMemoryResult> {
+    protected async readMemory(request: ReadMemoryWithContext): Promise<ReadMemoryResult> {
         try {
-            return await this.memoryProvider.readMemory(request);
+            const [readMemoryArgs, context] = request;
+            return await this.memoryProvider.readMemory(readMemoryArgs, context);
         } catch (err) {
             this.logError('Error fetching memory', err);
         }
     }
 
-    protected async writeMemory(request: WriteMemoryArguments): Promise<WriteMemoryResult> {
+    protected async writeMemory(request: WriteMemoryWithContext): Promise<WriteMemoryResult> {
         try {
-            return await this.memoryProvider.writeMemory(request);
+            const [writeMemoryArgs, context] = request;
+            return await this.memoryProvider.writeMemory(writeMemoryArgs, context);
         } catch (err) {
             this.logError('Error writing memory', err);
         }
     }
 
-    protected async getVariables(request: ReadMemoryArguments): Promise<VariableRange[]> {
+    protected async getVariables(request: ReadMemoryWithContext): Promise<VariableRange[]> {
         try {
-            return await this.memoryProvider.getVariables(request);
+            const [readMemoryArgs, context] = request;
+            return await this.memoryProvider.getVariables(readMemoryArgs, context);
         } catch (err) {
             this.logError('Error fetching variables', err);
             return [];
@@ -343,21 +367,39 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
         this.setMemoryViewSettings(ctx.messageParticipant, { visibleColumns });
     }
 
-    protected async storeMemory(storeArguments: StoreMemoryArguments): Promise<void> {
+    protected async storeMemory(storeArguments: [StoreMemoryArguments, ConnectionContext?]): Promise<void> {
         // Even if we disable the command in VS Code through enablement or when condition, programmatic execution is still possible.
         // However, we want to fail early in case the user tries to execute a disabled command
         this.sessionTracker.assertDebugCapability(this.sessionTracker.activeSession, 'supportsReadMemoryRequest', 'store memory');
         return vscode.commands.executeCommand(StoreCommandType, storeArguments);
     }
 
-    protected async applyMemory(): Promise<MemoryOptions> {
+    protected async applyMemory(applyArguments: [ApplyMemoryArguments, ConnectionContext?]): Promise<MemoryOptions> {
         // Even if we disable the command in VS Code through enablement or when condition, programmatic execution is still possible.
         // However, we want to fail early in case the user tries to execute a disabled command
         this.sessionTracker.assertDebugCapability(this.sessionTracker.activeSession, 'supportsWriteMemoryRequest', 'apply memory');
-        return vscode.commands.executeCommand(ApplyCommandType);
+        return vscode.commands.executeCommand(ApplyCommandType, applyArguments);
     }
 
     protected logError(msg: string, err: unknown): void {
         outputChannelLogger.error(msg, err instanceof Error ? `: ${err.message}\n${err.stack}` : '');
+    }
+
+    protected async getConnectionContexts(): Promise<ConnectionContext[]> {
+        try {
+            return await this.memoryProvider.getConnectionContexts();
+        } catch (err) {
+            this.logError('Error getting Connection Contexts', err);
+        }
+        return [];
+    }
+
+    protected async getCurrentConnectionContext(): Promise<ConnectionContext | undefined> {
+        try {
+            return await this.memoryProvider.getCurrentConnectionContext();
+        } catch (err) {
+            this.logError('Error getting Current Connection Context', err);
+        }
+        return undefined;
     }
 }

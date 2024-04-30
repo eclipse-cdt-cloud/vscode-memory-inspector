@@ -26,6 +26,8 @@ import { createMemoryFromRead, Memory } from '../common/memory';
 import { BigIntMemoryRange, doOverlap, getAddressLength, getAddressString, WrittenMemory } from '../common/memory-range';
 import {
     applyMemoryType,
+    ConnectionContext,
+    connectionContextChangedType,
     getWebviewSelectionType,
     logMessageType,
     MemoryOptions,
@@ -64,6 +66,8 @@ export interface MemoryAppState extends MemoryState, MemoryViewSettings {
     hoverService: HoverService;
     columns: ColumnStatus[];
     isFrozen: boolean;
+    connectionContexts: ConnectionContext[];
+    connectionContext: ConnectionContext | undefined;
 }
 
 export const DEFAULT_SESSION_CONTEXT: SessionContext = {
@@ -113,14 +117,18 @@ class App extends React.Component<{}, MemoryAppState> {
             columns: columnContributionService.getColumns(),
             isMemoryFetching: false,
             isFrozen: false,
+            connectionContexts: [],
+            connectionContext: undefined,
             ...DEFAULT_MEMORY_DISPLAY_CONFIGURATION
         };
     }
 
     public componentDidMount(): void {
+        messenger.onNotification(sessionContextChangedType, sessionContext => this.sessionContextChanged(sessionContext));
+        messenger.onNotification(connectionContextChangedType, connectionContext =>
+            this.connectionContextChanged(connectionContext));
         messenger.onRequest(setOptionsType, options => this.setOptions(options));
         messenger.onNotification(memoryWrittenType, writtenMemory => this.memoryWritten(writtenMemory));
-        messenger.onNotification(sessionContextChangedType, sessionContext => this.sessionContextChanged(sessionContext));
         messenger.onNotification(setMemoryViewSettingsType, config => {
             if (config.visibleColumns) {
                 for (const column of columnContributionService.getColumns()) {
@@ -214,6 +222,18 @@ class App extends React.Component<{}, MemoryAppState> {
         this.setState({ sessionContext });
     }
 
+    protected connectionContextChanged(connectionContext: [ConnectionContext?, ConnectionContext[]?]): void {
+        const [currentContext, contexts] = connectionContext;
+        const updatedState: Partial<MemoryAppState> = {};
+        if (typeof (currentContext) !== 'undefined') {
+            updatedState.connectionContext = currentContext;
+        }
+        if (contexts?.length) {
+            updatedState.connectionContexts = contexts;
+        }
+        this.setState(prevState => ({ ...prevState, ...updatedState }));
+    }
+
     public render(): React.ReactNode {
         return <PrimeReactProvider>
             <MemoryWidget
@@ -251,6 +271,9 @@ class App extends React.Component<{}, MemoryAppState> {
                 refreshOnStop={this.state.refreshOnStop}
                 periodicRefresh={this.state.periodicRefresh}
                 periodicRefreshInterval={this.state.periodicRefreshInterval}
+                connectionContexts={this.state.connectionContexts}
+                connectionContext={this.state.connectionContext}
+                setConnectionContext={this.setConnectionContext}
             />
         </PrimeReactProvider>;
     }
@@ -289,10 +312,11 @@ class App extends React.Component<{}, MemoryAppState> {
         this.setState({ isMemoryFetching: true, activeReadArguments: memoryOptions });
 
         try {
-            const response = await messenger.sendRequest(readMemoryType, HOST_EXTENSION, memoryOptions);
+            const response = await messenger.sendRequest(readMemoryType, HOST_EXTENSION,
+                [memoryOptions, this.state.connectionContext]);
             await Promise.all(Array.from(
                 new Set(columnContributionService.getUpdateExecutors().concat(decorationService.getUpdateExecutors())),
-                executor => executor.fetchData(memoryOptions)
+                executor => executor.fetchData(memoryOptions, this.state.connectionContext)
             ));
 
             const memory = createMemoryFromRead(response);
@@ -345,12 +369,17 @@ class App extends React.Component<{}, MemoryAppState> {
     }
 
     protected storeMemory = async (): Promise<void> => {
-        await messenger.sendRequest(storeMemoryType, HOST_EXTENSION, { ...this.state.activeReadArguments });
+        await messenger.sendRequest(storeMemoryType, HOST_EXTENSION,
+            [{ ...this.state.activeReadArguments }, this.state.connectionContext]);
     };
 
     protected applyMemory = async (): Promise<void> => {
-        await messenger.sendRequest(applyMemoryType, HOST_EXTENSION, undefined);
+        await messenger.sendRequest(applyMemoryType, HOST_EXTENSION,
+            [undefined, this.state.connectionContext]);
     };
+
+    protected setConnectionContext = (newContextState: ConnectionContext) => this.setState(prevState =>
+        ({ ...prevState, connectionContext: newContextState }));
 }
 
 const container = document.getElementById('root') as Element;
