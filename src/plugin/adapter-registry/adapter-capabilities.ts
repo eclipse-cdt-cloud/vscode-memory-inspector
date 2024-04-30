@@ -18,6 +18,7 @@ import { DebugProtocol } from '@vscode/debugprotocol';
 import * as vscode from 'vscode';
 import { isDebugRequest, isDebugResponse } from '../../common/debug-requests';
 import { VariableRange } from '../../common/memory-range';
+import { ReadMemoryArguments, ReadMemoryResult, WriteMemoryArguments, WriteMemoryResult } from '../../common/messaging';
 import { MemoryDisplaySettingsContribution } from '../../common/webview-configuration';
 import { Logger } from '../logger';
 
@@ -35,6 +36,8 @@ export interface AdapterCapabilities {
     getMemoryDisplaySettings?(session: vscode.DebugSession): Promise<Partial<MemoryDisplaySettingsContribution>>;
     /** Initialize the trackers of this adapter's for the debug session. */
     initializeAdapterTracker?(session: vscode.DebugSession): vscode.DebugAdapterTracker | undefined;
+    readMemory?(session: vscode.DebugSession, params: ReadMemoryArguments): Promise<ReadMemoryResult>;
+    writeMemory?(session: vscode.DebugSession, params: WriteMemoryArguments): Promise<WriteMemoryResult>;
 }
 
 export type WithChildren<Original> = Original & { children?: Array<WithChildren<DebugProtocol.Variable>> };
@@ -135,6 +138,10 @@ export class AdapterVariableTracker implements vscode.DebugAdapterTracker {
 
     /** Resolves the size of a given variable in bytes within the current context. */
     getSizeOfVariable?(variableName: string, session: vscode.DebugSession): Promise<bigint | undefined>;
+
+    readMemory?(session: vscode.DebugSession, params: ReadMemoryArguments): Promise<ReadMemoryResult>;
+
+    writeMemory?(session: vscode.DebugSession, params: WriteMemoryArguments): Promise<WriteMemoryResult>;
 }
 
 export class VariableTracker implements AdapterCapabilities {

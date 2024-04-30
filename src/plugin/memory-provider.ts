@@ -49,7 +49,10 @@ export class MemoryProvider {
     }
 
     public async readMemory(args: DebugProtocol.ReadMemoryArguments): Promise<ReadMemoryResult> {
-        return sendRequest(this.sessionTracker.assertDebugCapability(this.sessionTracker.activeSession, 'supportsReadMemoryRequest', 'read memory'), 'readMemory', args);
+        const session = this.sessionTracker.assertDebugCapability(this.sessionTracker.activeSession, 'supportsReadMemoryRequest', 'read memory');
+        const handler = this.adapterRegistry?.getHandlerForSession(session.type);
+        if (handler?.readMemory) { return handler.readMemory(session, args); }
+        return sendRequest(session, 'readMemory', args);
     }
 
     public async writeMemory(args: DebugProtocol.WriteMemoryArguments): Promise<WriteMemoryResult> {
@@ -62,6 +65,14 @@ export class MemoryProvider {
             const count = response?.bytesWritten ?? stringToBytesMemory(args.data).length;
             // if our custom handler is active, let's fire the event ourselves
             this.sessionTracker.fireSessionEvent(session, 'memory-written', { memoryReference: args.memoryReference, offset, count });
+        };
+        const handler = this.adapterRegistry?.getHandlerForSession(session.type);
+        if (handler?.writeMemory) {
+            return handler.writeMemory(session, args).then(response => {
+                // The memory event is handled before we got here, if the scheduled event still exists, we need to handle it
+                this.scheduledOnDidMemoryWriteEvents[args.memoryReference]?.(response);
+                return response;
+            });
         };
 
         return sendRequest(session, 'writeMemory', args).then(response => {
