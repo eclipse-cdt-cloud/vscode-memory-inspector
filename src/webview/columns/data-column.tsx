@@ -224,7 +224,10 @@ export class EditableDataColumnRow extends React.Component<EditableDataColumnRow
 
 export namespace DataColumn {
     export namespace Styles {
+        // `margin-right: 2px` per group (see memory-table.css)
         export const MARGIN_RIGHT_PX = 2;
+        // `padding: 0 1px` applies 1px right and left per group (see memory-table.css)
+        export const PADDING_RIGHT_LEFT_PX = 2;
     }
 
     /**
@@ -244,11 +247,13 @@ export namespace DataColumn {
         const columnWidth = elementInnerWidth(element);
         // The browser also rounds the character width
         const charactersWidth = Math.round((characterWidthInContainer(element, '0') + Number.EPSILON) * 100) / 100;
-        const groupWidth = charactersWidth
-            * 2 // characters per byte
+        const charactersPerByte = 2;
+        const groupWidth = (
+            charactersWidth
+            * charactersPerByte
             * options.bytesPerMau
             * options.mausPerGroup
-            + Styles.MARGIN_RIGHT_PX;
+        ) + Styles.MARGIN_RIGHT_PX + Styles.PADDING_RIGHT_LEFT_PX;
         // Accommodate the non-existent margin of the final element.
         const maxGroups = Math.max((columnWidth + Styles.MARGIN_RIGHT_PX) / groupWidth, 1);
 
