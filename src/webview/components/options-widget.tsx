@@ -28,8 +28,7 @@ import { MemoryOptions, ReadMemoryArguments, SessionContext } from '../../common
 import { tryToNumber } from '../../common/typescript';
 import { CONFIG_BYTES_PER_MAU_CHOICES, CONFIG_GROUPS_PER_ROW_CHOICES, CONFIG_MAUS_PER_GROUP_CHOICES } from '../../plugin/manifest';
 import { TableRenderOptions } from '../columns/column-contribution-service';
-import { DEFAULT_READ_ARGUMENTS } from '../memory-webview-view';
-import { AddressPaddingOptions, MemoryState, SerializedTableRenderOptions } from '../utils/view-types';
+import { AddressPaddingOptions, DEFAULT_READ_ARGUMENTS, MemoryState, SerializedTableRenderOptions } from '../utils/view-types';
 import { createSectionVscodeContext } from '../utils/vscode-contexts';
 import { MultiSelectWithLabel } from './multi-select';
 
@@ -106,7 +105,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
 
     protected validate = (values: OptionsForm) => {
         const errors: FormikErrors<OptionsForm> = {};
-        const addressError = values.address.trim().length === 0 ? 'Required' : validateMemoryReference(values.address);
+        const addressError = values.address.trim().length === 0 ? 'Required' : validateMemoryReference(values.address.trim());
         if (addressError) {
             errors.address = addressError;
         }
@@ -138,9 +137,11 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
         const readDisabled = isFrozen || !this.props.sessionContext.canRead;
         const freezeContentToggleTitle = isFrozen ? 'Unfreeze Memory View' : 'Freeze Memory View';
         const activeMemoryReadArgumentHint = (userValue: string | number, memoryValue: string | number): ReactNode | undefined => {
-            if (userValue !== memoryValue) {
-                return <small className="form-options-memory-read-argument-hint">Actual: {memoryValue}</small>;
+            if (userValue === memoryValue || this.props.activeReadArguments === DEFAULT_READ_ARGUMENTS) {
+                return undefined;
             }
+            return <small className="form-options-memory-read-argument-hint">Actual: {memoryValue}</small>;
+
         };
 
         return (
@@ -442,12 +443,12 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                 this.props.updateMemoryState({
                     configuredReadArguments: {
                         ...this.props.configuredReadArguments,
-                        memoryReference: value,
+                        memoryReference: value.trim(),
                     }
                 });
                 break;
             case InputId.Offset:
-                if (!Number.isNaN(value)) {
+                if (!!value && !Number.isNaN(value)) {
                     this.props.updateMemoryState({
                         configuredReadArguments: {
                             ...this.props.configuredReadArguments,
@@ -457,7 +458,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                 }
                 break;
             case InputId.Length:
-                if (!Number.isNaN(value)) {
+                if (!!value && !Number.isNaN(value)) {
                     this.props.updateMemoryState({
                         configuredReadArguments: {
                             ...this.props.configuredReadArguments,
