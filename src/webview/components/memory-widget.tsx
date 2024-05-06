@@ -67,12 +67,15 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
 
     protected createVscodeContext(): VscodeContext {
         const visibleColumns = this.props.columns.filter(candidate => candidate.active).map(column => column.contribution.id);
+        const { messageParticipant, showRadixPrefix, endianness, bytesPerMau, activeReadArguments } = this.props;
         return createAppVscodeContext({
-            messageParticipant: this.props.messageParticipant,
-            showRadixPrefix: this.props.showRadixPrefix,
+            messageParticipant,
+            showRadixPrefix,
             showAsciiColumn: visibleColumns.includes('ascii'),
             showVariablesColumn: visibleColumns.includes('variables'),
-            activeReadArguments: this.props.activeReadArguments
+            endianness,
+            bytesPerMau,
+            activeReadArguments
         });
 
     }

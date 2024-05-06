@@ -23,6 +23,7 @@ import { writeMemoryType } from '../../common/messaging';
 import type { MemorySizeOptions } from '../components/memory-table';
 import { decorationService } from '../decorations/decoration-service';
 import { Disposable, FullNodeAttributes } from '../utils/view-types';
+import { createGroupVscodeContext } from '../utils/vscode-contexts';
 import { characterWidthInContainer, elementInnerWidth } from '../utils/window';
 import { messenger } from '../view-messenger';
 import { ColumnContribution, TableRenderOptions } from './column-contribution-service';
@@ -87,6 +88,7 @@ export class EditableDataColumnRow extends React.Component<EditableDataColumnRow
             data-range={`${startAddress}-${endAddress}`}
             key={startAddress.toString(16)}
             onDoubleClick={this.setGroupEdit}
+            {...createGroupVscodeContext(startAddress, toOffset(startAddress, endAddress, this.props.options.bytesPerMau * 8))}
         >
             {maus}
         </span>;
