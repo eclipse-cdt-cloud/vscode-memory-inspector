@@ -15,7 +15,7 @@
  ********************************************************************************/
 
 import { WebviewIdMessageParticipant } from 'vscode-messenger-common';
-import { VariableMetadata } from './memory-range';
+import { Endianness, VariableMetadata } from './memory-range';
 import { ReadMemoryArguments } from './messaging';
 
 export interface WebviewContext {
@@ -24,6 +24,8 @@ export interface WebviewContext {
     showAsciiColumn: boolean
     showVariablesColumn: boolean,
     showRadixPrefix: boolean,
+    endianness: Endianness,
+    bytesPerMau: number,
     activeReadArguments: Required<ReadMemoryArguments>
 }
 

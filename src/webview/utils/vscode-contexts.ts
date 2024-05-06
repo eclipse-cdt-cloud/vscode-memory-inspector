@@ -28,7 +28,7 @@ export interface VscodeContext {
 export type WebviewSection = 'optionsWidget' | 'advancedOptionsOverlay' | 'memoryTable';
 
 export function createVscodeContext<C extends {}>(context: C): VscodeContext {
-    return { 'data-vscode-context': JSON.stringify(includeFlatKeys(context)) };
+    return { 'data-vscode-context': JSON.stringify(includeFlatKeys(context), replacerForBigInt) };
 }
 
 function includeFlatKeys(src: object): Record<string, unknown> {
@@ -60,8 +60,19 @@ export function createAppVscodeContext(context: Omit<WebviewContext, 'webviewSec
     return createVscodeContext({ ...context, webviewSection: 'app', preventDefaultContextMenuItems: true });
 }
 
+export function createGroupVscodeContext(startAddress: BigInt, length: number): VscodeContext {
+    return createVscodeContext({ memoryData: { group: { startAddress, length } } });
+}
+
 export function createVariableVscodeContext(variable: BigIntVariableRange): VscodeContext {
     const { name, type, value, isPointer } = variable;
     return createVscodeContext({ variable: { name, type, value, isPointer } });
+}
+
+function replacerForBigInt(_: string, value: unknown): unknown {
+    if (typeof value === 'bigint') {
+        return `0x${value.toString(16)}`;
+    }
+    return value;
 }
 
