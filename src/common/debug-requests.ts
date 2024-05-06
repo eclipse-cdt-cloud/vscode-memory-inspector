@@ -29,7 +29,8 @@ export interface DebugRequestTypes {
 
 export interface DebugEvents {
     'memory': DebugProtocol.MemoryEvent,
-    'stopped': DebugProtocol.StoppedEvent
+    'stopped': DebugProtocol.StoppedEvent,
+    'output': DebugProtocol.OutputEvent,
 }
 
 export type DebugRequest<C, A> = Omit<DebugProtocol.Request, 'command' | 'arguments'> & { command: C, arguments: A };
