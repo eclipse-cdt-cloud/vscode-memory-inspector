@@ -28,7 +28,6 @@ import {
     logMessageType,
     MemoryOptions,
     memoryWrittenType,
-    ReadMemoryArguments,
     readMemoryType,
     readyType,
     resetMemoryViewSettingsType,
@@ -51,7 +50,7 @@ import { AddressHover } from './hovers/address-hover';
 import { DataHover } from './hovers/data-hover';
 import { hoverService, HoverService } from './hovers/hover-service';
 import { VariableHover } from './hovers/variable-hover';
-import { Decoration, MemoryDisplayConfiguration, MemoryState } from './utils/view-types';
+import { Decoration, DEFAULT_READ_ARGUMENTS, MemoryDisplayConfiguration, MemoryState } from './utils/view-types';
 import { variableDecorator } from './variables/variable-decorations';
 import { messenger } from './view-messenger';
 
@@ -80,12 +79,6 @@ const MEMORY_DISPLAY_CONFIGURATION_DEFAULTS: MemoryDisplayConfiguration = {
     addressPadding: 'Min',
     addressRadix: 16,
     showRadixPrefix: true,
-};
-
-const DEFAULT_READ_ARGUMENTS: Required<ReadMemoryArguments> = {
-    memoryReference: '',
-    offset: 0,
-    count: 256,
 };
 
 class App extends React.Component<{}, MemoryAppState> {
@@ -249,12 +242,18 @@ class App extends React.Component<{}, MemoryAppState> {
         if (this.state.isFrozen) {
             return;
         }
-        this.setState(prev => ({ ...prev, isMemoryFetching: true }));
         const completeOptions = {
             memoryReference: partialOptions?.memoryReference || this.state.activeReadArguments.memoryReference,
             offset: partialOptions?.offset ?? this.state.activeReadArguments.offset,
             count: partialOptions?.count ?? this.state.activeReadArguments.count
         };
+
+        // Don't fetch memory if we have an incomplete memory reference
+        if (completeOptions.memoryReference === '') {
+            return;
+        }
+
+        this.setState(prev => ({ ...prev, isMemoryFetching: true }));
 
         try {
             const response = await messenger.sendRequest(readMemoryType, HOST_EXTENSION, completeOptions);
