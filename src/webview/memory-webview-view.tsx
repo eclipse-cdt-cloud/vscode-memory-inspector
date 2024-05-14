@@ -40,8 +40,6 @@ import {
     setTitleType,
     showAdvancedOptionsType,
     storeMemoryType,
-    ViewState,
-    viewStateChangedType,
     WebviewSelection,
 } from '../common/messaging';
 import { Change, hasChanged, hasChangedTo } from '../common/typescript';
@@ -63,7 +61,6 @@ import { messenger } from './view-messenger';
 export interface MemoryAppState extends MemoryState, MemoryDisplayConfiguration {
     messageParticipant: WebviewIdMessageParticipant;
     title: string;
-    viewState: ViewState;
     sessionContext: SessionContext;
     effectiveAddressLength: number;
     decorations: Decoration[];
@@ -75,11 +72,6 @@ export interface MemoryAppState extends MemoryState, MemoryDisplayConfiguration 
 export const DEFAULT_SESSION_CONTEXT: SessionContext = {
     canRead: false,
     canWrite: false
-};
-
-export const DEFAULT_VIEW_STATE: ViewState = {
-    active: false,
-    visible: false
 };
 
 export const DEFAULT_MEMORY_DISPLAY_CONFIGURATION: MemoryDisplayConfiguration = {
@@ -113,7 +105,6 @@ class App extends React.Component<{}, MemoryAppState> {
         this.state = {
             messageParticipant: { type: 'webview', webviewId: '' },
             title: 'Memory',
-            viewState: DEFAULT_VIEW_STATE,
             sessionContext: DEFAULT_SESSION_CONTEXT,
             memory: undefined,
             effectiveAddressLength: 0,
@@ -132,7 +123,6 @@ class App extends React.Component<{}, MemoryAppState> {
         messenger.onRequest(setOptionsType, options => this.setOptions(options));
         messenger.onNotification(memoryWrittenType, writtenMemory => this.memoryWritten(writtenMemory));
         messenger.onNotification(sessionContextChangedType, sessionContext => this.sessionContextChanged(sessionContext));
-        messenger.onNotification(viewStateChangedType, viewState => this.viewStateChanged(viewState));
         messenger.onNotification(setMemoryViewSettingsType, config => {
             if (config.visibleColumns) {
                 for (const column of columnContributionService.getColumns()) {
@@ -167,11 +157,6 @@ class App extends React.Component<{}, MemoryAppState> {
         if (current.refreshOnStop === 'on' && hasChangedTo(sessionContextChange, 'stopped', true)) {
             this.fetchMemory();
         }
-        // activate the code below if you want to refresh the memory when the view becomes active (focussed)
-        // const viewStateChange: Change<ViewState> = { from: from.viewState, to: current.viewState };
-        // if (hasChangedTo(viewStateChange, 'active', true)) {
-        //     this.fetchMemory();
-        // }
 
         hoverService.setMemoryState(this.state);
     }
@@ -229,10 +214,6 @@ class App extends React.Component<{}, MemoryAppState> {
 
     protected sessionContextChanged(sessionContext: SessionContext): void {
         this.setState({ sessionContext });
-    }
-
-    protected viewStateChanged(viewState: ViewState): void {
-        this.setState({ viewState });
     }
 
     public render(): React.ReactNode {
@@ -329,7 +310,6 @@ class App extends React.Component<{}, MemoryAppState> {
         } finally {
             this.setState({ isMemoryFetching: false });
         }
-
     }
 
     protected getEffectiveAddressLength(memory?: Memory): number {

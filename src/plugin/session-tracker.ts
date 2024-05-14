@@ -107,7 +107,7 @@ export class SessionTracker implements vscode.DebugAdapterTrackerFactory {
         this._onSessionEvent.fire({ event: 'active', session: session ? this.sessionInfo(session) : undefined });
     }
 
-    protected fireSessionEvent<K extends keyof Omit<SessionEvents, 'active'>>(session: vscode.DebugSession, event: K, data: SessionEvents[K]['data']): void {
+    fireSessionEvent<K extends keyof Omit<SessionEvents, 'active'>>(session: vscode.DebugSession, event: K, data: SessionEvents[K]['data']): void {
         this._onSessionEvent.fire({ event, session: this.sessionInfo(session), data });
     }
 

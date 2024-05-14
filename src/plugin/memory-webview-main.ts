@@ -39,8 +39,6 @@ import {
     showAdvancedOptionsType,
     StoreMemoryArguments,
     storeMemoryType,
-    ViewState,
-    viewStateChangedType,
     WebviewSelection,
     WriteMemoryArguments,
     WriteMemoryResult,
@@ -191,12 +189,11 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
         `;
     }
 
-    protected setWebviewMessageListener(panel: vscode.WebviewPanel, initialOptions?: MemoryOptions): void {
+    protected setWebviewMessageListener(panel: vscode.WebviewPanel, options?: MemoryOptions): void {
         const participant = this.messenger.registerWebviewPanel(panel);
-        let memoryOptions = initialOptions;
         const disposables = [
-            this.messenger.onNotification(readyType, () => this.initialize(participant, panel, memoryOptions), { sender: participant }),
-            this.messenger.onRequest(setOptionsType, newOptions => { memoryOptions = { ...memoryOptions, ...newOptions }; }, { sender: participant }),
+            this.messenger.onNotification(readyType, () => this.initialize(participant, panel, options), { sender: participant }),
+            this.messenger.onRequest(setOptionsType, newOptions => { options = { ...options, ...newOptions }; }, { sender: participant }),
             this.messenger.onRequest(logMessageType, message => outputChannelLogger.info('[webview]:', message), { sender: participant }),
             this.messenger.onRequest(readMemoryType, request => this.readMemory(request), { sender: participant }),
             this.messenger.onRequest(writeMemoryType, request => this.writeMemory(request), { sender: participant }),
@@ -207,13 +204,11 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
             this.messenger.onRequest(applyMemoryType, () => this.applyMemory(), { sender: participant }),
             this.sessionTracker.onSessionEvent(event => this.handleSessionEvent(participant, event))
         ];
-        panel.onDidChangeViewState(newState => this.setViewState(participant, { active: newState.webviewPanel.active, visible: newState.webviewPanel.visible }));
         panel.onDidDispose(() => disposables.forEach(disposable => disposable.dispose()));
     }
 
     protected async initialize(participant: WebviewIdMessageParticipant, panel: vscode.WebviewPanel, options?: MemoryOptions): Promise<void> {
         this.setSessionContext(participant, this.createContext());
-        this.setViewState(participant, { active: panel.active, visible: panel.visible });
         this.setInitialSettings(participant, panel.title);
         this.refresh(participant, options);
     }
@@ -232,10 +227,6 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
 
     protected setSessionContext(webviewParticipant: WebviewIdMessageParticipant, context: SessionContext): void {
         this.messenger.sendNotification(sessionContextChangedType, webviewParticipant, context);
-    }
-
-    protected setViewState(webviewParticipant: WebviewIdMessageParticipant, state: ViewState): void {
-        this.messenger.sendNotification(viewStateChangedType, webviewParticipant, state);
     }
 
     protected getMemoryViewSettings(messageParticipant: WebviewIdMessageParticipant, title: string): MemoryViewSettings {

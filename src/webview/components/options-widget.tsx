@@ -53,7 +53,6 @@ export interface OptionsWidgetProps
 
 interface OptionsWidgetState {
     isTitleEditing: boolean;
-    isEnablingPeriodicRefresh: boolean;
 }
 
 const enum InputId {
@@ -104,7 +103,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
             validate: this.validate,
             onSubmit: () => this.props.fetchMemory(this.props.configuredReadArguments),
         };
-        this.state = { isTitleEditing: false, isEnablingPeriodicRefresh: false };
+        this.state = { isTitleEditing: false };
     }
 
     protected validate = (values: OptionsForm) => {
@@ -131,11 +130,6 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
         }
         if (prevProps.activeReadArguments === DEFAULT_READ_ARGUMENTS) {
             this.formConfig.initialErrors = this.validate(this.optionsFormValues);
-        }
-        if (!prevState.isEnablingPeriodicRefresh && this.state.isEnablingPeriodicRefresh) {
-            const input = this.refreshRateInput.current?.getElement().getElementsByTagName('input')[0];
-            input?.focus();
-            input?.select();
         }
     }
 
@@ -420,7 +414,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                             </div>
 
                             <h2>Refresh</h2>
-                            <div className='flex align-items-center'>
+                            <div className='flex align-items-center mt-2'>
                                 <Checkbox
                                     id={InputId.RefreshOnStop}
                                     onChange={this.handleAdvancedOptionsDropdownChange}
@@ -429,7 +423,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                 <label htmlFor={InputId.ShowRadixPrefix} className='ml-2'>Refresh On Stop</label>
                             </div>
 
-                            <label htmlFor={InputId.PeriodicRefresh} className='advanced-options-label'>Periodic Refresh</label>
+                            <label htmlFor={InputId.PeriodicRefresh} className='advanced-options-label mt-2'>Periodic Refresh</label>
                             <Dropdown
                                 id={InputId.PeriodicRefresh}
                                 value={this.props.periodicRefresh}
@@ -437,7 +431,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                 options={[...PERIODIC_REFRESH_CHOICES]}
                                 className="advanced-options-dropdown" />
 
-                            <div className='flex align-items-center'>
+                            <div className='flex align-items-center mt-2'>
                                 <InputNumber
                                     id={InputId.PeriodicRefreshInterval}
                                     ref={this.refreshRateInput}
@@ -548,7 +542,6 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                 break;
             case InputId.PeriodicRefresh:
                 this.props.updateRenderOptions({ periodicRefresh: value });
-                this.setState({ isEnablingPeriodicRefresh: value !== 'off' });
                 break;
             default: {
                 throw new Error(`${id} can not be handled. Did you call the correct method?`);

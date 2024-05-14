@@ -45,11 +45,6 @@ export interface SessionContext {
     stopped?: boolean;
 }
 
-export interface ViewState {
-    active: boolean;
-    visible: boolean;
-}
-
 // Notifications
 export const readyType: NotificationType<void> = { method: 'ready' };
 export const setMemoryViewSettingsType: NotificationType<Partial<MemoryViewSettings>> = { method: 'setMemoryViewSettings' };
@@ -57,7 +52,6 @@ export const resetMemoryViewSettingsType: NotificationType<void> = { method: 're
 export const setTitleType: NotificationType<string> = { method: 'setTitle' };
 export const memoryWrittenType: NotificationType<WrittenMemory> = { method: 'memoryWritten' };
 export const sessionContextChangedType: NotificationType<SessionContext> = { method: 'sessionContextChanged' };
-export const viewStateChangedType: NotificationType<ViewState> = { method: 'viewStateChanged' };
 
 // Requests
 export const setOptionsType: RequestType<MemoryOptions, void> = { method: 'setOptions' };

@@ -267,7 +267,7 @@
             "Do not automatically refresh when the debugger stops"
           ],
           "default": "on",
-          "description": "Refresh Memory Inspectors when the debugger stops"
+          "description": "Refresh Memory Inspector windows when the debugger stops"
         },
         "memory-inspector.periodicRefresh": {
           "type": "string",
@@ -282,13 +282,13 @@
             "Do not automatically refresh after the configured delay"
           ],
           "default": "off",
-          "description": "Refresh Memory Inspectors after the configured delay"
+          "markdownDescription": "Refresh Memory Inspectors after the configured `#memory-inspector.periodicRefreshInterval#`."
         },
         "memory-inspector.periodicRefreshInterval": {
           "type": "number",
           "default": 500,
           "minimum": 500,
-          "markdownDescription": "Controls the delay in milliseconds after which a Memory Inspector is refrehsed automatically. Only applies when `#memory-inspector.periodicRefresh#` is set to `on`."
+          "markdownDescription": "Controls the delay in milliseconds after which a Memory Inspector is refrehsed automatically. Only applies when `#memory-inspector.periodicRefresh#` is enabled."
         },
         "memory-inspector.groupings.bytesPerMAU": {
           "type": "number",

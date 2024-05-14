@@ -39,18 +39,10 @@ export class MemoryProvider {
     }
 
     public activate(context: vscode.ExtensionContext): void {
-        const createDebugAdapterTracker = (session: vscode.DebugSession): Required<vscode.DebugAdapterTracker> => {
+        const createDebugAdapterTracker = (session: vscode.DebugSession): vscode.ProviderResult<vscode.DebugAdapterTracker> => {
             const handlerForSession = this.adapterRegistry.getHandlerForSession(session.type);
             const contributedTracker = handlerForSession?.initializeAdapterTracker?.(session);
-
-            return ({
-                onWillStartSession: () => contributedTracker?.onWillStartSession?.(),
-                onWillStopSession: () => contributedTracker?.onWillStopSession?.(),
-                onDidSendMessage: message => contributedTracker?.onDidSendMessage?.(message),
-                onError: error => contributedTracker?.onError?.(error),
-                onExit: (code, signal) => contributedTracker?.onExit?.(code, signal),
-                onWillReceiveMessage: message => contributedTracker?.onWillReceiveMessage?.(message)
-            });
+            return contributedTracker;
         };
         context.subscriptions.push(vscode.debug.registerDebugAdapterTrackerFactory('*', { createDebugAdapterTracker }));
     }
@@ -68,7 +60,7 @@ export class MemoryProvider {
             const offset = response?.offset ? (args.offset ?? 0) + response.offset : args.offset;
             const count = response?.bytesWritten ?? stringToBytesMemory(args.data).length;
             // if our custom handler is active, let's fire the event ourselves
-            this.sessionTracker['fireSessionEvent'](session, 'memory-written', { memoryReference: args.memoryReference, offset, count });
+            this.sessionTracker.fireSessionEvent(session, 'memory-written', { memoryReference: args.memoryReference, offset, count });
         };
 
         return sendRequest(session, 'writeMemory', args).then(response => {
