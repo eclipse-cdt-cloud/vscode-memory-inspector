@@ -18,7 +18,7 @@ import { DebugProtocol } from '@vscode/debugprotocol';
 import * as vscode from 'vscode';
 import { sendRequest } from '../../common/debug-requests';
 import { toHexStringWithRadixMarker, VariableRange } from '../../common/memory-range';
-import { AdapterVariableTracker, extractAddress, notADigit } from './adapter-capabilities';
+import { AdapterVariableTracker, decimalAddress, extractAddress, hexAddress, notADigit } from './adapter-capabilities';
 
 export namespace CEvaluateExpression {
     export function sizeOf(expression: string): string {
@@ -47,7 +47,7 @@ export class CTracker extends AdapterVariableTracker {
             const evaluateName = variable.evaluateName ?? variable.name;
             [variableAddress, variableSize] = await Promise.all([
                 variableAddress ?? this.getAddressOfVariable(evaluateName, session),
-                this.getSizeOfVariable(evaluateName, session)
+                this.getSizeOfVariable(evaluateName, session),
             ]);
         } catch (err) {
             this.logger.warn('Unable to resolve location and size of', variable.name + (err instanceof Error ? ':\n\t' + err.message : ''));
@@ -58,12 +58,15 @@ export class CTracker extends AdapterVariableTracker {
         }
         this.logger.debug('Resolved', variable.name, { start: variableAddress, size: variableSize });
         const address = BigInt(variableAddress);
+        const startAddress = toHexStringWithRadixMarker(address);
+        const isPointer = this.isMaybePointer(variable, startAddress);
         const variableRange: VariableRange = {
             name: variable.name,
-            startAddress: toHexStringWithRadixMarker(address),
+            startAddress,
             endAddress: variableSize === undefined ? undefined : toHexStringWithRadixMarker(address + variableSize),
             value: variable.value,
             type: variable.type,
+            isPointer,
         };
         return variableRange;
     }
@@ -76,5 +79,12 @@ export class CTracker extends AdapterVariableTracker {
     async getSizeOfVariable(variableName: string, session: vscode.DebugSession): Promise<bigint | undefined> {
         const response = await sendRequest(session, 'evaluate', { expression: CEvaluateExpression.sizeOf(variableName), context: 'watch', frameId: this.currentFrame });
         return notADigit.test(response.result) ? undefined : BigInt(response.result);
+    }
+
+    protected isMaybePointer({ value, type }: DebugProtocol.Variable, startAddress: string): boolean {
+        if (type?.endsWith('*')) { return true; } // Definitely a pointer
+
+        // Might reasonably get cast as a pointer
+        return (value !== startAddress) && (hexAddress.test(value) || decimalAddress.test(value));
     }
 }

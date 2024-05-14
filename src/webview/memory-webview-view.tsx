@@ -30,7 +30,6 @@ import {
     logMessageType,
     MemoryOptions,
     memoryWrittenType,
-    ReadMemoryArguments,
     readMemoryType,
     readyType,
     resetMemoryViewSettingsType,
@@ -57,7 +56,7 @@ import { AddressHover } from './hovers/address-hover';
 import { DataHover } from './hovers/data-hover';
 import { HoverService, hoverService } from './hovers/hover-service';
 import { VariableHover } from './hovers/variable-hover';
-import { Decoration, MemoryState } from './utils/view-types';
+import { Decoration, DEFAULT_READ_ARGUMENTS, MemoryState } from './utils/view-types';
 import { variableDecorator } from './variables/variable-decorations';
 import { messenger } from './view-messenger';
 
@@ -95,12 +94,6 @@ export const DEFAULT_MEMORY_DISPLAY_CONFIGURATION: MemoryDisplayConfiguration = 
     refreshOnStop: manifest.DEFAULT_REFRESH_ON_STOP,
     periodicRefresh: manifest.DEFAULT_PERIODIC_REFRESH,
     periodicRefreshInterval: manifest.DEFAULT_PERIODIC_REFRESH_INTERVAL
-};
-
-export const DEFAULT_READ_ARGUMENTS: Required<ReadMemoryArguments> = {
-    memoryReference: '',
-    offset: 0,
-    count: 256,
 };
 
 class App extends React.Component<{}, MemoryAppState> {
@@ -306,8 +299,8 @@ class App extends React.Component<{}, MemoryAppState> {
             offset: partialOptions?.offset ?? this.state.activeReadArguments.offset,
             count: partialOptions?.count ?? this.state.activeReadArguments.count
         };
+        // Don't fetch memory if we have an incomplete memory reference
         if (completeOptions.memoryReference === '') {
-            // may happen when we initialize empty
             return;
         }
         return this.doFetchMemory(completeOptions);
@@ -315,6 +308,7 @@ class App extends React.Component<{}, MemoryAppState> {
 
     protected async doFetchMemory(memoryOptions: Required<MemoryOptions>): Promise<void> {
         this.setState({ isMemoryFetching: true, activeReadArguments: memoryOptions });
+
         try {
             const response = await messenger.sendRequest(readMemoryType, HOST_EXTENSION, memoryOptions);
             await Promise.all(Array.from(

@@ -59,6 +59,12 @@ export interface MemoryState {
     isMemoryFetching: boolean;
 }
 
+export const DEFAULT_READ_ARGUMENTS: Required<ReadMemoryArguments> = {
+    memoryReference: '',
+    offset: 0,
+    count: 256,
+};
+
 export interface UpdateExecutor {
     fetchData(currentViewParameters: ReadMemoryArguments): Promise<void>;
 }

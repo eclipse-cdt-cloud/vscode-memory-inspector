@@ -102,6 +102,8 @@
   width: 2px;
 }
 
+/* == Hover == */
+
 .hoverable:hover {
   border-bottom: 1px dotted var(--vscode-editorHoverWidget-border);
 }
@@ -139,7 +141,8 @@
 
 /* Colors for the hover fields */
 .memory-hover .label-value-pair>.label {
-  color: var(--vscode-debugTokenExpression-string);
+    color: var(--vscode-debugTokenExpression-string);
+    white-space: nowrap;
 }
 .memory-hover .label-value-pair>.value {
   color: var(--vscode-debugTokenExpression-number);
@@ -156,4 +159,39 @@
 .memory-hover .data-hover .value.utf8,
 .memory-hover .variable-hover .value.type {
   color: var(--vscode-debugTokenExpression-name);
+}
+
+/* == Data Edit == */
+
+.byte-group {
+  font-family: var(--vscode-editor-font-family);
+  margin-right: 2px;
+  padding: 0 1px; /* we use this padding to balance out the 2px that are needed for the editing */
+}
+
+.byte-group:last-child {
+  margin-right: 0px;
+}
+
+.byte-group:has(> .data-edit) {
+  outline: 1px solid var(--vscode-inputOption-activeBorder);
+  outline-offset: 1px;
+  padding: 0px; /* editing takes two more pixels cause the input field will cut off the characters otherwise. */
+}
+
+.data-edit {
+  padding: 0;
+  outline: 0;
+  border: none;
+  text-indent: 1px;
+  min-height: unset;
+  height: 2ex;
+  background: unset;
+  margin: 0;
+}
+
+.data-edit:enabled:focus {
+  outline: none;
+  border: none;
+  text-indent: 1px;
 }

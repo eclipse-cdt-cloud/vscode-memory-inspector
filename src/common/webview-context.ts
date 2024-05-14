@@ -58,3 +58,13 @@ export function isWebviewContext(args: WebviewContext | unknown): args is Webvie
         && typeof assumed.showRadixPrefix === 'boolean' && typeof assumed.activeReadArguments?.count === 'number' && typeof assumed.activeReadArguments?.offset === 'number'
         && typeof assumed.activeReadArguments?.memoryReference === 'string';
 }
+
+export function isWebviewVariableContext(args: WebviewVariableContext | unknown): args is Required<WebviewVariableContext> {
+    const assumed = args ? args as WebviewVariableContext : undefined;
+    return !!assumed && isWebviewContext(args)
+        && !!assumed.variable
+        && typeof assumed.variable.name === 'string' && !!assumed.variable.name
+        && (typeof assumed.variable.type === 'string' || assumed.variable.type === undefined)
+        && (typeof assumed.variable.value === 'string' || assumed.variable.value === undefined)
+        && (typeof assumed.variable.isPointer === 'boolean' || assumed.variable.isPointer === undefined);
+}

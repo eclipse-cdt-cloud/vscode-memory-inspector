@@ -47,7 +47,7 @@ import {
     writeMemoryType,
 } from '../common/messaging';
 import { MemoryViewSettings, ScrollingBehavior } from '../common/webview-configuration';
-import { getVisibleColumns, WebviewContext } from '../common/webview-context';
+import { getVisibleColumns, isWebviewVariableContext, WebviewContext } from '../common/webview-context';
 import { isVariablesContext } from './external-views';
 import { outputChannelLogger } from './logger';
 import { MemoryProvider } from './memory-provider';
@@ -63,6 +63,7 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
     public static ViewType = `${manifest.PACKAGE_NAME}.memory`;
     public static ShowCommandType = `${manifest.PACKAGE_NAME}.show`;
     public static VariableCommandType = `${manifest.PACKAGE_NAME}.show-variable`;
+    public static GoToValueCommandType = `${manifest.PACKAGE_NAME}.go-to-value`;
     public static ToggleAsciiColumnCommandType = `${manifest.PACKAGE_NAME}.toggle-ascii-column`;
     public static ToggleVariablesColumnCommandType = `${manifest.PACKAGE_NAME}.toggle-variables-column`;
     public static ToggleRadixPrefixCommandType = `${manifest.PACKAGE_NAME}.toggle-radix-prefix`;
@@ -85,6 +86,11 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
                 if (isVariablesContext(args)) {
                     const memoryReference = args.variable.memoryReference ?? await this.memoryProvider.getAddressOfVariable(args.variable.name);
                     this.show({ memoryReference });
+                }
+            }),
+            vscode.commands.registerCommand(MemoryWebview.GoToValueCommandType, async args => {
+                if (isWebviewVariableContext(args) && args.variable.isPointer) {
+                    this.show({ memoryReference: args.variable.value });
                 }
             }),
             vscode.commands.registerCommand(MemoryWebview.ToggleVariablesColumnCommandType, (ctx: WebviewContext) => {

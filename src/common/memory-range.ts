@@ -108,6 +108,7 @@ export interface VariableMetadata {
     type?: string;
     /** If applicable, a string representation of the variable's value */
     value?: string;
+    isPointer?: boolean;
 }
 
 /** Suitable for transmission as JSON */

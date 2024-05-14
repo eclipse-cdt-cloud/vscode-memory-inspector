@@ -87,6 +87,11 @@
         "category": "Memory"
       },
       {
+        "command": "memory-inspector.go-to-value",
+        "title": "Go to value in Memory Inspector",
+        "category": "Memory"
+      },
+      {
         "command": "memory-inspector.toggle-variables-column",
         "title": "Toggle Variables Column",
         "category": "Memory",
@@ -146,6 +151,10 @@
           "when": "canViewMemory && memory-inspector.canRead"
         },
         {
+          "command": "memory-inspector.go-to-value",
+          "when": "canViewMemory && memory-inspector.canRead && memory-inspector.variable.isPointer"
+        },
+        {
           "command": "memory-inspector.store-file",
           "when": "canViewMemory && memory-inspector.canRead"
         }
@@ -200,6 +209,11 @@
           "command": "memory-inspector.show-advanced-display-options",
           "group": "z_more",
           "when": "webviewId === memory-inspector.memory"
+        },
+        {
+          "command": "memory-inspector.go-to-value",
+          "group": "display@7",
+          "when": "webviewId === memory-inspector.memory && memory-inspector.variable.isPointer"
         }
       ]
     },

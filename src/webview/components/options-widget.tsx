@@ -29,7 +29,7 @@ import { MemoryOptions, ReadMemoryArguments, SessionContext } from '../../common
 import { tryToNumber } from '../../common/typescript';
 import { TableRenderOptions } from '../columns/column-contribution-service';
 import { DEFAULT_MEMORY_DISPLAY_CONFIGURATION } from '../memory-webview-view';
-import { AddressPaddingOptions, MemoryState, SerializedTableRenderOptions } from '../utils/view-types';
+import { AddressPaddingOptions, DEFAULT_READ_ARGUMENTS, MemoryState, SerializedTableRenderOptions } from '../utils/view-types';
 import { createSectionVscodeContext } from '../utils/vscode-contexts';
 import { MultiSelectWithLabel } from './multi-select';
 
@@ -109,7 +109,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
 
     protected validate = (values: OptionsForm) => {
         const errors: FormikErrors<OptionsForm> = {};
-        const addressError = values.address.trim().length === 0 ? 'Required' : validateMemoryReference(values.address);
+        const addressError = values.address.trim().length === 0 ? 'Required' : validateMemoryReference(values.address.trim());
         if (addressError) {
             errors.address = addressError;
         }
@@ -124,10 +124,13 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
         return errors;
     };
 
-    componentDidUpdate(_: Readonly<OptionsWidgetProps>, prevState: Readonly<OptionsWidgetState>): void {
+    componentDidUpdate(prevProps: Readonly<OptionsWidgetProps>, prevState: Readonly<OptionsWidgetState>): void {
         if (!prevState.isTitleEditing && this.state.isTitleEditing) {
             this.labelEditInput.current?.focus();
             this.labelEditInput.current?.select();
+        }
+        if (prevProps.activeReadArguments === DEFAULT_READ_ARGUMENTS) {
+            this.formConfig.initialErrors = this.validate(this.optionsFormValues);
         }
         if (!prevState.isEnablingPeriodicRefresh && this.state.isEnablingPeriodicRefresh) {
             const input = this.refreshRateInput.current?.getElement().getElementsByTagName('input')[0];
@@ -143,9 +146,11 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
         const readDisabled = isFrozen || !this.props.sessionContext.canRead;
         const freezeContentToggleTitle = isFrozen ? 'Unfreeze Memory View' : 'Freeze Memory View';
         const activeMemoryReadArgumentHint = (userValue: string | number, memoryValue: string | number): ReactNode | undefined => {
-            if (userValue !== memoryValue) {
-                return <small className="form-options-memory-read-argument-hint">Actual: {memoryValue}</small>;
+            if (userValue === memoryValue || this.props.activeReadArguments === DEFAULT_READ_ARGUMENTS) {
+                return undefined;
             }
+            return <small className="form-options-memory-read-argument-hint">Actual: {memoryValue}</small>;
+
         };
 
         return (
@@ -208,7 +213,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                         </>
                     )}
                 </div>
-                <div className='core-options py-2' ref={this.coreOptionsDiv}>
+                <div className='core-options' ref={this.coreOptionsDiv}>
                     <Formik {...this.formConfig}>
                         {formik => (
                             <form onSubmit={formik.handleSubmit} className='form-options'>
@@ -272,22 +277,22 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                 <Button type='submit' disabled={!formik.isValid || readDisabled}>
                                     Go
                                 </Button>
+                                <Button
+                                    className='advanced-options-toggle'
+                                    icon='codicon codicon-gear'
+                                    onClick={event =>
+                                        this.extendedOptions?.current?.toggle(event)
+                                    }
+                                    type='button'
+                                    title='Advanced Display Options'
+                                    rounded
+                                    aria-label='Advanced Display Options'
+                                    aria-haspopup
+                                ></Button>
                             </form>
                         )}
                     </Formik>
-                    <Button
-                        className='advanced-options-toggle'
-                        icon='codicon codicon-gear'
-                        onClick={event =>
-                            this.extendedOptions?.current?.toggle(event)
-                        }
-                        type='button'
-                        title='Advanced Display Options'
-                        rounded
-                        aria-label='Advanced Display Options'
-                        aria-haspopup
-                    ></Button>
-                    <OverlayPanel ref={this.extendedOptions} {...this.advancedOptionsContext}>
+                    <OverlayPanel className='advanced-options-panel' ref={this.extendedOptions} {...this.advancedOptionsContext}>
                         <Button
                             icon='codicon codicon-discard'
                             className='reset-advanced-options-icon'
@@ -323,7 +328,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                             </h2>
                             <label
                                 htmlFor={InputId.BytesPerMau}
-                                className='advanced-options-label mt-1'
+                                className='advanced-options-label'
                             >
                                 Bytes per <abbr className='no-text-decoration' title='Minimum Addressable Unit'>MAU</abbr>
                             </label>
@@ -336,7 +341,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
 
                             <label
                                 htmlFor={InputId.MausPerGroup}
-                                className='advanced-options-label mt-1'
+                                className='advanced-options-label'
                             >
                                 <abbr className='no-text-decoration' title='Minimum Addressable Units'>MAUs</abbr> per Group
                             </label>
@@ -361,7 +366,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
 
                             <label
                                 htmlFor={InputId.EndiannessId}
-                                className='advanced-options-label mt-1'
+                                className='advanced-options-label'
                             >
                                 Group Endianness
                             </label>
@@ -378,7 +383,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                 htmlFor={InputId.AddressPadding}
                                 className='advanced-options-label'
                             >
-                                Address Padding
+                                Padding
                             </label>
                             <Dropdown
                                 id={InputId.AddressPadding}
@@ -405,7 +410,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                 ]}
                                 className="advanced-options-dropdown" />
 
-                            <div className='flex align-items-center'>
+                            <div className='flex align-items-center mt-2'>
                                 <Checkbox
                                     id={InputId.ShowRadixPrefix}
                                     onChange={this.handleAdvancedOptionsDropdownChange}
@@ -482,12 +487,12 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                 this.props.updateMemoryState({
                     configuredReadArguments: {
                         ...this.props.configuredReadArguments,
-                        memoryReference: value,
+                        memoryReference: value.trim(),
                     }
                 });
                 break;
             case InputId.Offset:
-                if (!Number.isNaN(value)) {
+                if (!!value && !Number.isNaN(value)) {
                     this.props.updateMemoryState({
                         configuredReadArguments: {
                             ...this.props.configuredReadArguments,
@@ -497,7 +502,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                 }
                 break;
             case InputId.Length:
-                if (!Number.isNaN(value)) {
+                if (!!value && !Number.isNaN(value)) {
                     this.props.updateMemoryState({
                         configuredReadArguments: {
                             ...this.props.configuredReadArguments,
