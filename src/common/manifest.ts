@@ -14,8 +14,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-import { Endianness } from '../common/memory-range';
-
 // Common
 export const PACKAGE_NAME = 'memory-inspector';
 export const DISPLAY_NAME = 'Memory Inspector';
@@ -26,8 +24,6 @@ export const CONFIG_LOGGING_VERBOSITY = 'loggingVerbosity';
 export const DEFAULT_LOGGING_VERBOSITY = 'warn';
 export const CONFIG_DEBUG_TYPES = 'debugTypes';
 export const DEFAULT_DEBUG_TYPES = ['gdb', 'embedded-debug', 'arm-debugger'];
-export const CONFIG_REFRESH_ON_STOP = 'refreshOnStop';
-export const DEFAULT_REFRESH_ON_STOP = 'on';
 
 // MAUs (Minimum Addressable Units)
 // - Bytes per MAU
@@ -49,7 +45,23 @@ export const DEFAULT_GROUPS_PER_ROW: GroupsPerRowOption = 4;
 
 // - Group Endianness
 export const CONFIG_ENDIANNESS = 'endianness';
-export const DEFAULT_ENDIANNESS = Endianness.Little;
+export const ENDIANNESS_CHOICES = ['Little Endian', 'Big Endian'] as const;
+export type Endianness = (typeof ENDIANNESS_CHOICES)[number];
+export const DEFAULT_ENDIANNESS: Endianness = 'Little Endian';
+
+// Refresh: On Stop
+export const CONFIG_REFRESH_ON_STOP = 'refreshOnStop';
+export const REFRESH_ON_STOP = ['on', 'off'] as const;
+export type RefreshOnStop = (typeof REFRESH_ON_STOP)[number];
+export const DEFAULT_REFRESH_ON_STOP = 'on';
+
+// Refresh: Periodic
+export const CONFIG_PERIODIC_REFRESH = 'periodicRefresh';
+export const PERIODIC_REFRESH_CHOICES = ['always', 'while running', 'off'] as const;
+export type PeriodicRefresh = (typeof PERIODIC_REFRESH_CHOICES)[number];
+export const DEFAULT_PERIODIC_REFRESH: PeriodicRefresh = 'always';
+export const CONFIG_PERIODIC_REFRESH_INTERVAL = 'periodicRefreshInterval';
+export const DEFAULT_PERIODIC_REFRESH_INTERVAL = 500;
 
 // Scroll
 export const CONFIG_SCROLLING_BEHAVIOR = 'scrollingBehavior';

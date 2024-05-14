@@ -18,16 +18,17 @@ import { Formik, FormikConfig, FormikErrors, FormikProps } from 'formik';
 import { Button } from 'primereact/button';
 import { Checkbox } from 'primereact/checkbox';
 import { Dropdown, DropdownChangeEvent } from 'primereact/dropdown';
+import { InputNumber } from 'primereact/inputnumber';
 import { InputText } from 'primereact/inputtext';
 import { OverlayPanel } from 'primereact/overlaypanel';
 import { classNames } from 'primereact/utils';
 import React, { FocusEventHandler, KeyboardEvent, KeyboardEventHandler, MouseEventHandler, ReactNode } from 'react';
+import { CONFIG_BYTES_PER_MAU_CHOICES, CONFIG_GROUPS_PER_ROW_CHOICES, CONFIG_MAUS_PER_GROUP_CHOICES, ENDIANNESS_CHOICES, PERIODIC_REFRESH_CHOICES } from '../../common/manifest';
 import { validateCount, validateMemoryReference, validateOffset } from '../../common/memory';
-import { Endianness } from '../../common/memory-range';
 import { MemoryOptions, ReadMemoryArguments, SessionContext } from '../../common/messaging';
 import { tryToNumber } from '../../common/typescript';
-import { CONFIG_BYTES_PER_MAU_CHOICES, CONFIG_GROUPS_PER_ROW_CHOICES, CONFIG_MAUS_PER_GROUP_CHOICES } from '../../plugin/manifest';
 import { TableRenderOptions } from '../columns/column-contribution-service';
+import { DEFAULT_MEMORY_DISPLAY_CONFIGURATION } from '../memory-webview-view';
 import { AddressPaddingOptions, DEFAULT_READ_ARGUMENTS, MemoryState, SerializedTableRenderOptions } from '../utils/view-types';
 import { createSectionVscodeContext } from '../utils/vscode-contexts';
 import { MultiSelectWithLabel } from './multi-select';
@@ -65,6 +66,9 @@ const enum InputId {
     AddressPadding = 'address-padding',
     AddressRadix = 'address-radix',
     ShowRadixPrefix = 'show-radix-prefix',
+    RefreshOnStop = 'refresh-on-stop',
+    PeriodicRefresh = 'periodic-refresh',
+    PeriodicRefreshInterval = 'periodic-refresh-interval',
 }
 
 interface OptionsForm {
@@ -77,6 +81,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
     protected formConfig: FormikConfig<OptionsForm>;
     protected extendedOptions = React.createRef<OverlayPanel>();
     protected labelEditInput = React.createRef<HTMLInputElement>();
+    protected refreshRateInput = React.createRef<InputNumber>();
     protected coreOptionsDiv = React.createRef<HTMLDivElement>();
     protected optionsMenuContext = createSectionVscodeContext('optionsWidget');
     protected advancedOptionsContext = createSectionVscodeContext('advancedOptionsOverlay');
@@ -96,9 +101,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
             initialValues: this.optionsFormValues,
             enableReinitialize: true,
             validate: this.validate,
-            onSubmit: () => {
-                this.props.fetchMemory(this.props.configuredReadArguments);
-            },
+            onSubmit: () => this.props.fetchMemory(this.props.configuredReadArguments),
         };
         this.state = { isTitleEditing: false };
     }
@@ -365,7 +368,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                 id={InputId.EndiannessId}
                                 value={this.props.endianness}
                                 onChange={this.handleAdvancedOptionsDropdownChange}
-                                options={Object.values(Endianness)}
+                                options={[...ENDIANNESS_CHOICES]}
                                 className='advanced-options-dropdown' />
 
                             <h2>Address Format</h2>
@@ -408,6 +411,41 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                     checked={!!this.props.showRadixPrefix}
                                 />
                                 <label htmlFor={InputId.ShowRadixPrefix} className='ml-2'>Display Radix Prefix</label>
+                            </div>
+
+                            <h2>Refresh</h2>
+                            <div className='flex align-items-center mt-2'>
+                                <Checkbox
+                                    id={InputId.RefreshOnStop}
+                                    onChange={this.handleAdvancedOptionsDropdownChange}
+                                    checked={this.props.refreshOnStop === 'on'}
+                                />
+                                <label htmlFor={InputId.ShowRadixPrefix} className='ml-2'>Refresh On Stop</label>
+                            </div>
+
+                            <label htmlFor={InputId.PeriodicRefresh} className='advanced-options-label mt-2'>Periodic Refresh</label>
+                            <Dropdown
+                                id={InputId.PeriodicRefresh}
+                                value={this.props.periodicRefresh}
+                                onChange={this.handleAdvancedOptionsDropdownChange}
+                                options={[...PERIODIC_REFRESH_CHOICES]}
+                                className="advanced-options-dropdown" />
+
+                            <div className='flex align-items-center mt-2'>
+                                <InputNumber
+                                    id={InputId.PeriodicRefreshInterval}
+                                    ref={this.refreshRateInput}
+                                    disabled={this.props.periodicRefresh === 'off'}
+                                    value={this.props.periodicRefreshInterval}
+                                    placeholder='Interval in ms'
+                                    inputClassName='advanced-options-input'
+                                    min={500}
+                                    step={250}
+                                    maxFractionDigits={0}
+                                    useGrouping={false}
+                                    onBlur={this.handlePeriodicRefreshIntervalChange}
+                                    onKeyDown={this.handlePeriodicRefreshIntervalChange} />
+                                <label htmlFor={InputId.PeriodicRefreshInterval} className='ml-2'>ms</label>
                             </div>
                         </div>
                     </OverlayPanel>
@@ -499,6 +537,12 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
             case InputId.ShowRadixPrefix:
                 this.props.updateRenderOptions({ showRadixPrefix: !!event.target.checked });
                 break;
+            case InputId.RefreshOnStop:
+                this.props.updateRenderOptions({ refreshOnStop: !!event.target.checked ? 'on' : 'off' });
+                break;
+            case InputId.PeriodicRefresh:
+                this.props.updateRenderOptions({ periodicRefresh: value });
+                break;
             default: {
                 throw new Error(`${id} can not be handled. Did you call the correct method?`);
             }
@@ -511,6 +555,15 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
         const columnId = columnState?.contribution.id;
         if (columnId) {
             this.props.toggleColumn(columnId, isVisible);
+        }
+    }
+
+    protected handlePeriodicRefreshIntervalChange: (event: React.FocusEvent<HTMLInputElement> | React.KeyboardEvent<HTMLInputElement>) => void =
+        event => this.doHandlePeriodicRefreshIntervalChange(event);
+    doHandlePeriodicRefreshIntervalChange(event: React.FocusEvent<HTMLInputElement> | React.KeyboardEvent<HTMLInputElement>): void {
+        if (!('key' in event) || event.key === 'Enter') {
+            const periodicRefreshInterval = tryToNumber(event.currentTarget.value) ?? DEFAULT_MEMORY_DISPLAY_CONFIGURATION.periodicRefreshInterval;
+            this.props.updateRenderOptions({ periodicRefreshInterval });
         }
     }
 

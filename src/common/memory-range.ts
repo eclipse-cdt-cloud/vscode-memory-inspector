@@ -126,8 +126,3 @@ export function areVariablesEqual(one: BigIntVariableRange, other: BigIntVariabl
 export function toOffset(startAddress: bigint, targetAddress: bigint, mauSize: number): number {
     return Number(targetAddress - startAddress) * (mauSize / 8);
 }
-
-export enum Endianness {
-    Little = 'Little Endian',
-    Big = 'Big Endian'
-}

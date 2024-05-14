@@ -19,9 +19,10 @@ import { WebviewIdMessageParticipant } from 'vscode-messenger-common';
 import { Memory } from '../../common/memory';
 import { WebviewSelection } from '../../common/messaging';
 import { MemoryOptions, ReadMemoryArguments, SessionContext } from '../../common/messaging';
+import { MemoryDisplayConfiguration } from '../../common/webview-configuration';
 import { ColumnStatus } from '../columns/column-contribution-service';
 import { HoverService } from '../hovers/hover-service';
-import { Decoration, MemoryDisplayConfiguration, MemoryState } from '../utils/view-types';
+import { Decoration, MemoryState } from '../utils/view-types';
 import { createAppVscodeContext, VscodeContext } from '../utils/vscode-contexts';
 import { MemoryTable } from './memory-table';
 import { OptionsWidget } from './options-widget';
@@ -90,6 +91,9 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 bytesPerMau={this.props.bytesPerMau}
                 mausPerGroup={this.props.mausPerGroup}
                 groupsPerRow={this.props.groupsPerRow}
+                refreshOnStop={this.props.refreshOnStop}
+                periodicRefresh={this.props.periodicRefresh}
+                periodicRefreshInterval={this.props.periodicRefreshInterval}
                 updateMemoryState={this.props.updateMemoryState}
                 updateRenderOptions={this.props.updateMemoryDisplayConfiguration}
                 resetRenderOptions={this.props.resetMemoryDisplayConfiguration}
@@ -115,6 +119,9 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 bytesPerMau={this.props.bytesPerMau}
                 mausPerGroup={this.props.mausPerGroup}
                 groupsPerRow={this.props.groupsPerRow}
+                refreshOnStop={this.props.refreshOnStop}
+                periodicRefresh={this.props.periodicRefresh}
+                periodicRefreshInterval={this.props.periodicRefreshInterval}
                 effectiveAddressLength={this.props.effectiveAddressLength}
                 fetchMemory={this.props.fetchMemory}
                 isMemoryFetching={this.props.isMemoryFetching}

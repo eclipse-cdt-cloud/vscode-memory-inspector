@@ -120,7 +120,8 @@
   flex-direction: column;
 }
 
-.advanced-options-dropdown {
+.advanced-options-dropdown,
+.advanced-options-input {
   width: 100%;
 }
 

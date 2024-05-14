@@ -17,7 +17,8 @@
 import * as vscode from 'vscode';
 import { Messenger } from 'vscode-messenger';
 import { WebviewIdMessageParticipant } from 'vscode-messenger-common';
-import { Endianness, VariableRange } from '../common/memory-range';
+import * as manifest from '../common/manifest';
+import { VariableRange } from '../common/memory-range';
 import {
     applyMemoryType,
     getVariablesType,
@@ -43,18 +44,13 @@ import {
     WriteMemoryResult,
     writeMemoryType,
 } from '../common/messaging';
+import { MemoryViewSettings, ScrollingBehavior } from '../common/webview-configuration';
 import { getVisibleColumns, isWebviewVariableContext, WebviewContext } from '../common/webview-context';
-import { AddressPaddingOptions, MemoryViewSettings, ScrollingBehavior } from '../webview/utils/view-types';
 import { isVariablesContext } from './external-views';
 import { outputChannelLogger } from './logger';
-import * as manifest from './manifest';
 import { MemoryProvider } from './memory-provider';
 import { ApplyCommandType, StoreCommandType } from './memory-storage';
-
-enum RefreshEnum {
-    off = 0,
-    on = 1
-}
+import { isSessionEvent, SessionEvent, SessionTracker } from './session-tracker';
 
 const CONFIGURABLE_COLUMNS = [
     manifest.CONFIG_SHOW_ASCII_COLUMN,
@@ -73,19 +69,11 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
     public static GetWebviewSelectionCommandType = `${manifest.PACKAGE_NAME}.get-webview-selection`;
 
     protected messenger: Messenger;
-    protected refreshOnStop: RefreshEnum;
 
     protected panelIndices: number = 1;
 
-    public constructor(protected extensionUri: vscode.Uri, protected memoryProvider: MemoryProvider) {
+    public constructor(protected extensionUri: vscode.Uri, protected memoryProvider: MemoryProvider, protected sessionTracker: SessionTracker) {
         this.messenger = new Messenger();
-
-        this.refreshOnStop = this.getRefresh();
-        vscode.workspace.onDidChangeConfiguration(e => {
-            if (e.affectsConfiguration(`${manifest.PACKAGE_NAME}.${manifest.CONFIG_REFRESH_ON_STOP}`)) {
-                this.refreshOnStop = this.getRefresh();
-            }
-        });
     }
 
     public activate(context: vscode.ExtensionContext): void {
@@ -171,11 +159,6 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
         this.setWebviewMessageListener(panel, initialMemory);
     }
 
-    protected getRefresh(): RefreshEnum {
-        const config = vscode.workspace.getConfiguration(manifest.PACKAGE_NAME).get<string>(manifest.CONFIG_REFRESH_ON_STOP) || manifest.DEFAULT_REFRESH_ON_STOP;
-        return RefreshEnum[config as keyof typeof RefreshEnum];
-    }
-
     protected async getWebviewContent(panel: vscode.WebviewPanel): Promise<void> {
         const mainUri = panel.webview.asWebviewUri(vscode.Uri.joinPath(
             this.extensionUri,
@@ -208,16 +191,9 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
 
     protected setWebviewMessageListener(panel: vscode.WebviewPanel, options?: MemoryOptions): void {
         const participant = this.messenger.registerWebviewPanel(panel);
-
         const disposables = [
-            this.messenger.onNotification(readyType, () => {
-                this.setInitialSettings(participant, panel.title);
-                this.setSessionContext(participant, this.memoryProvider.createContext());
-                this.refresh(participant, options);
-            }, { sender: participant }),
-            this.messenger.onRequest(setOptionsType, o => {
-                options = { ...options, ...o };
-            }, { sender: participant }),
+            this.messenger.onNotification(readyType, () => this.initialize(participant, panel, options), { sender: participant }),
+            this.messenger.onRequest(setOptionsType, newOptions => { options = { ...options, ...newOptions }; }, { sender: participant }),
             this.messenger.onRequest(logMessageType, message => outputChannelLogger.info('[webview]:', message), { sender: participant }),
             this.messenger.onRequest(readMemoryType, request => this.readMemory(request), { sender: participant }),
             this.messenger.onRequest(writeMemoryType, request => this.writeMemory(request), { sender: participant }),
@@ -226,21 +202,15 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
             this.messenger.onNotification(setTitleType, title => { panel.title = title; }, { sender: participant }),
             this.messenger.onRequest(storeMemoryType, args => this.storeMemory(args), { sender: participant }),
             this.messenger.onRequest(applyMemoryType, () => this.applyMemory(), { sender: participant }),
-
-            this.memoryProvider.onDidStopDebug(() => {
-                if (this.refreshOnStop === RefreshEnum.on) {
-                    this.refresh(participant);
-                }
-            }),
-            this.memoryProvider.onDidChangeSessionContext(context => this.setSessionContext(participant, context)),
-            this.memoryProvider.onDidWriteMemory(writtenMemory => this.messenger.sendNotification(memoryWrittenType, participant, writtenMemory))
+            this.sessionTracker.onSessionEvent(event => this.handleSessionEvent(participant, event))
         ];
-        panel.onDidChangeViewState(newState => {
-            if (newState.webviewPanel.visible) {
-                this.refresh(participant, options);
-            }
-        });
         panel.onDidDispose(() => disposables.forEach(disposable => disposable.dispose()));
+    }
+
+    protected async initialize(participant: WebviewIdMessageParticipant, panel: vscode.WebviewPanel, options?: MemoryOptions): Promise<void> {
+        this.setSessionContext(participant, this.createContext());
+        this.setInitialSettings(participant, panel.title);
+        this.refresh(participant, options);
     }
 
     protected async refresh(participant: WebviewIdMessageParticipant, options: MemoryOptions = {}): Promise<void> {
@@ -264,17 +234,47 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
         const bytesPerMau = memoryInspectorConfiguration.get<number>(manifest.CONFIG_BYTES_PER_MAU, manifest.DEFAULT_BYTES_PER_MAU);
         const mausPerGroup = memoryInspectorConfiguration.get<number>(manifest.CONFIG_MAUS_PER_GROUP, manifest.DEFAULT_MAUS_PER_GROUP);
         const groupsPerRow = memoryInspectorConfiguration.get<manifest.GroupsPerRowOption>(manifest.CONFIG_GROUPS_PER_ROW, manifest.DEFAULT_GROUPS_PER_ROW);
-        const endianness = memoryInspectorConfiguration.get<Endianness>(manifest.CONFIG_ENDIANNESS, manifest.DEFAULT_ENDIANNESS);
+        const endianness = memoryInspectorConfiguration.get<manifest.Endianness>(manifest.CONFIG_ENDIANNESS, manifest.DEFAULT_ENDIANNESS);
         const scrollingBehavior = memoryInspectorConfiguration.get<ScrollingBehavior>(manifest.CONFIG_SCROLLING_BEHAVIOR, manifest.DEFAULT_SCROLLING_BEHAVIOR);
         const visibleColumns = CONFIGURABLE_COLUMNS
             .filter(column => vscode.workspace.getConfiguration(manifest.PACKAGE_NAME).get<boolean>(column, false))
             .map(columnId => columnId.replace('columns.', ''));
-        const addressPadding = AddressPaddingOptions[memoryInspectorConfiguration.get(manifest.CONFIG_ADDRESS_PADDING, manifest.DEFAULT_ADDRESS_PADDING)];
+        const addressPadding = memoryInspectorConfiguration.get(manifest.CONFIG_ADDRESS_PADDING, manifest.DEFAULT_ADDRESS_PADDING);
         const addressRadix = memoryInspectorConfiguration.get<number>(manifest.CONFIG_ADDRESS_RADIX, manifest.DEFAULT_ADDRESS_RADIX);
         const showRadixPrefix = memoryInspectorConfiguration.get<boolean>(manifest.CONFIG_SHOW_RADIX_PREFIX, manifest.DEFAULT_SHOW_RADIX_PREFIX);
+        const refreshOnStop = memoryInspectorConfiguration.get<manifest.RefreshOnStop>(manifest.CONFIG_REFRESH_ON_STOP, manifest.DEFAULT_REFRESH_ON_STOP);
+        const periodicRefresh = memoryInspectorConfiguration.get<manifest.PeriodicRefresh>(manifest.CONFIG_PERIODIC_REFRESH, manifest.DEFAULT_PERIODIC_REFRESH);
+        const periodicRefreshInterval = memoryInspectorConfiguration.get<number>(manifest.CONFIG_PERIODIC_REFRESH_INTERVAL, manifest.DEFAULT_PERIODIC_REFRESH_INTERVAL);
         return {
             messageParticipant, title, bytesPerMau, mausPerGroup, groupsPerRow,
-            endianness, scrollingBehavior, visibleColumns, addressPadding, addressRadix, showRadixPrefix
+            endianness, scrollingBehavior, visibleColumns, addressPadding, addressRadix, showRadixPrefix,
+            refreshOnStop, periodicRefresh, periodicRefreshInterval
+        };
+    }
+
+    protected handleSessionEvent(participant: WebviewIdMessageParticipant, event: SessionEvent): void {
+        if (isSessionEvent('active', event)) {
+            this.setSessionContext(participant, this.createContext(event.session?.raw));
+            return;
+        }
+        // we are only interested in the events of the active session
+        if (!event.session?.active) {
+            return;
+        }
+        if (isSessionEvent('memory-written', event)) {
+            this.messenger.sendNotification(memoryWrittenType, participant, event.data);
+        } else {
+            this.setSessionContext(participant, this.createContext(event.session.raw));
+        }
+    }
+
+    protected createContext(session = this.sessionTracker.activeSession): SessionContext {
+        const sessionId = session?.id;
+        return {
+            sessionId,
+            canRead: !!this.sessionTracker.hasDebugCapabilitiy(session, 'supportsReadMemoryRequest'),
+            canWrite: !!this.sessionTracker.hasDebugCapabilitiy(session, 'supportsWriteMemoryRequest'),
+            stopped: this.sessionTracker.isStopped(session)
         };
     }
 
@@ -322,18 +322,14 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
     protected async storeMemory(storeArguments: StoreMemoryArguments): Promise<void> {
         // Even if we disable the command in VS Code through enablement or when condition, programmatic execution is still possible.
         // However, we want to fail early in case the user tries to execute a disabled command
-        if (!this.memoryProvider.createContext().canRead) {
-            throw new Error('Cannot read memory, no valid debug session.');
-        }
+        this.sessionTracker.assertDebugCapability(this.sessionTracker.activeSession, 'supportsReadMemoryRequest', 'store memory');
         return vscode.commands.executeCommand(StoreCommandType, storeArguments);
     }
 
     protected async applyMemory(): Promise<MemoryOptions> {
         // Even if we disable the command in VS Code through enablement or when condition, programmatic execution is still possible.
         // However, we want to fail early in case the user tries to execute a disabled command
-        if (!this.memoryProvider.createContext().canWrite) {
-            throw new Error('Cannot write memory, no valid debug session.');
-        }
+        this.sessionTracker.assertDebugCapability(this.sessionTracker.activeSession, 'supportsWriteMemoryRequest', 'apply memory');
         return vscode.commands.executeCommand(ApplyCommandType);
     }
 

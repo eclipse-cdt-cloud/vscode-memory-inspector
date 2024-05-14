@@ -28,10 +28,11 @@ import { Memory } from '../../common/memory';
 import { WebviewSelection } from '../../common/messaging';
 import { MemoryOptions, ReadMemoryArguments } from '../../common/messaging';
 import { tryToNumber } from '../../common/typescript';
+import { MemoryDisplayConfiguration, ScrollingBehavior } from '../../common/webview-configuration';
 import { TableRenderOptions } from '../columns/column-contribution-service';
 import { DataColumn } from '../columns/data-column';
 import type { HoverService } from '../hovers/hover-service';
-import { Decoration, isTrigger, MemoryDisplayConfiguration, ScrollingBehavior } from '../utils/view-types';
+import { Decoration, isTrigger } from '../utils/view-types';
 import { createColumnVscodeContext, createSectionVscodeContext } from '../utils/vscode-contexts';
 
 export interface MoreMemorySelectProps {

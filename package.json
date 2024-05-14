@@ -25,7 +25,7 @@
     "prepare": "yarn build",
     "clean": "git clean -f -x ./node_modules ./dist",
     "build": "webpack --mode production && yarn lint",
-    "watch": "webpack -w",
+    "watch": "webpack -w --mode development ",
     "lint": "eslint . --ext .ts,.tsx",
     "package": "vsce package --yarn",
     "serve": "serve --cors -p 3333"
@@ -78,6 +78,7 @@
       {
         "command": "memory-inspector.show",
         "title": "Show Memory Inspector",
+        "icon": "$(file-binary)",
         "category": "Memory"
       },
       {
@@ -262,11 +263,32 @@
             "off"
           ],
           "enumDescriptions": [
-            "Refresh memory views when when debugger stops (e.g. a breakpoint is hit)",
-            "Memory view data is manually refreshed by user"
+            "Refresh Memory Inspector when the debugger stops (e.g. a breakpoint is hit)",
+            "Do not automatically refresh when the debugger stops"
           ],
           "default": "on",
-          "description": "Refresh memory views when debugger stops"
+          "description": "Refresh Memory Inspector windows when the debugger stops"
+        },
+        "memory-inspector.periodicRefresh": {
+          "type": "string",
+          "enum": [
+            "always",
+            "while running",
+            "off"
+          ],
+          "markdownEnumDescriptions": [
+            "Always refresh automatically after the configured `#memory-inspector.periodicRefreshInterval#`",
+            "Refresh automatically after the configured `#memory-inspector.periodicRefreshInterval#` while the CPU is running",
+            "Do not automatically refresh after the configured delay"
+          ],
+          "default": "off",
+          "markdownDescription": "Refresh Memory Inspectors after the configured `#memory-inspector.periodicRefreshInterval#`."
+        },
+        "memory-inspector.periodicRefreshInterval": {
+          "type": "number",
+          "default": 500,
+          "minimum": 500,
+          "markdownDescription": "Controls the delay in milliseconds after which a Memory Inspector is refrehsed automatically. Only applies when `#memory-inspector.periodicRefresh#` is enabled."
         },
         "memory-inspector.groupings.bytesPerMAU": {
           "type": "number",
