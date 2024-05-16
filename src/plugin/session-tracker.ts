@@ -158,23 +158,23 @@ export class SessionTracker implements vscode.DebugAdapterTrackerFactory {
         return !!session && !!this.sessionInfo(session).stopped;
     }
 
-    hasDebugCapabilitiy(session = this.activeSession, capability: DebugCapability): boolean {
+    hasDebugCapability(session = this.activeSession, capability: DebugCapability): boolean {
         return !!session && !!this.sessionInfo(session).debugCapabilities?.[capability];
     }
 
     assertDebugCapability(session = this.assertActiveSession(), capability: DebugCapability, action: string = 'execute action'): vscode.DebugSession {
-        if (!this.hasDebugCapabilitiy(session, capability)) {
+        if (!this.hasDebugCapability(session, capability)) {
             throw new Error(`Cannot ${action}. Session does not have capability '${capability}'.`);
         }
         return session;
     }
 
-    hasClientCapabilitiy(session: vscode.DebugSession | undefined, capability: ClientCapability): boolean {
+    hasClientCapability(session: vscode.DebugSession | undefined, capability: ClientCapability): boolean {
         return !!session && !!this.sessionInfo(session).clientCapabilities?.[capability];
     }
 
     assertClientCapability(session = this.assertActiveSession(), capability: ClientCapability, action: string = 'execute action'): vscode.DebugSession {
-        if (!this.hasClientCapabilitiy(session, capability)) {
+        if (!this.hasClientCapability(session, capability)) {
             throw new Error(`Cannot ${action}. Client does not have capability '${capability}'.`);
         }
         return session;

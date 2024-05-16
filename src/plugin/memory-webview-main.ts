@@ -272,8 +272,8 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
         const sessionId = session?.id;
         return {
             sessionId,
-            canRead: !!this.sessionTracker.hasDebugCapabilitiy(session, 'supportsReadMemoryRequest'),
-            canWrite: !!this.sessionTracker.hasDebugCapabilitiy(session, 'supportsWriteMemoryRequest'),
+            canRead: !!this.sessionTracker.hasDebugCapability(session, 'supportsReadMemoryRequest'),
+            canWrite: !!this.sessionTracker.hasDebugCapability(session, 'supportsWriteMemoryRequest'),
             stopped: this.sessionTracker.isStopped(session)
         };
     }

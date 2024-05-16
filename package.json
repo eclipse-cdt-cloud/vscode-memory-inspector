@@ -288,7 +288,7 @@
           "type": "number",
           "default": 500,
           "minimum": 500,
-          "markdownDescription": "Controls the delay in milliseconds after which a Memory Inspector is refrehsed automatically. Only applies when `#memory-inspector.periodicRefresh#` is enabled."
+          "markdownDescription": "Controls the delay in milliseconds after which a Memory Inspector is refreshed automatically. Only applies when `#memory-inspector.periodicRefresh#` is enabled."
         },
         "memory-inspector.groupings.bytesPerMAU": {
           "type": "number",
