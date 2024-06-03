@@ -27,8 +27,9 @@
   white-space: nowrap;
 }
 
-.memory-inspector-table .column-data .byte-group.editable:hover {
-  border-bottom: 1px dotted var(--vscode-editorHoverWidget-border);
+.p-datatable :focus-visible {
+  outline-style: dotted;
+  outline-offset: -1px;
 }
 
 /* == MoreMemorySelect == */
@@ -161,22 +162,60 @@
   color: var(--vscode-debugTokenExpression-name);
 }
 
-/* == Data Edit == */
+/* Cell Styles */
 
-.byte-group {
-  font-family: var(--vscode-editor-font-family);
-  margin-right: 2px;
-  padding: 0 1px; /* we use this padding to balance out the 2px that are needed for the editing */
+.p-datatable .p-datatable-tbody > tr > td[data-column="address"][role="cell"],
+.p-datatable .p-datatable-tbody > tr > td[data-column="ascii"][role="cell"] {
+  padding: 0;
 }
 
-.byte-group:last-child {
+.p-datatable .p-datatable-tbody > tr > td[data-column="data"][role="cell"],
+.p-datatable .p-datatable-tbody > tr > td[data-column="variables"][role="cell"] {
+  padding: 0 12px;
+  vertical-align: middle;
+}
+
+/* Group Styles */
+
+[role='group']:hover {
+  border-bottom: 0px;
+  color: var(--vscode-list-activeSelectionForeground);
+  outline: 1px solid var(--vscode-list-focusOutline);
+}
+
+[role='group'][data-group-selected='true'] {
+  background: var(--vscode-list-activeSelectionBackground);
+  color: var(--vscode-list-activeSelectionForeground);
+  outline: 1px solid var(--vscode-list-focusOutline);
+}
+
+[data-column="address"][role="group"],
+[data-column="ascii"][role="group"] {
+  padding: 4px 12px;
+  display: flex;
+  outline-offset: -1px;
+}
+
+[data-column="data"][role="group"],
+[data-column="variables"][role="group"] {
+  padding: 4px 1px;
+  line-height: 23.5px;
+  outline-offset: -1px;
+}
+
+/* Data Column */
+
+
+/* == Data Edit == */
+
+[data-column="data"][role="group"]:last-child {
   margin-right: 0px;
 }
 
-.byte-group:has(> .data-edit) {
+[data-column="data"][role="group"]:has(> .data-edit) {
   outline: 1px solid var(--vscode-inputOption-activeBorder);
-  outline-offset: 1px;
-  padding: 0px; /* editing takes two more pixels cause the input field will cut off the characters otherwise. */
+  padding-left: 0px; /* editing takes two more pixels cause the input field will cut off the characters otherwise. */
+  padding-right: 0px; /* editing takes two more pixels cause the input field will cut off the characters otherwise. */
 }
 
 .data-edit {
@@ -193,5 +232,11 @@
 .data-edit:enabled:focus {
   outline: none;
   border: none;
+  color: var(--vscode-list-activeSelectionForeground);
   text-indent: 1px;
+}
+
+.p-datatable .p-datatable-tbody > tr > td.p-highlight:has(>.selected) {
+  background: transparent;
+  outline: none;
 }
