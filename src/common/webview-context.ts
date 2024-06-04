@@ -15,7 +15,8 @@
  ********************************************************************************/
 
 import { WebviewIdMessageParticipant } from 'vscode-messenger-common';
-import { Endianness, VariableMetadata } from './memory-range';
+import { Endianness } from './manifest';
+import { VariableMetadata } from './memory-range';
 import { ReadMemoryArguments } from './messaging';
 
 export interface WebviewContext {
