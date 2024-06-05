@@ -17,8 +17,8 @@
 import type { DebugProtocol } from '@vscode/debugprotocol';
 import type { NotificationType, RequestType } from 'vscode-messenger-common';
 import { URI } from 'vscode-uri';
-import { VariablesView } from '../plugin/external-views';
 import { DebugRequestTypes } from './debug-requests';
+import { VariablesView } from './external-views';
 import type { VariableRange, WrittenMemory } from './memory-range';
 import { MemoryViewSettings } from './webview-configuration';
 import { WebviewContext } from './webview-context';

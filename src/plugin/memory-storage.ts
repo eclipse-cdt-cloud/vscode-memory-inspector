@@ -17,6 +17,7 @@
 import MemoryMap from 'nrf-intel-hex';
 import * as vscode from 'vscode';
 import { URI, Utils } from 'vscode-uri';
+import { isVariablesContext } from '../common/external-views';
 import { IntelHEX } from '../common/intel-hex';
 import * as manifest from '../common/manifest';
 import {
@@ -26,7 +27,6 @@ import {
 import { toHexStringWithRadixMarker } from '../common/memory-range';
 import { ApplyMemoryArguments, ApplyMemoryResult, MemoryOptions, StoreMemoryArguments } from '../common/messaging';
 import { isWebviewContext } from '../common/webview-context';
-import { isVariablesContext } from './external-views';
 import { MemoryProvider } from './memory-provider';
 
 export const StoreCommandType = `${manifest.PACKAGE_NAME}.store-file`;
