@@ -93,6 +93,36 @@
         "category": "Memory"
       },
       {
+        "command": "memory-inspector.data-breakpoint.set.read",
+        "title": "Break on Value Read",
+        "enablement": "memory-inspector.canWrite",
+        "category": "Memory"
+      },
+      {
+        "command": "memory-inspector.data-breakpoint.set.readWrite",
+        "title": "Break on Value Access",
+        "enablement": "memory-inspector.canWrite",
+        "category": "Memory"
+      },
+      {
+        "command": "memory-inspector.data-breakpoint.set.write",
+        "title": "Break on Value Change",
+        "enablement": "memory-inspector.canWrite",
+        "category": "Memory"
+      },
+      {
+        "command": "memory-inspector.data-breakpoint.remove",
+        "title": "Remove Breakpoint",
+        "enablement": "memory-inspector.canWrite",
+        "category": "Memory"
+      },
+      {
+        "command": "memory-inspector.data-breakpoint.remove-all",
+        "title": "Remove All Breakpoints",
+        "enablement": "memory-inspector.canWrite",
+        "category": "Memory"
+      },
+      {
         "command": "memory-inspector.toggle-variables-column",
         "title": "Toggle Variables Column",
         "category": "Memory",
@@ -237,6 +267,31 @@
           "command": "memory-inspector.reset-display-options",
           "group": "a_reset@2",
           "when": "webviewId === memory-inspector.memory && optionsMenu"
+        },
+        {
+          "command": "memory-inspector.data-breakpoint.set.read",
+          "group": "breakpoints@1",
+          "when": "webviewId === memory-inspector.memory && memory-inspector.breakpoint.isBreakable"
+        },
+        {
+          "command": "memory-inspector.data-breakpoint.set.write",
+          "group": "breakpoints@2",
+          "when": "webviewId === memory-inspector.memory && memory-inspector.breakpoint.isBreakable"
+        },
+        {
+          "command": "memory-inspector.data-breakpoint.set.readWrite",
+          "group": "breakpoints@3",
+          "when": "webviewId === memory-inspector.memory && memory-inspector.breakpoint.isBreakable"
+        },
+        {
+          "command": "memory-inspector.data-breakpoint.remove",
+          "group": "breakpoints@4",
+          "when": "webviewId === memory-inspector.memory && memory-inspector.breakpoint.type === 'internal'"
+        },
+        {
+          "command": "memory-inspector.data-breakpoint.remove-all",
+          "group": "breakpoints@5",
+          "when": "webviewId === memory-inspector.memory && memory-inspector.breakpoint.type === 'internal'"
         }
       ]
     },

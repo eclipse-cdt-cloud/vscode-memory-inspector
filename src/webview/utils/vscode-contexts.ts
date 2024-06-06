@@ -16,6 +16,7 @@
 
 import { BigIntVariableRange } from '../../common/memory-range';
 import { WebviewContext } from '../../common/webview-context';
+import { BreakpointMetadata } from '../breakpoints/breakpoint-service';
 /**
  * Custom data property used by VSCode to provide additional context info when opening a webview context menu
  * The data property needs to represent a valid JSON object.  Data context properties up the parent chain are merged into the child context.
@@ -64,13 +65,13 @@ export function createAppVscodeContext(context: Omit<WebviewContext, 'webviewSec
     return createVscodeContext({ ...context, webviewSection: 'app', preventDefaultContextMenuItems: true });
 }
 
-export function createGroupVscodeContext(startAddress: BigInt, length: number): VscodeContext {
-    return createVscodeContext({ memoryData: { group: { startAddress, length } } });
+export function createGroupVscodeContext(startAddress: bigint, length: number, breakpoint?: BreakpointMetadata): VscodeContext {
+    return createVscodeContext({ memoryData: { group: { startAddress, length } }, breakpoint: { ...breakpoint, isBreakable: true } });
 }
 
-export function createVariableVscodeContext(variable: BigIntVariableRange): VscodeContext {
-    const { name, type, value, isPointer } = variable;
-    return createVscodeContext({ variable: { name, type, value, isPointer } });
+export function createVariableVscodeContext(variable: BigIntVariableRange, breakpoint?: BreakpointMetadata): VscodeContext {
+    const { name, type, value, parentVariablesReference, isPointer } = variable;
+    return createVscodeContext({ variable: { name, type, value, parentVariablesReference, isPointer }, breakpoint: { ...breakpoint, isBreakable: true } });
 }
 
 function replacerForBigInt(_: string, value: unknown): unknown {
