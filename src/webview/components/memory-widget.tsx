@@ -17,8 +17,7 @@
 import React from 'react';
 import { WebviewIdMessageParticipant } from 'vscode-messenger-common';
 import { Memory } from '../../common/memory';
-import { WebviewSelection } from '../../common/messaging';
-import { MemoryOptions, ReadMemoryArguments, SessionContext } from '../../common/messaging';
+import { MemoryOptions, ReadMemoryArguments, SessionContext, WebviewSelection } from '../../common/messaging';
 import { MemoryDisplayConfiguration } from '../../common/webview-configuration';
 import { ColumnStatus } from '../columns/column-contribution-service';
 import { HoverService } from '../hovers/hover-service';
@@ -39,9 +38,9 @@ interface MemoryWidgetProps extends MemoryDisplayConfiguration {
     columns: ColumnStatus[];
     effectiveAddressLength: number;
     isMemoryFetching: boolean;
+    isFrozen: boolean;
     updateMemoryState: (state: Partial<MemoryState>) => void;
     toggleColumn(id: string, active: boolean): void;
-    isFrozen: boolean;
     toggleFrozen: () => void;
     updateMemoryDisplayConfiguration: (memoryArguments: Partial<MemoryDisplayConfiguration>) => void;
     resetMemoryDisplayConfiguration: () => void;

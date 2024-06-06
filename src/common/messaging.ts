@@ -18,7 +18,8 @@ import type { DebugProtocol } from '@vscode/debugprotocol';
 import type { NotificationType, RequestType } from 'vscode-messenger-common';
 import { URI } from 'vscode-uri';
 import { VariablesView } from '../plugin/external-views';
-import { DebugRequestTypes } from './debug-requests';
+import type { TrackedDataBreakpoints } from './breakpoint';
+import { DebugEvents, DebugRequestTypes } from './debug-requests';
 import type { VariableRange, WrittenMemory } from './memory-range';
 import { MemoryViewSettings } from './webview-configuration';
 import { WebviewContext } from './webview-context';
@@ -31,6 +32,9 @@ export type ReadMemoryResult = DebugRequestTypes['readMemory'][1];
 
 export type WriteMemoryArguments = DebugRequestTypes['writeMemory'][0];
 export type WriteMemoryResult = DebugRequestTypes['writeMemory'][1];
+
+export type StoppedEvent = DebugEvents['stopped'];
+export type ContinuedEvent = DebugEvents['continued'];
 
 export type StoreMemoryArguments = MemoryOptions & { proposedOutputName?: string } | VariablesView.IVariablesContext | WebviewContext;
 export type StoreMemoryResult = void;
@@ -52,6 +56,9 @@ export const resetMemoryViewSettingsType: NotificationType<void> = { method: 're
 export const setTitleType: NotificationType<string> = { method: 'setTitle' };
 export const memoryWrittenType: NotificationType<WrittenMemory> = { method: 'memoryWritten' };
 export const sessionContextChangedType: NotificationType<SessionContext> = { method: 'sessionContextChanged' };
+export const setTrackedBreakpointType: NotificationType<TrackedDataBreakpoints> = { method: 'setTrackedBreakpoints' };
+export const notifyStoppedType: NotificationType<StoppedEvent> = { method: 'notifyStoppedType' };
+export const notifyContinuedType: NotificationType<ContinuedEvent> = { method: 'notifyContinuedType' };
 
 // Requests
 export const setOptionsType: RequestType<MemoryOptions, void> = { method: 'setOptions' };

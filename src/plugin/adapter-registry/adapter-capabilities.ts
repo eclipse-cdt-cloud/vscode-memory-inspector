@@ -108,7 +108,7 @@ export class AdapterVariableTracker implements vscode.DebugAdapterTracker {
             if (this.isDesiredVariable(parent) && parent.children?.length) {
                 this.logger.debug('Resolving children of', parent.name);
                 parent.children.forEach(child => {
-                    previous.push(this.variableToVariableRange(child, session));
+                    previous.push(this.variableToVariableRange(child, session, parent));
                 });
             } else {
                 this.logger.debug('Ignoring', parent.name);
@@ -122,7 +122,10 @@ export class AdapterVariableTracker implements vscode.DebugAdapterTracker {
         return candidate.presentationHint !== 'registers' && candidate.name !== 'Registers';
     }
 
-    protected variableToVariableRange(_variable: DebugProtocol.Variable, _session: vscode.DebugSession): Promise<VariableRange | undefined> {
+    protected variableToVariableRange(
+        _variable: DebugProtocol.Variable,
+        _session: vscode.DebugSession,
+        _parent: WithChildren<DebugProtocol.Scope | DebugProtocol.Variable>): Promise<VariableRange | undefined> {
         throw new Error('To be implemented by derived classes!');
     }
 
