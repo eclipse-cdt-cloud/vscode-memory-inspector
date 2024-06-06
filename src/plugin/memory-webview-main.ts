@@ -17,6 +17,7 @@
 import * as vscode from 'vscode';
 import { Messenger } from 'vscode-messenger';
 import { WebviewIdMessageParticipant } from 'vscode-messenger-common';
+import { isVariablesContext } from '../common/external-views';
 import * as manifest from '../common/manifest';
 import { VariableRange } from '../common/memory-range';
 import {
@@ -46,7 +47,6 @@ import {
 } from '../common/messaging';
 import { MemoryViewSettings, ScrollingBehavior } from '../common/webview-configuration';
 import { getVisibleColumns, isWebviewVariableContext, WebviewContext } from '../common/webview-context';
-import { isVariablesContext } from './external-views';
 import { outputChannelLogger } from './logger';
 import { MemoryProvider } from './memory-provider';
 import { ApplyCommandType, StoreCommandType } from './memory-storage';
