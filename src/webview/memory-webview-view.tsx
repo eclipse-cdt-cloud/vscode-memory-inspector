@@ -44,6 +44,7 @@ import {
 } from '../common/messaging';
 import { Change, hasChanged, hasChangedTo } from '../common/typescript';
 import { MemoryDisplayConfiguration } from '../common/webview-configuration';
+import { breakpointService } from './breakpoints/breakpoint-service';
 import { AddressColumn } from './columns/address-column';
 import { AsciiColumn } from './columns/ascii-column';
 import { columnContributionService, ColumnStatus } from './columns/column-contribution-service';
@@ -136,6 +137,8 @@ class App extends React.Component<{}, MemoryAppState> {
         messenger.onRequest(getWebviewSelectionType, () => this.getWebviewSelection());
         messenger.onNotification(showAdvancedOptionsType, () => this.showAdvancedOptions());
         messenger.sendNotification(readyType, HOST_EXTENSION, undefined);
+        breakpointService.activate();
+        breakpointService.onDidChange(() => this.forceUpdate());
         this.updatePeriodicRefresh();
     }
 
@@ -293,7 +296,10 @@ class App extends React.Component<{}, MemoryAppState> {
         try {
             const response = await messenger.sendRequest(readMemoryType, HOST_EXTENSION, memoryOptions);
             await Promise.all(Array.from(
-                new Set(columnContributionService.getUpdateExecutors().concat(decorationService.getUpdateExecutors())),
+                new Set(columnContributionService
+                    .getUpdateExecutors()
+                    .concat(decorationService.getUpdateExecutors())
+                    .concat(breakpointService)),
                 executor => executor.fetchData(memoryOptions)
             ));
 

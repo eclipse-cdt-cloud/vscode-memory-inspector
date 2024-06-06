@@ -15,11 +15,13 @@
  ********************************************************************************/
 
 import { InputText } from 'primereact/inputtext';
+import { classNames } from 'primereact/utils';
 import * as React from 'react';
 import { HOST_EXTENSION } from 'vscode-messenger-common';
 import { Memory } from '../../common/memory';
 import { BigIntMemoryRange, isWithin, toHexStringWithRadixMarker, toOffset } from '../../common/memory-range';
 import { writeMemoryType } from '../../common/messaging';
+import { BreakpointService, breakpointService } from '../breakpoints/breakpoint-service';
 import type { MemorySizeOptions } from '../components/memory-table';
 import { decorationService } from '../decorations/decoration-service';
 import { Disposable, FullNodeAttributes } from '../utils/view-types';
@@ -82,13 +84,14 @@ export class EditableDataColumnRow extends React.Component<EditableDataColumnRow
     }
 
     protected renderGroup(maus: React.ReactNode, startAddress: bigint, endAddress: bigint): React.ReactNode {
+        const breakpointMetadata = breakpointService.metadata(toHexStringWithRadixMarker(startAddress));
         return <span
-            className='byte-group hoverable'
+            className={classNames('byte-group', 'hoverable', ...BreakpointService.inlineClasses(breakpointMetadata))}
             data-column='data'
             data-range={`${startAddress}-${endAddress}`}
             key={startAddress.toString(16)}
             onDoubleClick={this.setGroupEdit}
-            {...createGroupVscodeContext(startAddress, toOffset(startAddress, endAddress, this.props.options.bytesPerMau * 8))}
+            {...createGroupVscodeContext(startAddress, toOffset(startAddress, endAddress, this.props.options.bytesPerMau * 8), breakpointMetadata)}
         >
             {maus}
         </span>;
