@@ -23,7 +23,7 @@ import { InputNumber } from 'primereact/inputnumber';
 import { InputText } from 'primereact/inputtext';
 import { OverlayPanel } from 'primereact/overlaypanel';
 import { classNames } from 'primereact/utils';
-import React, { FocusEventHandler, KeyboardEvent, KeyboardEventHandler, MouseEventHandler, ReactNode } from 'react';
+import React, { FocusEventHandler, KeyboardEvent, KeyboardEventHandler, ReactNode } from 'react';
 import { CONFIG_BYTES_PER_MAU_CHOICES, CONFIG_GROUPS_PER_ROW_CHOICES, CONFIG_MAUS_PER_GROUP_CHOICES, ENDIANNESS_CHOICES, PERIODIC_REFRESH_CHOICES } from '../../common/manifest';
 import { validateCount, validateMemoryReference, validateOffset } from '../../common/memory';
 import { MemoryOptions, ReadMemoryArguments, SessionContext } from '../../common/messaging';
@@ -31,7 +31,7 @@ import { tryToNumber } from '../../common/typescript';
 import { TableRenderOptions } from '../columns/column-contribution-service';
 import { DEFAULT_MEMORY_DISPLAY_CONFIGURATION } from '../memory-webview-view';
 import { AddressPaddingOptions, DEFAULT_READ_ARGUMENTS, MemoryState, SerializedTableRenderOptions } from '../utils/view-types';
-import { createSectionVscodeContext } from '../utils/vscode-contexts';
+import { createOverlayMoreActionsVscodeContext, createSectionVscodeContext } from '../utils/vscode-contexts';
 import { MultiSelectBar } from './multi-select';
 
 export interface OptionsWidgetProps
@@ -40,8 +40,8 @@ export interface OptionsWidgetProps
     configuredReadArguments: Required<ReadMemoryArguments>;
     activeReadArguments: Required<ReadMemoryArguments>;
     title: string;
+    settingsContributionMessage?: string;
     updateRenderOptions: (options: Partial<SerializedTableRenderOptions>) => void;
-    resetRenderOptions: () => void;
     updateTitle: (title: string) => void;
     updateMemoryState: (state: Partial<MemoryState>) => void;
     fetchMemory(partialOptions?: MemoryOptions): Promise<void>
@@ -90,6 +90,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
     protected coreOptionsDiv = React.createRef<HTMLDivElement>();
     protected optionsMenuContext = createSectionVscodeContext('optionsWidget');
     protected advancedOptionsContext = createSectionVscodeContext('advancedOptionsOverlay');
+    protected moreActionsOverlayMenuContext = createOverlayMoreActionsVscodeContext();
     protected advancedOptionsSections: { key: keyof OptionsWidgetState, index: number }[] = [
         { key: 'showColumnsOptions', index: 0 },
         { key: 'showMemoryOptions', index: 1 },
@@ -309,13 +310,17 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                         ref={this.extendedOptions}
                         {...this.advancedOptionsContext}>
                         <h2 className='advanced-options-header'>Advanced Options</h2>
+                        {this.props.settingsContributionMessage && (
+                            <p className='settings-contribution-message'>{this.props.settingsContributionMessage}</p>
+                        )}
                         <Button
-                            icon='codicon codicon-discard'
-                            className='reset-advanced-options-icon'
-                            onClick={this.handleResetAdvancedOptions}
-                            title='Reset to Defaults'
+                            {...this.moreActionsOverlayMenuContext}
+                            icon='codicon codicon-ellipsis'
+                            className='more-actions-overlay-icon'
+                            onClick={this.handleMoreActionsButtonInOverlay}
+                            title='More Actions...'
                             rounded
-                            aria-label='Reset to Defaults'
+                            aria-label='More Actions...'
                             aria-haspopup
                         />
                         <Accordion
@@ -507,6 +512,11 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
         }
     }
 
+    protected handleMoreActionsButtonInOverlay: (event: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement, MouseEvent>) => void = e => this.triggerContextMenu(e);
+    protected triggerContextMenu(event: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement, MouseEvent>): void {
+        event.target.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: event.clientX, clientY: event.clientY }));
+    }
+
     protected updateOptions(id: InputId, value: string): void {
         switch (id) {
             case InputId.Address:
@@ -598,8 +608,6 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
             this.props.updateRenderOptions({ periodicRefreshInterval });
         }
     }
-
-    protected handleResetAdvancedOptions: MouseEventHandler<HTMLButtonElement> | undefined = () => this.props.resetRenderOptions();
 
     protected enableTitleEditing = () => this.doEnableTitleEditing();
     protected doEnableTitleEditing(): void {

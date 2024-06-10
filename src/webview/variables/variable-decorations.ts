@@ -17,6 +17,7 @@
 import { ReactNode } from 'react';
 import * as React from 'react';
 import { HOST_EXTENSION } from 'vscode-messenger-common';
+import * as manifest from '../../common/manifest';
 import { areVariablesEqual, BigIntMemoryRange, BigIntVariableRange, compareBigInt, doOverlap } from '../../common/memory-range';
 import { getVariablesType, ReadMemoryArguments } from '../../common/messaging';
 import { stringifyWithBigInts } from '../../common/typescript';
@@ -36,7 +37,7 @@ const NON_HC_COLORS = [
 ] as const;
 
 export class VariableDecorator implements ColumnContribution, Decorator {
-    readonly id = 'variables';
+    readonly id = manifest.CONFIG_SHOW_VARIABLES_COLUMN;
     readonly label = 'Variables';
     readonly priority = 2;
     protected active = false;

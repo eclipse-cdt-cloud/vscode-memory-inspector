@@ -25,10 +25,9 @@ import { TooltipEvent } from 'primereact/tooltip/tooltipoptions';
 import { classNames } from 'primereact/utils';
 import React from 'react';
 import { Memory } from '../../common/memory';
-import { WebviewSelection } from '../../common/messaging';
-import { MemoryOptions, ReadMemoryArguments } from '../../common/messaging';
+import { MemoryOptions, ReadMemoryArguments, WebviewSelection } from '../../common/messaging';
 import { tryToNumber } from '../../common/typescript';
-import { MemoryDisplayConfiguration, ScrollingBehavior } from '../../common/webview-configuration';
+import { MemoryDataDisplaySettings, ScrollingBehavior } from '../../common/webview-configuration';
 import { TableRenderOptions } from '../columns/column-contribution-service';
 import { DataColumn } from '../columns/data-column';
 import type { HoverService } from '../hovers/hover-service';
@@ -129,7 +128,7 @@ export const MoreMemorySelect: React.FC<MoreMemoryAboveSelectProps | MoreMemoryB
     );
 };
 
-interface MemoryTableProps extends TableRenderOptions, MemoryDisplayConfiguration {
+interface MemoryTableProps extends TableRenderOptions, MemoryDataDisplaySettings {
     configuredReadArguments: Required<ReadMemoryArguments>;
     activeReadArguments: Required<ReadMemoryArguments>;
     memory?: Memory;
@@ -244,11 +243,18 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
             this.setState(prev => ({ ...prev, selection: null }));
         }
 
-        const hasDisplayChanged = prevProps.bytesPerMau !== this.props.bytesPerMau || prevProps.mausPerGroup !== this.props.mausPerGroup ||
-            (prevProps.groupsPerRow !== 'Autofit' && this.props.groupsPerRow === 'Autofit');
+        // update the groups per row to render if the display options that impact the available width may have changed or we didn't have a memory before
+        const hasDisplayChanged = prevProps.bytesPerMau !== this.props.bytesPerMau
+            || prevProps.mausPerGroup !== this.props.mausPerGroup
+            || (prevProps.groupsPerRow !== 'Autofit' && this.props.groupsPerRow === 'Autofit')
+            || prevProps.columnOptions !== this.props.columnOptions
+            || prevProps.effectiveAddressLength !== this.props.effectiveAddressLength
+            || prevProps.showRadixPrefix !== this.props.showRadixPrefix
+            || prevProps.memory === undefined;
         if (hasDisplayChanged) {
             this.ensureGroupsPerRowToRenderIsSet();
         }
+
         if (this.props.memory !== undefined && this.props.scrollingBehavior === 'Auto-Append') {
             this.ensureSufficientVisibleRowsForScrollbar();
 

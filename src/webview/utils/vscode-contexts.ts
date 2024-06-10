@@ -52,6 +52,10 @@ export function createSectionVscodeContext(webviewSection: WebviewSection): Vsco
     return createVscodeContext({ webviewSection });
 }
 
+export function createOverlayMoreActionsVscodeContext(): VscodeContext {
+    return createVscodeContext({ webviewSection: 'advancedOptionsOverlay', advancedOptions: true, optionsMenu: true });
+}
+
 export function createColumnVscodeContext(column: string): VscodeContext {
     return createVscodeContext({ column });
 }

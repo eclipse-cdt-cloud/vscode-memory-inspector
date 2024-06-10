@@ -20,6 +20,7 @@ import { sendRequest } from '../common/debug-requests';
 import { stringToBytesMemory } from '../common/memory';
 import { VariableRange } from '../common/memory-range';
 import { ReadMemoryResult, WriteMemoryResult } from '../common/messaging';
+import { MemoryDisplaySettingsContribution } from '../common/webview-configuration';
 import { AdapterRegistry } from './adapter-registry/adapter-registry';
 import { isSessionEvent, SessionTracker } from './session-tracker';
 
@@ -84,8 +85,14 @@ export class MemoryProvider {
     }
 
     public async getSizeOfVariable(variableName: string): Promise<bigint | undefined> {
-        const session = this.sessionTracker.assertActiveSession('get address of variable');
+        const session = this.sessionTracker.assertActiveSession('get size of variable');
         const handler = this.adapterRegistry?.getHandlerForSession(session.type);
         return handler?.getSizeOfVariable?.(session, variableName);
+    }
+
+    public async getMemoryDisplaySettingsContribution(): Promise<MemoryDisplaySettingsContribution> {
+        const session = this.sessionTracker.assertActiveSession('get memory display settings contribution');
+        const handler = this.adapterRegistry?.getHandlerForSession(session.type);
+        return handler?.getMemoryDisplaySettings?.(session) ?? {};
     }
 }

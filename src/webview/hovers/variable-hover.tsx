@@ -15,6 +15,7 @@
  ********************************************************************************/
 
 import * as React from 'react';
+import * as manifest from '../../common/manifest';
 import { VariableRange } from '../../common/memory-range';
 import { HoverContribution, MemoryDetails } from './hover-service';
 
@@ -25,7 +26,7 @@ export class VariableHover implements HoverContribution {
     async render(
         { columnId, bytesPerMau, extraData }: MemoryDetails,
     ): Promise<React.ReactNode> {
-        if (columnId !== 'variables') { return; }
+        if (columnId !== manifest.CONFIG_SHOW_VARIABLES_COLUMN) { return; }
 
         const { type, startAddress, endAddress, name } = extraData as VariableRange;
         const start = '0x' + parseInt(startAddress).toString(16);

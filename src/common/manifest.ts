@@ -74,5 +74,9 @@ export const CONFIG_SHOW_RADIX_PREFIX = 'showRadixPrefix';
 export const DEFAULT_SHOW_RADIX_PREFIX = true;
 
 // Columns
-export const CONFIG_SHOW_VARIABLES_COLUMN = 'columns.variables';
-export const CONFIG_SHOW_ASCII_COLUMN = 'columns.ascii';
+export const CONFIG_SHOW_VARIABLES_COLUMN = 'variables';
+export const CONFIG_SHOW_ASCII_COLUMN = 'ascii';
+export const DEFAULT_VISIBLE_COLUMNS = [CONFIG_SHOW_VARIABLES_COLUMN, CONFIG_SHOW_ASCII_COLUMN];
+
+// Extension Settings
+export const CONFIG_ALLOW_DEBUGGER_OVERWRITE_SETTINGS = 'allowDebuggerOverwriteSettings';

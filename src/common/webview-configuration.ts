@@ -17,16 +17,22 @@ import { WebviewIdMessageParticipant } from 'vscode-messenger-common';
 import { Endianness, GroupsPerRowOption, PeriodicRefresh, RefreshOnStop } from './manifest';
 import { Radix } from './memory-range';
 
-/** The memory display configuration that can be specified for the memory widget. */
-export interface MemoryDisplayConfiguration {
+/** Specifies the settings for displaying memory addresses in the memory data table. */
+export interface MemoryAddressDisplaySettings {
+    addressPadding: AddressPadding;
+    addressRadix: Radix;
+    showRadixPrefix: boolean;
+}
+
+export type AddressPadding = 'Min' | 0 | 32 | 64;
+
+/** Specifies the settings for displaying memory data in the memory data table, including the memory addresses. */
+export interface MemoryDataDisplaySettings extends MemoryAddressDisplaySettings {
     bytesPerMau: number;
     mausPerGroup: number;
     groupsPerRow: GroupsPerRowOption;
     endianness: Endianness;
     scrollingBehavior: ScrollingBehavior;
-    addressPadding: AddressPadding;
-    addressRadix: Radix;
-    showRadixPrefix: boolean;
     refreshOnStop: RefreshOnStop;
     periodicRefresh: PeriodicRefresh;
     periodicRefreshInterval: number;
@@ -34,14 +40,21 @@ export interface MemoryDisplayConfiguration {
 
 export type ScrollingBehavior = 'Paginate' | 'Grow' | 'Auto-Append';
 
-export type AddressPadding = 'Minimal' | number;
-
-export interface ColumnVisibilityStatus {
+/** Specifies the display settings of the memory data table, including the memory data and addresses. */
+export interface MemoryDisplaySettings extends MemoryDataDisplaySettings {
     visibleColumns: string[];
 }
 
+/** An extender's contribution to the `MemoryDisplaySettings` via the `AdapterCapabilities`. */
+export interface MemoryDisplaySettingsContribution {
+    message?: string;
+    settings?: Partial<MemoryDisplaySettings>;
+}
+
 /** All settings related to memory view that can be specified for the webview from the extension "main". */
-export interface MemoryViewSettings extends ColumnVisibilityStatus, MemoryDisplayConfiguration {
+export interface MemoryViewSettings extends MemoryDisplaySettings {
     title: string
     messageParticipant: WebviewIdMessageParticipant;
+    hasDebuggerDefaults?: boolean;
+    contributionMessage?: string;
 }

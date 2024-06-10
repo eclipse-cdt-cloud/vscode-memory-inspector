@@ -172,7 +172,7 @@
   margin: 0.5rem 0 0.2rem 0;
 }
 
-.reset-advanced-options-icon {
+.more-actions-overlay-icon {
   position: absolute;
   top: 12px;
   right: 0;
@@ -203,4 +203,10 @@
 .option-help-icon {
   color: var(--vscode-button-background);
   margin-left: 0.2em;
+}
+
+.settings-contribution-message {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  color: var(--vscode-descriptionForeground);
 }

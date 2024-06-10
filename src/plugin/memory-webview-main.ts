@@ -31,7 +31,6 @@ import {
     ReadMemoryResult,
     readMemoryType,
     readyType,
-    resetMemoryViewSettingsType,
     SessionContext,
     sessionContextChangedType,
     setMemoryViewSettingsType,
@@ -45,8 +44,9 @@ import {
     WriteMemoryResult,
     writeMemoryType,
 } from '../common/messaging';
-import { MemoryViewSettings, ScrollingBehavior } from '../common/webview-configuration';
+import { MemoryDisplaySettings, MemoryDisplaySettingsContribution, MemoryViewSettings, ScrollingBehavior } from '../common/webview-configuration';
 import { getVisibleColumns, isWebviewVariableContext, WebviewContext } from '../common/webview-context';
+import { AddressPaddingOptions } from '../webview/utils/view-types';
 import { outputChannelLogger } from './logger';
 import { MemoryProvider } from './memory-provider';
 import { ApplyCommandType, StoreCommandType } from './memory-storage';
@@ -65,6 +65,8 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
     public static ToggleAsciiColumnCommandType = `${manifest.PACKAGE_NAME}.toggle-ascii-column`;
     public static ToggleVariablesColumnCommandType = `${manifest.PACKAGE_NAME}.toggle-variables-column`;
     public static ToggleRadixPrefixCommandType = `${manifest.PACKAGE_NAME}.toggle-radix-prefix`;
+    public static ResetDisplayOptionsToDefaultsType = `${manifest.PACKAGE_NAME}.reset-display-options`;
+    public static ResetDisplayOptionsToDebuggerDefaultsType = `${manifest.PACKAGE_NAME}.reset-display-options-to-debugger-defaults`;
     public static ShowAdvancedDisplayConfigurationCommandType = `${manifest.PACKAGE_NAME}.show-advanced-display-options`;
     public static GetWebviewSelectionCommandType = `${manifest.PACKAGE_NAME}.get-webview-selection`;
 
@@ -92,17 +94,26 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
                 }
             }),
             vscode.commands.registerCommand(MemoryWebview.ToggleVariablesColumnCommandType, (ctx: WebviewContext) => {
-                this.toggleWebviewColumn(ctx, 'variables');
+                this.toggleWebviewColumn(ctx, manifest.CONFIG_SHOW_VARIABLES_COLUMN);
             }),
             vscode.commands.registerCommand(MemoryWebview.ToggleAsciiColumnCommandType, (ctx: WebviewContext) => {
-                this.toggleWebviewColumn(ctx, 'ascii');
+                this.toggleWebviewColumn(ctx, manifest.CONFIG_SHOW_ASCII_COLUMN);
             }),
             vscode.commands.registerCommand(MemoryWebview.ToggleRadixPrefixCommandType, (ctx: WebviewContext) => {
                 this.setMemoryViewSettings(ctx.messageParticipant, { showRadixPrefix: !ctx.showRadixPrefix });
             }),
+
             vscode.commands.registerCommand(MemoryWebview.ShowAdvancedDisplayConfigurationCommandType, async (ctx: WebviewContext) => {
                 this.messenger.sendNotification(showAdvancedOptionsType, ctx.messageParticipant, undefined);
             }),
+
+            vscode.commands.registerCommand(MemoryWebview.ResetDisplayOptionsToDefaultsType, (ctx: WebviewContext) => {
+                this.setMemoryDisplaySettings(ctx.messageParticipant, undefined, false);
+            }),
+            vscode.commands.registerCommand(MemoryWebview.ResetDisplayOptionsToDebuggerDefaultsType, (ctx: WebviewContext) => {
+                this.setMemoryDisplaySettings(ctx.messageParticipant);
+            }),
+
             vscode.commands.registerCommand(MemoryWebview.GetWebviewSelectionCommandType, (ctx: WebviewContext) => this.getWebviewSelection(ctx.messageParticipant)),
         );
     };
@@ -192,13 +203,16 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
     protected setWebviewMessageListener(panel: vscode.WebviewPanel, options?: MemoryOptions): void {
         const participant = this.messenger.registerWebviewPanel(panel);
         const disposables = [
-            this.messenger.onNotification(readyType, () => this.initialize(participant, panel, options), { sender: participant }),
+            this.messenger.onNotification(readyType, async () => {
+                this.setSessionContext(participant, this.createContext());
+                await this.setMemoryDisplaySettings(participant, panel.title);
+                this.refresh(participant, options);
+            }, { sender: participant }),
             this.messenger.onRequest(setOptionsType, newOptions => { options = { ...options, ...newOptions }; }, { sender: participant }),
             this.messenger.onRequest(logMessageType, message => outputChannelLogger.info('[webview]:', message), { sender: participant }),
             this.messenger.onRequest(readMemoryType, request => this.readMemory(request), { sender: participant }),
             this.messenger.onRequest(writeMemoryType, request => this.writeMemory(request), { sender: participant }),
             this.messenger.onRequest(getVariablesType, request => this.getVariables(request), { sender: participant }),
-            this.messenger.onNotification(resetMemoryViewSettingsType, () => this.setInitialSettings(participant, panel.title), { sender: participant }),
             this.messenger.onNotification(setTitleType, title => { panel.title = title; }, { sender: participant }),
             this.messenger.onRequest(storeMemoryType, args => this.storeMemory(args), { sender: participant }),
             this.messenger.onRequest(applyMemoryType, () => this.applyMemory(), { sender: participant }),
@@ -207,18 +221,21 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
         panel.onDidDispose(() => disposables.forEach(disposable => disposable.dispose()));
     }
 
-    protected async initialize(participant: WebviewIdMessageParticipant, panel: vscode.WebviewPanel, options?: MemoryOptions): Promise<void> {
-        this.setSessionContext(participant, this.createContext());
-        this.setInitialSettings(participant, panel.title);
-        this.refresh(participant, options);
+    protected async setMemoryDisplaySettings(messageParticipant: WebviewIdMessageParticipant, title?: string, includeContributions: boolean = true): Promise<void> {
+        const defaultSettings = this.getDefaultMemoryDisplaySettings();
+        const settingsContribution = includeContributions ? await this.getMemoryDisplaySettingsContribution() : {};
+        const settings = settingsContribution.settings ? { ...settingsContribution.settings, hasDebuggerDefaults: true } : {};
+        this.setMemoryViewSettings(messageParticipant, {
+            messageParticipant,
+            title,
+            ...defaultSettings,
+            ...settings,
+            contributionMessage: settingsContribution.message
+        });
     }
 
     protected async refresh(participant: WebviewIdMessageParticipant, options: MemoryOptions = {}): Promise<void> {
         this.messenger.sendRequest(setOptionsType, participant, options);
-    }
-
-    protected setInitialSettings(webviewParticipant: WebviewIdMessageParticipant, title: string): void {
-        this.setMemoryViewSettings(webviewParticipant, this.getMemoryViewSettings(webviewParticipant, title));
     }
 
     protected setMemoryViewSettings(webviewParticipant: WebviewIdMessageParticipant, settings: Partial<MemoryViewSettings>): void {
@@ -229,27 +246,34 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
         this.messenger.sendNotification(sessionContextChangedType, webviewParticipant, context);
     }
 
-    protected getMemoryViewSettings(messageParticipant: WebviewIdMessageParticipant, title: string): MemoryViewSettings {
-        const memoryInspectorConfiguration = vscode.workspace.getConfiguration(manifest.PACKAGE_NAME);
-        const bytesPerMau = memoryInspectorConfiguration.get<number>(manifest.CONFIG_BYTES_PER_MAU, manifest.DEFAULT_BYTES_PER_MAU);
-        const mausPerGroup = memoryInspectorConfiguration.get<number>(manifest.CONFIG_MAUS_PER_GROUP, manifest.DEFAULT_MAUS_PER_GROUP);
-        const groupsPerRow = memoryInspectorConfiguration.get<manifest.GroupsPerRowOption>(manifest.CONFIG_GROUPS_PER_ROW, manifest.DEFAULT_GROUPS_PER_ROW);
-        const endianness = memoryInspectorConfiguration.get<manifest.Endianness>(manifest.CONFIG_ENDIANNESS, manifest.DEFAULT_ENDIANNESS);
-        const scrollingBehavior = memoryInspectorConfiguration.get<ScrollingBehavior>(manifest.CONFIG_SCROLLING_BEHAVIOR, manifest.DEFAULT_SCROLLING_BEHAVIOR);
-        const visibleColumns = CONFIGURABLE_COLUMNS
-            .filter(column => vscode.workspace.getConfiguration(manifest.PACKAGE_NAME).get<boolean>(column, false))
-            .map(columnId => columnId.replace('columns.', ''));
-        const addressPadding = memoryInspectorConfiguration.get(manifest.CONFIG_ADDRESS_PADDING, manifest.DEFAULT_ADDRESS_PADDING);
-        const addressRadix = memoryInspectorConfiguration.get<number>(manifest.CONFIG_ADDRESS_RADIX, manifest.DEFAULT_ADDRESS_RADIX);
-        const showRadixPrefix = memoryInspectorConfiguration.get<boolean>(manifest.CONFIG_SHOW_RADIX_PREFIX, manifest.DEFAULT_SHOW_RADIX_PREFIX);
-        const refreshOnStop = memoryInspectorConfiguration.get<manifest.RefreshOnStop>(manifest.CONFIG_REFRESH_ON_STOP, manifest.DEFAULT_REFRESH_ON_STOP);
-        const periodicRefresh = memoryInspectorConfiguration.get<manifest.PeriodicRefresh>(manifest.CONFIG_PERIODIC_REFRESH, manifest.DEFAULT_PERIODIC_REFRESH);
-        const periodicRefreshInterval = memoryInspectorConfiguration.get<number>(manifest.CONFIG_PERIODIC_REFRESH_INTERVAL, manifest.DEFAULT_PERIODIC_REFRESH_INTERVAL);
+    protected getDefaultMemoryDisplaySettings(): MemoryDisplaySettings {
+        const memoryInspectorSettings = vscode.workspace.getConfiguration(manifest.PACKAGE_NAME);
+        const bytesPerMau = memoryInspectorSettings.get<number>(manifest.CONFIG_BYTES_PER_MAU, manifest.DEFAULT_BYTES_PER_MAU);
+        const mausPerGroup = memoryInspectorSettings.get<number>(manifest.CONFIG_MAUS_PER_GROUP, manifest.DEFAULT_MAUS_PER_GROUP);
+        const groupsPerRow = memoryInspectorSettings.get<manifest.GroupsPerRowOption>(manifest.CONFIG_GROUPS_PER_ROW, manifest.DEFAULT_GROUPS_PER_ROW);
+        const endianness = memoryInspectorSettings.get<manifest.Endianness>(manifest.CONFIG_ENDIANNESS, manifest.DEFAULT_ENDIANNESS);
+        const scrollingBehavior = memoryInspectorSettings.get<ScrollingBehavior>(manifest.CONFIG_SCROLLING_BEHAVIOR, manifest.DEFAULT_SCROLLING_BEHAVIOR);
+        const visibleColumns = CONFIGURABLE_COLUMNS.filter(column => memoryInspectorSettings.get<boolean>(`columns.${column}`, false));
+        const addressPadding = AddressPaddingOptions[memoryInspectorSettings.get(manifest.CONFIG_ADDRESS_PADDING, manifest.DEFAULT_ADDRESS_PADDING)];
+        const addressRadix = memoryInspectorSettings.get<number>(manifest.CONFIG_ADDRESS_RADIX, manifest.DEFAULT_ADDRESS_RADIX);
+        const showRadixPrefix = memoryInspectorSettings.get<boolean>(manifest.CONFIG_SHOW_RADIX_PREFIX, manifest.DEFAULT_SHOW_RADIX_PREFIX);
+        const refreshOnStop = memoryInspectorSettings.get<manifest.RefreshOnStop>(manifest.CONFIG_REFRESH_ON_STOP, manifest.DEFAULT_REFRESH_ON_STOP);
+        const periodicRefresh = memoryInspectorSettings.get<manifest.PeriodicRefresh>(manifest.CONFIG_PERIODIC_REFRESH, manifest.DEFAULT_PERIODIC_REFRESH);
+        const periodicRefreshInterval = memoryInspectorSettings.get<number>(manifest.CONFIG_PERIODIC_REFRESH_INTERVAL, manifest.DEFAULT_PERIODIC_REFRESH_INTERVAL);
         return {
-            messageParticipant, title, bytesPerMau, mausPerGroup, groupsPerRow,
-            endianness, scrollingBehavior, visibleColumns, addressPadding, addressRadix, showRadixPrefix,
+            bytesPerMau, mausPerGroup, groupsPerRow, endianness, scrollingBehavior,
+            visibleColumns, addressPadding, addressRadix, showRadixPrefix,
             refreshOnStop, periodicRefresh, periodicRefreshInterval
         };
+    }
+
+    protected async getMemoryDisplaySettingsContribution(): Promise<MemoryDisplaySettingsContribution> {
+        const memoryInspectorSettings = vscode.workspace.getConfiguration(manifest.PACKAGE_NAME);
+        const allowDebuggerOverwriteSettings = memoryInspectorSettings.get<boolean>(manifest.CONFIG_ALLOW_DEBUGGER_OVERWRITE_SETTINGS, true);
+        if (allowDebuggerOverwriteSettings) {
+            return this.memoryProvider.getMemoryDisplaySettingsContribution();
+        }
+        return { settings: {}, message: undefined };
     }
 
     protected handleSessionEvent(participant: WebviewIdMessageParticipant, event: SessionEvent): void {

@@ -126,6 +126,18 @@
         "title": "Apply Memory from File...",
         "enablement": "memory-inspector.canWrite",
         "category": "Memory"
+      },
+      {
+        "command": "memory-inspector.reset-display-options-to-debugger-defaults",
+        "title": "Reset to Debugger Defaults",
+        "enablement": "optionsMenu && hasDebuggerDefaults",
+        "category": "Memory"
+      },
+      {
+        "command": "memory-inspector.reset-display-options",
+        "title": "Reset to Defaults",
+        "enablement": "optionsMenu",
+        "category": "Memory"
       }
     ],
     "menus": {
@@ -183,37 +195,47 @@
         {
           "command": "memory-inspector.toggle-variables-column",
           "group": "a_display@1",
-          "when": "webviewId === memory-inspector.memory"
+          "when": "webviewId === memory-inspector.memory && !optionsMenu"
         },
         {
           "command": "memory-inspector.toggle-ascii-column",
           "group": "a_display@2",
-          "when": "webviewId === memory-inspector.memory"
+          "when": "webviewId === memory-inspector.memory && !optionsMenu"
         },
         {
           "command": "memory-inspector.toggle-radix-prefix",
           "group": "a_display@3",
-          "when": "webviewId === memory-inspector.memory"
+          "when": "webviewId === memory-inspector.memory && !optionsMenu"
         },
         {
           "command": "memory-inspector.store-file",
           "group": "c_store-and-restore@1",
-          "when": "webviewId === memory-inspector.memory"
+          "when": "webviewId === memory-inspector.memory && !optionsMenu"
         },
         {
           "command": "memory-inspector.apply-file",
           "group": "c_store-and-restore@2",
-          "when": "webviewId === memory-inspector.memory"
+          "when": "webviewId === memory-inspector.memory && !optionsMenu"
         },
         {
           "command": "memory-inspector.show-advanced-display-options",
           "group": "z_more",
-          "when": "webviewId === memory-inspector.memory"
+          "when": "webviewId === memory-inspector.memory && !optionsMenu"
         },
         {
           "command": "memory-inspector.go-to-value",
           "group": "display@7",
-          "when": "webviewId === memory-inspector.memory && memory-inspector.variable.isPointer"
+          "when": "webviewId === memory-inspector.memory && memory-inspector.variable.isPointer && !optionsMenu"
+        },
+        {
+          "command": "memory-inspector.reset-display-options-to-debugger-defaults",
+          "group": "a_reset@1",
+          "when": "webviewId === memory-inspector.memory && optionsMenu && hasDebuggerDefaults"
+        },
+        {
+          "command": "memory-inspector.reset-display-options",
+          "group": "a_reset@2",
+          "when": "webviewId === memory-inspector.memory && optionsMenu"
         }
       ]
     },
@@ -407,6 +429,11 @@
           "type": "boolean",
           "default": true,
           "description": "Display the radix prefix (e.g., '0x' for hexadecimal, '0b' for binary) before memory addresses."
+        },
+        "memory-inspector.allowDebuggerOverwriteSettings": {
+          "type": "boolean",
+          "default": true,
+          "description": "Allow debuggers to overwrite the default memory display settings."
         }
       }
     }

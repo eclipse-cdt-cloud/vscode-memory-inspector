@@ -48,7 +48,6 @@ export interface SessionContext {
 // Notifications
 export const readyType: NotificationType<void> = { method: 'ready' };
 export const setMemoryViewSettingsType: NotificationType<Partial<MemoryViewSettings>> = { method: 'setMemoryViewSettings' };
-export const resetMemoryViewSettingsType: NotificationType<void> = { method: 'resetMemoryViewSettings' };
 export const setTitleType: NotificationType<string> = { method: 'setTitle' };
 export const memoryWrittenType: NotificationType<WrittenMemory> = { method: 'memoryWritten' };
 export const sessionContextChangedType: NotificationType<SessionContext> = { method: 'sessionContextChanged' };
