@@ -31,7 +31,7 @@ export interface AdapterCapabilities {
     getAddressOfVariable?(session: vscode.DebugSession, variableName: string): Promise<string | undefined>;
     /** Resolves the size of a given variable in bytes within the current context. */
     getSizeOfVariable?(session: vscode.DebugSession, variableName: string): Promise<bigint | undefined>;
-    /** Retrieve the enforced default display settings for the memory view. */
+    /** Retrieve the suggested default display settings for the memory view. */
     getMemoryDisplaySettings?(session: vscode.DebugSession): Promise<Partial<MemoryDisplaySettingsContribution>>;
     /** Initialize the trackers of this adapter's for the debug session. */
     initializeAdapterTracker?(session: vscode.DebugSession): vscode.DebugAdapterTracker | undefined;
