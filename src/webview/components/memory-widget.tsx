@@ -16,10 +16,11 @@
 
 import React from 'react';
 import { WebviewIdMessageParticipant } from 'vscode-messenger-common';
+import * as manifest from '../../common/manifest';
 import { Memory } from '../../common/memory';
 import { WebviewSelection } from '../../common/messaging';
 import { MemoryOptions, ReadMemoryArguments, SessionContext } from '../../common/messaging';
-import { MemoryDisplayConfiguration } from '../../common/webview-configuration';
+import { MemoryDataDisplaySettings } from '../../common/webview-configuration';
 import { ColumnStatus } from '../columns/column-contribution-service';
 import { HoverService } from '../hovers/hover-service';
 import { Decoration, MemoryState } from '../utils/view-types';
@@ -27,7 +28,7 @@ import { createAppVscodeContext, VscodeContext } from '../utils/vscode-contexts'
 import { MemoryTable } from './memory-table';
 import { OptionsWidget } from './options-widget';
 
-interface MemoryWidgetProps extends MemoryDisplayConfiguration {
+interface MemoryWidgetProps extends MemoryDataDisplaySettings {
     messageParticipant: WebviewIdMessageParticipant;
     sessionContext: SessionContext;
     configuredReadArguments: Required<ReadMemoryArguments>;
@@ -39,12 +40,13 @@ interface MemoryWidgetProps extends MemoryDisplayConfiguration {
     columns: ColumnStatus[];
     effectiveAddressLength: number;
     isMemoryFetching: boolean;
+    hasDebuggerDefaults?: boolean;
+    settingsContributionMessage?: string;
     updateMemoryState: (state: Partial<MemoryState>) => void;
     toggleColumn(id: string, active: boolean): void;
     isFrozen: boolean;
     toggleFrozen: () => void;
-    updateMemoryDisplayConfiguration: (memoryArguments: Partial<MemoryDisplayConfiguration>) => void;
-    resetMemoryDisplayConfiguration: () => void;
+    updateMemoryDisplaySettings: (memoryArguments: Partial<MemoryDataDisplaySettings>) => void;
     updateTitle: (title: string) => void;
     fetchMemory(partialOptions?: MemoryOptions): Promise<void>;
     storeMemory(): void;
@@ -67,15 +69,16 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
 
     protected createVscodeContext(): VscodeContext {
         const visibleColumns = this.props.columns.filter(candidate => candidate.active).map(column => column.contribution.id);
-        const { messageParticipant, showRadixPrefix, endianness, bytesPerMau, activeReadArguments } = this.props;
+        const { messageParticipant, showRadixPrefix, endianness, bytesPerMau, activeReadArguments, hasDebuggerDefaults } = this.props;
         return createAppVscodeContext({
             messageParticipant,
             showRadixPrefix,
-            showAsciiColumn: visibleColumns.includes('ascii'),
-            showVariablesColumn: visibleColumns.includes('variables'),
+            showAsciiColumn: visibleColumns.includes(manifest.CONFIG_SHOW_ASCII_COLUMN),
+            showVariablesColumn: visibleColumns.includes(manifest.CONFIG_SHOW_VARIABLES_COLUMN),
+            activeReadArguments,
+            hasDebuggerDefaults,
             endianness,
             bytesPerMau,
-            activeReadArguments
         });
 
     }
@@ -98,11 +101,11 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 periodicRefresh={this.props.periodicRefresh}
                 periodicRefreshInterval={this.props.periodicRefreshInterval}
                 updateMemoryState={this.props.updateMemoryState}
-                updateRenderOptions={this.props.updateMemoryDisplayConfiguration}
-                resetRenderOptions={this.props.resetMemoryDisplayConfiguration}
+                updateRenderOptions={this.props.updateMemoryDisplaySettings}
                 addressPadding={this.props.addressPadding}
                 addressRadix={this.props.addressRadix}
                 showRadixPrefix={this.props.showRadixPrefix}
+                settingsContributionMessage={this.props.settingsContributionMessage}
                 fetchMemory={this.props.fetchMemory}
                 toggleColumn={this.props.toggleColumn}
                 toggleFrozen={this.props.toggleFrozen}

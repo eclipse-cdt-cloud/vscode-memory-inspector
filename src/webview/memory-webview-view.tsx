@@ -20,7 +20,7 @@ import { debounce } from 'lodash';
 import { PrimeReactProvider } from 'primereact/api';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { HOST_EXTENSION, WebviewIdMessageParticipant } from 'vscode-messenger-common';
+import { HOST_EXTENSION } from 'vscode-messenger-common';
 import * as manifest from '../common/manifest';
 import { createMemoryFromRead, Memory } from '../common/memory';
 import { BigIntMemoryRange, doOverlap, getAddressLength, getAddressString, WrittenMemory } from '../common/memory-range';
@@ -32,7 +32,6 @@ import {
     memoryWrittenType,
     readMemoryType,
     readyType,
-    resetMemoryViewSettingsType,
     SessionContext,
     sessionContextChangedType,
     setMemoryViewSettingsType,
@@ -43,7 +42,7 @@ import {
     WebviewSelection,
 } from '../common/messaging';
 import { Change, hasChanged, hasChangedTo } from '../common/typescript';
-import { MemoryDisplayConfiguration } from '../common/webview-configuration';
+import { MemoryDisplaySettings, MemoryViewSettings } from '../common/webview-configuration';
 import { AddressColumn } from './columns/address-column';
 import { AsciiColumn } from './columns/ascii-column';
 import { columnContributionService, ColumnStatus } from './columns/column-contribution-service';
@@ -54,13 +53,11 @@ import { AddressHover } from './hovers/address-hover';
 import { DataHover } from './hovers/data-hover';
 import { HoverService, hoverService } from './hovers/hover-service';
 import { VariableHover } from './hovers/variable-hover';
-import { Decoration, DEFAULT_READ_ARGUMENTS, MemoryState } from './utils/view-types';
+import { AddressPaddingOptions, Decoration, DEFAULT_READ_ARGUMENTS, MemoryState } from './utils/view-types';
 import { variableDecorator } from './variables/variable-decorations';
 import { messenger } from './view-messenger';
 
-export interface MemoryAppState extends MemoryState, MemoryDisplayConfiguration {
-    messageParticipant: WebviewIdMessageParticipant;
-    title: string;
+export interface MemoryAppState extends MemoryState, MemoryViewSettings {
     sessionContext: SessionContext;
     effectiveAddressLength: number;
     decorations: Decoration[];
@@ -74,18 +71,19 @@ export const DEFAULT_SESSION_CONTEXT: SessionContext = {
     canWrite: false
 };
 
-export const DEFAULT_MEMORY_DISPLAY_CONFIGURATION: MemoryDisplayConfiguration = {
+export const DEFAULT_MEMORY_DISPLAY_CONFIGURATION: MemoryDisplaySettings = {
     bytesPerMau: manifest.DEFAULT_BYTES_PER_MAU,
     mausPerGroup: manifest.DEFAULT_MAUS_PER_GROUP,
     groupsPerRow: manifest.DEFAULT_GROUPS_PER_ROW,
     endianness: manifest.DEFAULT_ENDIANNESS,
     scrollingBehavior: manifest.DEFAULT_SCROLLING_BEHAVIOR,
-    addressPadding: manifest.DEFAULT_ADDRESS_PADDING,
+    addressPadding: AddressPaddingOptions[manifest.DEFAULT_ADDRESS_PADDING],
     addressRadix: manifest.DEFAULT_ADDRESS_RADIX,
     showRadixPrefix: manifest.DEFAULT_SHOW_RADIX_PREFIX,
     refreshOnStop: manifest.DEFAULT_REFRESH_ON_STOP,
     periodicRefresh: manifest.DEFAULT_PERIODIC_REFRESH,
-    periodicRefreshInterval: manifest.DEFAULT_PERIODIC_REFRESH_INTERVAL
+    periodicRefreshInterval: manifest.DEFAULT_PERIODIC_REFRESH_INTERVAL,
+    visibleColumns: manifest.DEFAULT_VISIBLE_COLUMNS
 };
 
 class App extends React.Component<{}, MemoryAppState> {
@@ -144,7 +142,7 @@ class App extends React.Component<{}, MemoryAppState> {
         const stateChange: Change<MemoryAppState> = { from, to: current };
         const sessionContextChange: Change<SessionContext> = { from: from.sessionContext, to: current.sessionContext };
 
-        if (hasChanged(stateChange, 'addressPadding') || (this.state.addressPadding === 'Minimal' && hasChanged(stateChange, 'memory'))) {
+        if (hasChanged(stateChange, 'addressPadding') || (this.state.addressPadding === 'Min' && hasChanged(stateChange, 'memory'))) {
             const effectiveAddressLength = this.getEffectiveAddressLength(this.state.memory);
             if (this.state.effectiveAddressLength !== effectiveAddressLength) {
                 this.setState({ effectiveAddressLength });
@@ -231,8 +229,7 @@ class App extends React.Component<{}, MemoryAppState> {
                 title={this.state.title}
                 effectiveAddressLength={this.state.effectiveAddressLength}
                 updateMemoryState={this.updateMemoryState}
-                updateMemoryDisplayConfiguration={this.updateMemoryDisplayConfiguration}
-                resetMemoryDisplayConfiguration={this.resetMemoryDisplayConfiguration}
+                updateMemoryDisplaySettings={this.updateMemoryDisplayConfiguration}
                 updateTitle={this.updateTitle}
                 toggleColumn={this.toggleColumn}
                 toggleFrozen={this.toggleFrozen}
@@ -247,6 +244,8 @@ class App extends React.Component<{}, MemoryAppState> {
                 addressPadding={this.state.addressPadding}
                 addressRadix={this.state.addressRadix}
                 showRadixPrefix={this.state.showRadixPrefix}
+                settingsContributionMessage={this.state.contributionMessage}
+                hasDebuggerDefaults={this.state.hasDebuggerDefaults}
                 storeMemory={this.storeMemory}
                 applyMemory={this.applyMemory}
                 refreshOnStop={this.state.refreshOnStop}
@@ -257,8 +256,7 @@ class App extends React.Component<{}, MemoryAppState> {
     }
 
     protected updateMemoryState = (newState?: Partial<MemoryState>) => this.setState(prevState => ({ ...prevState, ...newState }));
-    protected updateMemoryDisplayConfiguration = (newState: Partial<MemoryDisplayConfiguration>) => this.setState(prevState => ({ ...prevState, ...newState }));
-    protected resetMemoryDisplayConfiguration = () => messenger.sendNotification(resetMemoryViewSettingsType, HOST_EXTENSION, undefined);
+    protected updateMemoryDisplayConfiguration = (newState: Partial<MemoryDisplaySettings>) => this.setState(prevState => ({ ...prevState, ...newState }));
 
     protected updateTitle = (title: string) => {
         this.setState({ title });
@@ -314,7 +312,7 @@ class App extends React.Component<{}, MemoryAppState> {
 
     protected getEffectiveAddressLength(memory?: Memory): number {
         const { addressRadix, addressPadding } = this.state;
-        return addressPadding === 'Minimal' ? this.getLastAddressLength(memory) : getAddressLength(addressPadding, addressRadix);
+        return addressPadding === 'Min' ? this.getLastAddressLength(memory) : getAddressLength(addressPadding, addressRadix);
     }
 
     protected getLastAddressLength(memory?: Memory): number {

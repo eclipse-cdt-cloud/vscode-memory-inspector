@@ -15,6 +15,7 @@
  ********************************************************************************/
 
 import { WebviewIdMessageParticipant } from 'vscode-messenger-common';
+import * as manifest from '../common/manifest';
 import { Endianness } from './manifest';
 import { VariableMetadata } from './memory-range';
 import { ReadMemoryArguments } from './messaging';
@@ -25,6 +26,7 @@ export interface WebviewContext {
     showAsciiColumn: boolean
     showVariablesColumn: boolean,
     showRadixPrefix: boolean,
+    hasDebuggerDefaults?: boolean,
     endianness: Endianness,
     bytesPerMau: number,
     activeReadArguments: Required<ReadMemoryArguments>
@@ -46,10 +48,10 @@ export interface WebviewVariableContext extends WebviewCellContext {
 export function getVisibleColumns(context: WebviewContext): string[] {
     const columns = [];
     if (context.showAsciiColumn) {
-        columns.push('ascii');
+        columns.push(manifest.CONFIG_SHOW_ASCII_COLUMN);
     }
     if (context.showVariablesColumn) {
-        columns.push('variables');
+        columns.push(manifest.CONFIG_SHOW_VARIABLES_COLUMN);
     }
     return columns;
 }

@@ -15,6 +15,7 @@
  ********************************************************************************/
 
 import { ReactNode } from 'react';
+import * as manifest from '../../common/manifest';
 import { Memory } from '../../common/memory';
 import { BigIntMemoryRange, toOffset } from '../../common/memory-range';
 import { ColumnContribution, TableRenderOptions } from './column-contribution-service';
@@ -29,7 +30,7 @@ function getASCIIForSingleByte(byte: number | undefined): string {
 }
 
 export class AsciiColumn implements ColumnContribution {
-    readonly id = 'ascii';
+    readonly id = manifest.CONFIG_SHOW_ASCII_COLUMN;
     readonly label = 'ASCII';
     readonly priority = 3;
     render(range: BigIntMemoryRange, memory: Memory, options: TableRenderOptions): ReactNode {

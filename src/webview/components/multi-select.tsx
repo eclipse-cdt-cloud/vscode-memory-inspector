@@ -25,12 +25,13 @@ export interface SingleSelectItemProps {
 
 interface MultiSelectProps {
     items: SingleSelectItemProps[];
-    label: string;
+    label?: string;
     id?: string;
+    classNames?: string;
     onSelectionChanged: (labelSelected: string, newSelectionState: boolean) => unknown;
 }
 
-const MultiSelectBar: React.FC<MultiSelectProps> = ({ items, onSelectionChanged, id }) => {
+export const MultiSelectBar: React.FC<MultiSelectProps> = ({ items, onSelectionChanged, id }) => {
     const changeHandler: ((e: CheckboxChangeEvent) => unknown) = React.useCallback(e => {
         const target = e.target as HTMLInputElement;
         if (target) {
@@ -54,10 +55,3 @@ const MultiSelectBar: React.FC<MultiSelectProps> = ({ items, onSelectionChanged,
         </div>
     );
 };
-
-export const MultiSelectWithLabel: React.FC<MultiSelectProps> = ({ id, label, items, onSelectionChanged }) => (
-    <div className='flex flex-column'>
-        <h2 className='multi-select-label mb-2 mt-0'>{label}</h2>
-        <MultiSelectBar id={id} items={items} onSelectionChanged={onSelectionChanged} label={label} />
-    </div>
-);

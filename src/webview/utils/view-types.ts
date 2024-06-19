@@ -16,15 +16,13 @@
 
 import deepequal from 'fast-deep-equal';
 import type * as React from 'react';
-import { Endianness } from '../../common/manifest';
 import { Memory } from '../../common/memory';
 import { areRangesEqual, BigIntMemoryRange } from '../../common/memory-range';
 import { ReadMemoryArguments } from '../../common/messaging';
-import { MemoryDisplayConfiguration } from '../../common/webview-configuration';
+import { MemoryDataDisplaySettings } from '../../common/webview-configuration';
 
-export interface SerializedTableRenderOptions extends MemoryDisplayConfiguration {
+export interface SerializedTableRenderOptions extends MemoryDataDisplaySettings {
     columnOptions: Array<{ label: string, doRender: boolean }>;
-    endianness: Endianness;
     effectiveAddressLength: number;
 }
 
@@ -80,7 +78,7 @@ export interface FullNodeAttributes extends StylableNodeAttributes {
 }
 
 export const AddressPaddingOptions = {
-    'Minimal': 'Minimal',
+    'Minimal': 'Min',
     'Unpadded': 0,
     '32bit': 32,
     '64bit': 64,

@@ -18,6 +18,7 @@ import { DebugProtocol } from '@vscode/debugprotocol';
 import * as vscode from 'vscode';
 import { isDebugRequest, isDebugResponse } from '../../common/debug-requests';
 import { VariableRange } from '../../common/memory-range';
+import { MemoryDisplaySettingsContribution } from '../../common/webview-configuration';
 import { Logger } from '../logger';
 
 /** Represents capabilities that may be achieved with particular debug adapters but are not part of the DAP */
@@ -30,6 +31,9 @@ export interface AdapterCapabilities {
     getAddressOfVariable?(session: vscode.DebugSession, variableName: string): Promise<string | undefined>;
     /** Resolves the size of a given variable in bytes within the current context. */
     getSizeOfVariable?(session: vscode.DebugSession, variableName: string): Promise<bigint | undefined>;
+    /** Retrieve the suggested default display settings for the memory view. */
+    getMemoryDisplaySettings?(session: vscode.DebugSession): Promise<Partial<MemoryDisplaySettingsContribution>>;
+    /** Initialize the trackers of this adapter's for the debug session. */
     initializeAdapterTracker?(session: vscode.DebugSession): vscode.DebugAdapterTracker | undefined;
 }
 
