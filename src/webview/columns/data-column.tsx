@@ -19,7 +19,7 @@ import * as React from 'react';
 import { HOST_EXTENSION } from 'vscode-messenger-common';
 import { Memory } from '../../common/memory';
 import { BigIntMemoryRange, isWithin, toHexStringWithRadixMarker, toOffset } from '../../common/memory-range';
-import { writeMemoryType } from '../../common/messaging';
+import { ConnectionContext, writeMemoryType } from '../../common/messaging';
 import type { MemorySizeOptions } from '../components/memory-table';
 import { decorationService } from '../decorations/decoration-service';
 import { Disposable, FullNodeAttributes } from '../utils/view-types';
@@ -49,6 +49,7 @@ export interface EditableDataColumnRowProps {
 
 export interface EditableDataColumnRowState {
     editedRange?: BigIntMemoryRange;
+    context?: ConnectionContext;
 }
 
 export class EditableDataColumnRow extends React.Component<EditableDataColumnRowProps, EditableDataColumnRowState> {
@@ -58,6 +59,10 @@ export class EditableDataColumnRow extends React.Component<EditableDataColumnRow
 
     render(): React.ReactNode {
         return this.renderGroups();
+    }
+
+    setConnectionContext(currentContext?: ConnectionContext): void {
+        this.state.context = currentContext;
     }
 
     protected renderGroups(): React.ReactNode {
@@ -203,10 +208,10 @@ export class EditableDataColumnRow extends React.Component<EditableDataColumnRow
         if (originalData !== this.inputText.current.value) {
             const newMemoryValue = this.processData(this.inputText.current.value, this.state.editedRange);
             const converted = Buffer.from(newMemoryValue, 'hex').toString('base64');
-            await messenger.sendRequest(writeMemoryType, HOST_EXTENSION, {
+            await messenger.sendRequest(writeMemoryType, HOST_EXTENSION, [{
                 memoryReference: toHexStringWithRadixMarker(this.state.editedRange.startAddress),
                 data: converted
-            }).catch(() => { });
+            }, this.state.context]).catch(() => { });
         }
 
         this.disableEdit();

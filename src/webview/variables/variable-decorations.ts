@@ -19,7 +19,7 @@ import * as React from 'react';
 import { HOST_EXTENSION } from 'vscode-messenger-common';
 import * as manifest from '../../common/manifest';
 import { areVariablesEqual, BigIntMemoryRange, BigIntVariableRange, compareBigInt, doOverlap } from '../../common/memory-range';
-import { getVariablesType, ReadMemoryArguments } from '../../common/messaging';
+import { ConnectionContext, getVariablesType, ReadMemoryArguments } from '../../common/messaging';
 import { stringifyWithBigInts } from '../../common/typescript';
 import { ColumnContribution } from '../columns/column-contribution-service';
 import { Decorator } from '../decorations/decoration-service';
@@ -47,9 +47,9 @@ export class VariableDecorator implements ColumnContribution, Decorator {
 
     get onDidChange(): IEvent<Decoration[]> { return this.onDidChangeEmitter.event; }
 
-    async fetchData(currentViewParameters: ReadMemoryArguments): Promise<void> {
+    async fetchData(currentViewParameters: ReadMemoryArguments, context?: ConnectionContext): Promise<void> {
         if (!this.active || !currentViewParameters.memoryReference || !currentViewParameters.count) { return; }
-        const visibleVariables = (await messenger.sendRequest(getVariablesType, HOST_EXTENSION, currentViewParameters))
+        const visibleVariables = (await messenger.sendRequest(getVariablesType, HOST_EXTENSION, [currentViewParameters, context]))
             .map<BigIntVariableRange>(transmissible => {
                 const startAddress = BigInt(transmissible.startAddress);
                 return {
