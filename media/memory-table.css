@@ -165,7 +165,7 @@
 
 .byte-group {
   font-family: var(--vscode-editor-font-family);
-  margin-right: 2px;
+  margin-right: 4px;
   padding: 0 1px; /* we use this padding to balance out the 2px that are needed for the editing */
 }
 

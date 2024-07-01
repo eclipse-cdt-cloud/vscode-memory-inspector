@@ -226,8 +226,8 @@ export class EditableDataColumnRow extends React.Component<EditableDataColumnRow
 
 export namespace DataColumn {
     export namespace Styles {
-        // `margin-right: 2px` per group (see memory-table.css)
-        export const MARGIN_RIGHT_PX = 2;
+        // `margin-right: 4px` per group (see memory-table.css)
+        export const MARGIN_RIGHT_PX = 4;
         // `padding: 0 1px` applies 1px right and left per group (see memory-table.css)
         export const PADDING_RIGHT_LEFT_PX = 2;
     }
