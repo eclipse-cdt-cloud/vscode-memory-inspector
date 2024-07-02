@@ -38,6 +38,7 @@ export function dispose(disposable: { dispose(): unknown }): void {
 export interface Decoration {
     range: BigIntMemoryRange;
     style: React.CSSProperties;
+    classNames: string[];
 }
 
 export function areDecorationsEqual(one: Decoration, other: Decoration): boolean {

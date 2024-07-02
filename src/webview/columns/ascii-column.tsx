@@ -14,11 +14,12 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-import { ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 import * as manifest from '../../common/manifest';
-import { Memory } from '../../common/memory';
-import { BigIntMemoryRange, toOffset } from '../../common/memory-range';
-import { ColumnContribution, TableRenderOptions } from './column-contribution-service';
+import { toOffset } from '../../common/memory-range';
+import { MemoryRowData } from '../components/memory-table';
+import { ColumnContribution, ColumnRenderProps } from './column-contribution-service';
+import { createDefaultSelection, groupAttributes, SelectionProps } from './table-group';
 
 function isPrintableAsAscii(input: number): boolean {
     return input >= 32 && input < (128 - 1);
@@ -30,17 +31,25 @@ function getASCIIForSingleByte(byte: number | undefined): string {
 }
 
 export class AsciiColumn implements ColumnContribution {
-    readonly id = manifest.CONFIG_SHOW_ASCII_COLUMN;
+    static ID = manifest.CONFIG_SHOW_ASCII_COLUMN;
+    readonly id = AsciiColumn.ID;
     readonly label = 'ASCII';
     readonly priority = 3;
-    render(range: BigIntMemoryRange, memory: Memory, options: TableRenderOptions): ReactNode {
-        const mauSize = options.bytesPerMau * 8;
-        const startOffset = toOffset(memory.address, range.startAddress, mauSize);
-        const endOffset = toOffset(memory.address, range.endAddress, mauSize);
+
+    render(columnIndex: number, row: MemoryRowData, config: ColumnRenderProps): ReactNode {
+        const selectionProps: SelectionProps = {
+            createSelection: (event, position) => createDefaultSelection(event, position, AsciiColumn.ID, row),
+            getSelection: () => config.selection,
+            setSelection: config.setSelection
+        };
+        const groupProps = groupAttributes({ columnIndex, rowIndex: row.rowIndex, groupIndex: 0, maxGroupIndex: 0 }, selectionProps);
+        const mauSize = config.tableConfig.bytesPerMau * 8;
+        const startOffset = toOffset(config.memory.address, row.startAddress, mauSize);
+        const endOffset = toOffset(config.memory.address, row.endAddress, mauSize);
         let result = '';
         for (let i = startOffset; i < endOffset; i++) {
-            result += getASCIIForSingleByte(memory.bytes[i]);
+            result += getASCIIForSingleByte(config.memory.bytes[i]);
         }
-        return result;
+        return <span data-column='ascii' className='ascii' {...groupProps}>{result}</span>;
     }
 }
