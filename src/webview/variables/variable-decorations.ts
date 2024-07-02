@@ -33,7 +33,7 @@ import { messenger } from '../view-messenger';
 const NON_HC_COLORS = [
     'var(--vscode-terminal-ansiBlue)',
     'var(--vscode-terminal-ansiGreen)',
-    'var(--vscode-terminal-ansiRed)',
+    'var(--vscode-terminal-ansiBrightRed)',
     'var(--vscode-terminal-ansiYellow)',
     'var(--vscode-terminal-ansiMagenta)',
 ] as const;
@@ -132,12 +132,14 @@ export class VariableDecorator implements ColumnContribution, Decorator {
         let colorIndex = 0;
         for (const variable of this.currentVariables ?? []) {
             if (variable.endAddress) {
+                const idx = colorIndex++ % 5;
                 decorations.push({
                     range: {
                         startAddress: variable.startAddress,
                         endAddress: variable.endAddress
                     },
-                    style: { color: NON_HC_COLORS[colorIndex++ % 5] }
+                    style: {},
+                    classNames: ['variable-' + idx]
                 });
             }
         }

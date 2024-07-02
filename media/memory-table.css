@@ -179,13 +179,17 @@
 
 [role='group']:hover {
   border-bottom: 0px;
-  color: var(--vscode-list-activeSelectionForeground);
   outline: 1px solid var(--vscode-list-focusOutline);
 }
 
 [role='group'][data-group-selected='true'] {
   background: var(--vscode-list-activeSelectionBackground);
   color: var(--vscode-list-activeSelectionForeground);
+  outline: 1px solid var(--vscode-list-activeSelectionBackground);
+}
+
+[role='group']:focus-visible,
+[role='group']:focus {
   outline: 1px solid var(--vscode-list-focusOutline);
 }
 
@@ -197,7 +201,7 @@
 }
 
 [data-column="data"][role="group"],
-[data-column="variables"][role="group"] {
+[data-column="variables"][role="group"] {  
   padding: 4px 1px;
   line-height: 23.5px;
   outline-offset: -1px;
@@ -205,15 +209,15 @@
 
 /* Data Column */
 
+[data-column="data"][role="group"] {
+  padding: 4px 2px; /* left-padding should match text-indent of data-edit */
+}
 
 /* == Data Edit == */
 
-[data-column="data"][role="group"]:last-child {
-  margin-right: 0px;
-}
-
 [data-column="data"][role="group"]:has(> .data-edit) {
   outline: 1px solid var(--vscode-inputOption-activeBorder);
+  background: transparent;
   padding-left: 0px; /* editing takes two more pixels cause the input field will cut off the characters otherwise. */
   padding-right: 0px; /* editing takes two more pixels cause the input field will cut off the characters otherwise. */
 }
@@ -222,18 +226,18 @@
   padding: 0;
   outline: 0;
   border: none;
-  text-indent: 1px;
+  text-indent: 2px;
   min-height: unset;
   height: 2ex;
   background: unset;
   margin: 0;
+  color: var(--vscode-editor-foreground) !important;
 }
 
 .data-edit:enabled:focus {
   outline: none;
   border: none;
-  color: var(--vscode-list-activeSelectionForeground);
-  text-indent: 1px;
+  text-indent: 2px;
 }
 
 .p-datatable .p-datatable-tbody > tr > td.p-highlight:has(>.selected) {

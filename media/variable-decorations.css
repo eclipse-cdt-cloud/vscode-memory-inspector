@@ -1,5 +1,5 @@
 /********************************************************************************
- * Copyright (C) 2024 EclipseSource.
+ * Copyright (C) 2024 Ericsson and others.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -14,10 +14,31 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-@import "./theme/theme.css";
+ /* Color wheel of variable decorations with 5 non-HC colors */
+.variable-0 {
+    color: var(--vscode-terminal-ansiBlue);
+}
 
-@import "./root.css";
-@import "./multi-select.css";
-@import "./options-widget.css";
-@import "./memory-table.css";
-@import "./variable-decorations.css";
+.variable-1 {
+    color: var(--vscode-terminal-ansiGreen);
+}
+
+.variable-2 {
+    color: var(--vscode-terminal-ansiBrightRed);
+}
+
+.variable-3 {
+    color: var(--vscode-terminal-ansiYellow);
+}
+
+.variable-4 {
+    color: var(--vscode-terminal-ansiMagenta);
+}
+
+[role='group'][data-group-selected='true'] .variable-0,
+[role='group'][data-group-selected='true'] .variable-1,
+[role='group'][data-group-selected='true'] .variable-2,
+[role='group'][data-group-selected='true'] .variable-3,
+[role='group'][data-group-selected='true'] .variable-4 {
+   color: inherit;
+}

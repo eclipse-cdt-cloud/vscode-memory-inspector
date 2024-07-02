@@ -13,6 +13,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
+/* eslint-disable no-null/no-null */
 
 import { DOMAttributes, HTMLAttributes } from 'react';
 import { MemoryRowData, MemoryTableSelection } from '../components/memory-table';
@@ -90,7 +91,7 @@ export function getGroupPosition(element: Element): GroupPosition | undefined {
     return { columnIndex: Number(columnIndex), rowIndex: Number(rowIndex), groupIndex: Number(groupIndex), maxGroupIndex: Number(maxGroupIndex) };
 }
 
-export function findGroup<T extends Element>(position: GroupPosition, element?: Element | null): T | undefined {
+export function findGroup<T extends Element>(position: Omit<GroupPosition, 'maxGroupIndex'>, element?: Element | null): T | undefined {
     const context = element ?? document.documentElement;
     // eslint-disable-next-line max-len
     const group = context.querySelector<T>(`[${GroupPosition.Attributes.ColumnIndex}="${position.columnIndex}"][${GroupPosition.Attributes.RowIndex}="${position.rowIndex}"][${GroupPosition.Attributes.GroupIndex}="${position.groupIndex}"]`);
@@ -98,47 +99,23 @@ export function findGroup<T extends Element>(position: GroupPosition, element?: 
 }
 
 export function handleGroupNavigation<T extends HTMLElement>(event: React.KeyboardEvent<T>): boolean {
+    const currentGroup = event.target as HTMLElement;
+
+    let targetGroup: HTMLElement | null = null;
+
     switch (event.key) {
-        case 'ArrowRight': {
-            const rightGroup = findRightGroup<HTMLElement>(event.currentTarget);
-            if (rightGroup) {
-                rightGroup.focus();
-                event.preventDefault();
-                event.stopPropagation();
-                return true;
-            }
+        case 'ArrowRight':
+            targetGroup = getNextGroup(currentGroup);
             break;
-        }
-        case 'ArrowLeft': {
-            const leftGroup = findLeftGroup<HTMLElement>(event.currentTarget);
-            if (leftGroup) {
-                leftGroup?.focus?.();
-                event.preventDefault();
-                event.stopPropagation();
-                return true;
-            }
+        case 'ArrowLeft':
+            targetGroup = getPreviousGroup(currentGroup);
             break;
-        }
-        case 'ArrowUp': {
-            const upGroup = findUpGroup<HTMLElement>(event.currentTarget);
-            if (upGroup) {
-                upGroup?.focus?.();
-                event.preventDefault();
-                event.stopPropagation();
-                return true;
-            }
+        case 'ArrowDown':
+            targetGroup = getGroupInNextRow(currentGroup);
             break;
-        }
-        case 'ArrowDown': {
-            const downGroup = findDownGroup<HTMLElement>(event.currentTarget);
-            if (downGroup) {
-                downGroup?.focus?.();
-                event.preventDefault();
-                event.stopPropagation();
-                return true;
-            }
+        case 'ArrowUp':
+            targetGroup = getGroupInPreviousRow(currentGroup);
             break;
-        }
         case 'c': {
             if (event.ctrlKey) {
                 handleCopy(event);
@@ -151,6 +128,10 @@ export function handleGroupNavigation<T extends HTMLElement>(event: React.Keyboa
             }
             break;
         }
+    }
+    if (targetGroup) {
+        event.preventDefault();
+        targetGroup.focus();
     }
     return false;
 }
@@ -225,6 +206,7 @@ export function createDefaultSelection(event: React.MouseEvent<HTMLElement> | Re
 
 function handleCopy(event: React.ClipboardEvent<HTMLElement> | React.KeyboardEvent<HTMLElement>): void {
     event.preventDefault();
+    event.stopPropagation();
     const textSelection = window.getSelection()?.toString();
     if (textSelection) {
         navigator.clipboard.writeText(textSelection);
@@ -267,3 +249,104 @@ export function toggleSelection<T extends HTMLElement>(event: React.MouseEvent<T
     return true;
 };
 
+function getNextGroup(currentGroup: HTMLElement): HTMLElement | null {
+    let next = currentGroup.nextElementSibling;
+    while (next) {
+        if (next.getAttribute('role') === 'group') {
+            return next as HTMLElement;
+        }
+        next = next.nextElementSibling;
+    }
+    const nextCell = currentGroup.closest('td')?.nextElementSibling;
+    if (nextCell) {
+        return findFirstGroup(nextCell);
+    }
+    return getNextGroupInNextCells(currentGroup.closest('td'));
+}
+
+function getPreviousGroup(currentGroup: HTMLElement): HTMLElement | null {
+    let prev = currentGroup.previousElementSibling;
+    while (prev) {
+        if (prev.getAttribute('role') === 'group') {
+            return prev as HTMLElement;
+        }
+        prev = prev.previousElementSibling;
+    }
+    const prevCell = currentGroup.closest('td')?.previousElementSibling;
+    if (prevCell) {
+        return findLastGroup(prevCell);
+    }
+    return getPreviousGroupInPreviousCells(currentGroup.closest('td'));
+}
+
+function getGroupInNextRow(currentGroup: HTMLElement): HTMLElement | null {
+    const currentCell = currentGroup.closest('td');
+    const currentRow = currentCell?.closest('tr');
+    const nextRow = currentRow?.nextElementSibling as HTMLTableRowElement;
+    if (nextRow) {
+        const cellIndex = Array.from(currentRow!.children).indexOf(currentCell as HTMLTableCellElement);
+        const nextCell = nextRow.children[cellIndex] as HTMLTableCellElement;
+        return findGroupInSamePosition(currentCell, nextCell);
+    }
+    return null;
+}
+
+function getGroupInPreviousRow(currentGroup: HTMLElement): HTMLElement | null {
+    const currentCell = currentGroup.closest('td');
+    const currentRow = currentCell?.closest('tr');
+    const prevRow = currentRow?.previousElementSibling as HTMLTableRowElement;
+    if (prevRow) {
+        const cellIndex = Array.from(currentRow!.children).indexOf(currentCell as HTMLTableCellElement);
+        const prevCell = prevRow.children[cellIndex] as HTMLTableCellElement;
+        return findGroupInSamePosition(currentCell, prevCell);
+    }
+    return null;
+}
+
+function findFirstGroup(cell: Element): HTMLElement | null {
+    const groups = cell.querySelectorAll('[role="group"]');
+    if (groups.length > 0) { return groups[0] as HTMLElement; }
+    const nextCell = cell.nextElementSibling;
+    return nextCell ? findFirstGroup(nextCell) : null;
+}
+
+function findLastGroup(cell: Element): HTMLElement | null {
+    const groups = cell.querySelectorAll('[role="group"]');
+    if (groups.length > 0) { return groups[groups.length - 1] as HTMLElement; }
+    const prevCell = cell.previousElementSibling;
+    return prevCell ? findLastGroup(prevCell) : null;
+}
+
+function getNextGroupInNextCells(cell: Element | null): HTMLElement | null {
+    if (!cell) { return null; }
+    const nextCell = cell.nextElementSibling;
+    if (nextCell) {
+        return findFirstGroup(nextCell);
+    }
+    const nextRow = cell.closest('tr')?.nextElementSibling?.firstElementChild;
+    if (nextRow) {
+        return findFirstGroup(nextRow);
+    }
+    return null;
+}
+
+function getPreviousGroupInPreviousCells(cell: Element | null): HTMLElement | null {
+    if (!cell) { return null; }
+    const prevCell = cell.previousElementSibling;
+    if (prevCell) {
+        return findLastGroup(prevCell);
+    }
+    const prevRow = cell.closest('tr')?.previousElementSibling?.lastElementChild;
+    if (prevRow) {
+        return findLastGroup(prevRow);
+    }
+    return null;
+}
+
+function findGroupInSamePosition(currentCell: Element | null, targetCell: Element | null): HTMLElement | null {
+    if (!currentCell || !targetCell) { return null; }
+    const groups = Array.from(targetCell.querySelectorAll('[role="group"]'));
+    const currentGroups = Array.from(currentCell.querySelectorAll('[role="group"]'));
+    const currentIndex = currentGroups.indexOf(document.activeElement as HTMLElement);
+    return groups[currentIndex] as HTMLElement || groups[0] as HTMLElement || null;
+}

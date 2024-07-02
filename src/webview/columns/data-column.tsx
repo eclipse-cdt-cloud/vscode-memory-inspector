@@ -16,6 +16,7 @@
 
 import { ColumnPassThroughOptions } from 'primereact/column';
 import { InputText } from 'primereact/inputtext';
+import { classNames } from 'primereact/utils';
 import * as React from 'react';
 import { HOST_EXTENSION } from 'vscode-messenger-common';
 import { Memory } from '../../common/memory';
@@ -31,10 +32,10 @@ import { AddressColumn } from './address-column';
 import { ColumnContribution, ColumnRenderProps } from './column-contribution-service';
 import {
     findGroup,
-    getDefaultSearchContext,
     getGroupPosition,
     groupAttributes,
-    GroupPosition, handleGroupNavigation,
+    GroupPosition,
+    handleGroupNavigation,
     handleGroupSelection,
     SelectionProps
 } from './table-group';
@@ -97,7 +98,11 @@ export interface EditableDataColumnRowProps {
     config: ColumnRenderProps;
 }
 
-export class EditableDataColumnRow extends React.Component<EditableDataColumnRowProps, {}> {
+export interface EditableDataColumnRowState {
+    position?: GroupPosition;
+}
+
+export class EditableDataColumnRow extends React.Component<EditableDataColumnRowProps, EditableDataColumnRowState> {
     protected inputText = React.createRef<HTMLInputElement>();
     protected toDisposeOnUnmount?: Disposable;
 
@@ -110,6 +115,14 @@ export class EditableDataColumnRow extends React.Component<EditableDataColumnRow
 
     render(): React.ReactNode {
         return this.renderGroups();
+    }
+
+    componentDidUpdate(_prevProps: Readonly<EditableDataColumnRowProps>, prevState: Readonly<EditableDataColumnRowState>): void {
+        const editingPosition = prevState?.position;
+        if (editingPosition && !this.state.position) {
+            // we went out of editing mode --> restore focus
+            setTimeout(() => findGroup<HTMLElement>(editingPosition)?.focus());
+        }
     }
 
     protected renderGroups(): React.ReactNode {
@@ -192,9 +205,10 @@ export class EditableDataColumnRow extends React.Component<EditableDataColumnRow
     }
 
     protected getBitAttributes(memory: Memory, currentAdress: bigint, offset: number): FullNodeAttributes {
+        const decoration = decorationService.getDecoration(currentAdress);
         return {
-            className: 'eight-bits',
-            style: decorationService.getDecoration(currentAdress)?.style,
+            className: classNames(...decoration?.classNames ?? [], 'eight-bits'),
+            style: decoration?.style,
             content: (memory.bytes[offset] ?? 0).toString(16).padStart(2, '0')
         };
     }
@@ -206,15 +220,16 @@ export class EditableDataColumnRow extends React.Component<EditableDataColumnRow
 
     protected renderEditingGroup(editedRange: BigIntMemoryRange): React.ReactNode {
         const defaultValue = this.createEditingGroupDefaultValue(editedRange);
+        const decoration = decorationService.getDecoration(editedRange.startAddress);
 
         const style: React.CSSProperties = {
-            ...decorationService.getDecoration(editedRange.startAddress)?.style,
-            width: `calc(${defaultValue.length}ch + 2px)` // we balance the two pixels with padding on the group
+            ...decoration?.style,
+            width: `calc(${defaultValue.length}ch + ${DataColumn.Styles.PADDING_RIGHT_LEFT_PX}px)` // we balance the two pixels with padding on the group
         };
 
         return <InputText key={editedRange.startAddress.toString(16)}
             ref={this.inputText}
-            className='data-edit'
+            className={classNames(...decoration?.classNames ?? [], 'data-edit')}
             maxLength={defaultValue.length}
             defaultValue={defaultValue}
             onBlur={this.onBlur}
@@ -236,14 +251,27 @@ export class EditableDataColumnRow extends React.Component<EditableDataColumnRow
         return area.map(byte => byte.toString(16).padStart(2, '0')).join('');
     }
 
-    protected onBlur: React.FocusEventHandler<HTMLInputElement> = event => {
-        this.submitChanges(event);
+    protected onBlur: React.FocusEventHandler<HTMLInputElement> = _event => {
+        this.submitChanges();
     };
 
-    protected onKeyDown: React.KeyboardEventHandler<HTMLInputElement> = event => {
+    protected onKeyDown: React.KeyboardEventHandler<HTMLInputElement> = async event => {
         switch (event.key) {
             case ' ': {
                 this.setGroupEdit(event);
+                break;
+            }
+            case 'v': {
+                if (event.ctrlKey) {
+                    // paste clipboard text and submit as change
+                    const range = getAddressRange(event.currentTarget);
+                    if (range) {
+                        const text = await navigator.clipboard.readText();
+                        if (text.length > 0) {
+                            this.submitChanges(text, range);
+                        }
+                    }
+                }
                 break;
             }
         }
@@ -255,11 +283,11 @@ export class EditableDataColumnRow extends React.Component<EditableDataColumnRow
     protected onEditKeyDown: React.KeyboardEventHandler<HTMLInputElement> = event => {
         switch (event.key) {
             case 'Escape': {
-                this.disableEdit(event);
+                this.disableEdit();
                 break;
             }
             case 'Enter': {
-                this.submitChanges(event);
+                this.submitChanges();
                 break;
             }
         }
@@ -276,6 +304,7 @@ export class EditableDataColumnRow extends React.Component<EditableDataColumnRow
         if (selection) {
             selection.editingRange = selection.selectedRange;
             this.props.config.setSelection(selection);
+            this.setState({ position });
         }
     };
 
@@ -294,37 +323,33 @@ export class EditableDataColumnRow extends React.Component<EditableDataColumnRow
         };
     }
 
-    protected disableEdit(event: React.BaseSyntheticEvent): void {
+    protected disableEdit(): void {
         const selection = this.props.config.selection;
         if (DataColumnSelection.is(selection)) {
             selection.editingRange = undefined;
             this.props.config.setSelection({ ...selection });
-        }
-        // restore focus
-        const parent = event.currentTarget.parentElement;
-        if (parent) {
-            const position = getGroupPosition(parent);
-            if (position) {
-                const context = getDefaultSearchContext(parent);
-                setTimeout(() => findGroup<HTMLElement>(position, context)?.focus());
-            }
+            this.setState({ position: undefined });
         }
     }
 
-    protected async submitChanges(event: React.BaseSyntheticEvent): Promise<void> {
-        if (!this.inputText.current || !DataColumnSelection.is(this.props.config.selection) || !this.props.config.selection.editingRange) { return; }
+    protected async submitChanges(data = this.inputText.current?.value, range?: BigIntMemoryRange): Promise<void> {
+        if (!data || !DataColumnSelection.is(this.props.config.selection)) { return; }
 
-        const originalData = this.createEditingGroupDefaultValue(this.props.config.selection.editingRange);
-        if (originalData !== this.inputText.current.value) {
-            const newMemoryValue = this.processData(this.inputText.current.value, this.props.config.selection.editingRange);
+        const editingRange = range ?? this.props.config.selection.editingRange;
+        if (!editingRange) {
+            return;
+        }
+        const originalData = this.createEditingGroupDefaultValue(editingRange);
+        if (originalData !== data) {
+            const newMemoryValue = this.processData(data, editingRange);
             const converted = Buffer.from(newMemoryValue, 'hex').toString('base64');
             await messenger.sendRequest(writeMemoryType, HOST_EXTENSION, {
-                memoryReference: toHexStringWithRadixMarker(this.props.config.selection.editingRange.startAddress),
+                memoryReference: toHexStringWithRadixMarker(editingRange.startAddress),
                 data: converted
             }).catch(() => { });
         }
 
-        this.disableEdit(event);
+        this.disableEdit();
     }
 
     protected processData(data: string, editedRange: BigIntMemoryRange): string {
@@ -341,10 +366,8 @@ export class EditableDataColumnRow extends React.Component<EditableDataColumnRow
 
 export namespace DataColumn {
     export namespace Styles {
-        // `margin-right: 2px` per group (see memory-table.css)
-        export const MARGIN_RIGHT_PX = 2;
-        // `padding: 0 1px` applies 1px right and left per group (see memory-table.css)
-        export const PADDING_RIGHT_LEFT_PX = 2;
+        // `padding: 4px 2px;` applies 2px right and left per group (see memory-table.css)
+        export const PADDING_RIGHT_LEFT_PX = 4;
     }
 
     /**
@@ -370,9 +393,9 @@ export namespace DataColumn {
             * charactersPerByte
             * options.bytesPerMau
             * options.mausPerGroup
-        ) + Styles.MARGIN_RIGHT_PX + Styles.PADDING_RIGHT_LEFT_PX;
+        ) + Styles.PADDING_RIGHT_LEFT_PX;
         // Accommodate the non-existent margin of the final element.
-        const maxGroups = Math.max((columnWidth + Styles.MARGIN_RIGHT_PX) / groupWidth, 1);
+        const maxGroups = Math.max(columnWidth / groupWidth, 1);
 
         return Math.floor(maxGroups);
     }
