@@ -18,23 +18,29 @@ import { DebugProtocol } from '@vscode/debugprotocol';
 import * as vscode from 'vscode';
 import { isDebugRequest, isDebugResponse } from '../../common/debug-requests';
 import { VariableRange } from '../../common/memory-range';
+import { ConnectionContext, ReadMemoryArguments, ReadMemoryResult,
+    WriteMemoryArguments, WriteMemoryResult } from '../../common/messaging';
 import { MemoryDisplaySettingsContribution } from '../../common/webview-configuration';
 import { Logger } from '../logger';
 
 /** Represents capabilities that may be achieved with particular debug adapters but are not part of the DAP */
 export interface AdapterCapabilities {
     /** Resolve variables known to the adapter to their locations. Fallback if {@link getResidents} is not present */
-    getVariables?(session: vscode.DebugSession): Promise<VariableRange[]>;
+    getVariables?(session: vscode.DebugSession, context?: ConnectionContext): Promise<VariableRange[]>;
     /** Resolve symbols resident in the memory at the specified range. Will be preferred to {@link getVariables} if present. */
-    getResidents?(session: vscode.DebugSession, params: DebugProtocol.ReadMemoryArguments): Promise<VariableRange[]>;
+    getResidents?(session: vscode.DebugSession, params: DebugProtocol.ReadMemoryArguments, context?: ConnectionContext): Promise<VariableRange[]>;
     /** Resolves the address of a given variable in bytes with the current context. */
-    getAddressOfVariable?(session: vscode.DebugSession, variableName: string): Promise<string | undefined>;
+    getAddressOfVariable?(session: vscode.DebugSession, variableName: string, context?: ConnectionContext): Promise<string | undefined>;
     /** Resolves the size of a given variable in bytes within the current context. */
-    getSizeOfVariable?(session: vscode.DebugSession, variableName: string): Promise<bigint | undefined>;
+    getSizeOfVariable?(session: vscode.DebugSession, variableName: string, context?: ConnectionContext): Promise<bigint | undefined>;
     /** Retrieve the suggested default display settings for the memory view. */
     getMemoryDisplaySettings?(session: vscode.DebugSession): Promise<Partial<MemoryDisplaySettingsContribution>>;
     /** Initialize the trackers of this adapter's for the debug session. */
     initializeAdapterTracker?(session: vscode.DebugSession): vscode.DebugAdapterTracker | undefined;
+    readMemory?(session: vscode.DebugSession, params: ReadMemoryArguments, context?: ConnectionContext): Promise<ReadMemoryResult>;
+    writeMemory?(session: vscode.DebugSession, params: WriteMemoryArguments, context?: ConnectionContext): Promise<WriteMemoryResult>;
+    getConnectionContexts?(session: vscode.DebugSession): Promise<ConnectionContext[]>;
+    getCurrentConnectionContext?(session: vscode.DebugSession): Promise<ConnectionContext | undefined>;
 }
 
 export type WithChildren<Original> = Original & { children?: Array<WithChildren<DebugProtocol.Variable>> };
@@ -105,14 +111,14 @@ export class AdapterVariableTracker implements vscode.DebugAdapterTracker {
         this.pendingMessages.clear();
     }
 
-    async getLocals(session: vscode.DebugSession): Promise<VariableRange[]> {
+    async getLocals(session: vscode.DebugSession, context?: ConnectionContext): Promise<VariableRange[]> {
         this.logger.debug('Retrieving local variables in', session.name + ' Current variables:\n', this.variablesTree);
         if (this.currentFrame === undefined) { return []; }
         const maybeRanges = await Promise.all(Object.values(this.variablesTree).reduce<Array<Promise<VariableRange | undefined>>>((previous, parent) => {
             if (this.isDesiredVariable(parent) && parent.children?.length) {
                 this.logger.debug('Resolving children of', parent.name);
                 parent.children.forEach(child => {
-                    previous.push(this.variableToVariableRange(child, session));
+                    previous.push(this.variableToVariableRange(child, session, context));
                 });
             } else {
                 this.logger.debug('Ignoring', parent.name);
@@ -126,15 +132,23 @@ export class AdapterVariableTracker implements vscode.DebugAdapterTracker {
         return candidate.presentationHint !== 'registers' && candidate.name !== 'Registers';
     }
 
-    protected variableToVariableRange(_variable: DebugProtocol.Variable, _session: vscode.DebugSession): Promise<VariableRange | undefined> {
+    protected variableToVariableRange(_variable: DebugProtocol.Variable, _session: vscode.DebugSession,
+        _context?: ConnectionContext): Promise<VariableRange | undefined> {
         throw new Error('To be implemented by derived classes!');
     }
 
     /** Resolves the address of a given variable in bytes within the current context. */
-    getAddressOfVariable?(variableName: string, session: vscode.DebugSession): Promise<string | undefined>;
+    getAddressOfVariable?(variableName: string, session: vscode.DebugSession, context?: ConnectionContext): Promise<string | undefined>;
 
     /** Resolves the size of a given variable in bytes within the current context. */
-    getSizeOfVariable?(variableName: string, session: vscode.DebugSession): Promise<bigint | undefined>;
+    getSizeOfVariable?(variableName: string, session: vscode.DebugSession, context?: ConnectionContext): Promise<bigint | undefined>;
+
+    readMemory?(session: vscode.DebugSession, params: ReadMemoryArguments, context?: ConnectionContext): Promise<ReadMemoryResult>;
+
+    writeMemory?(session: vscode.DebugSession, params: WriteMemoryArguments, context?: ConnectionContext): Promise<WriteMemoryResult>;
+
+    getConnectionContexts?(session: vscode.DebugSession): Promise<ConnectionContext[]>;
+    getCurrentConnectionContext?(session: vscode.DebugSession): Promise<ConnectionContext | undefined>;
 }
 
 export class VariableTracker implements AdapterCapabilities {
@@ -156,15 +170,15 @@ export class VariableTracker implements AdapterCapabilities {
         }
     }
 
-    async getVariables(session: vscode.DebugSession): Promise<VariableRange[]> {
-        return this.sessions.get(session.id)?.getLocals(session) ?? [];
+    async getVariables(session: vscode.DebugSession, context?: ConnectionContext): Promise<VariableRange[]> {
+        return this.sessions.get(session.id)?.getLocals(session, context) ?? [];
     }
 
-    async getAddressOfVariable(session: vscode.DebugSession, variableName: string): Promise<string | undefined> {
-        return this.sessions.get(session.id)?.getAddressOfVariable?.(variableName, session);
+    async getAddressOfVariable(session: vscode.DebugSession, variableName: string, context?: ConnectionContext): Promise<string | undefined> {
+        return this.sessions.get(session.id)?.getAddressOfVariable?.(variableName, session, context);
     }
 
-    async getSizeOfVariable(session: vscode.DebugSession, variableName: string): Promise<bigint | undefined> {
-        return this.sessions.get(session.id)?.getSizeOfVariable?.(variableName, session);
+    async getSizeOfVariable(session: vscode.DebugSession, variableName: string, context?: ConnectionContext): Promise<bigint | undefined> {
+        return this.sessions.get(session.id)?.getSizeOfVariable?.(variableName, session, context);
     }
 }
