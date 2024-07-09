@@ -468,7 +468,7 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
 
         if (this.props.memory !== undefined) {
             const prependScrollingBehaviors: ScrollingBehavior[] = ['Grow', 'Auto-Append'];
-            memorySelect = <div className='flex-auto'>
+            memorySelect = <div className='flex flex-auto justify-content-center'>
                 <MoreMemorySelect
                     activeReadArguments={this.props.activeReadArguments}
                     options={[128, 256, 512]}
@@ -499,7 +499,7 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
         let memorySelect: React.ReactNode | undefined;
 
         if (this.props.memory !== undefined) {
-            memorySelect = <div className='flex-auto'>
+            memorySelect = <div className='flex flex-auto justify-content-center'>
                 <MoreMemorySelect
                     activeReadArguments={this.props.activeReadArguments}
                     options={[128, 256, 512]}
