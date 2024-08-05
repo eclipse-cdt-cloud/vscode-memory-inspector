@@ -26,7 +26,7 @@ import type { MemoryRowData, MemorySizeOptions, MemoryTableSelection, MemoryTabl
 import { decorationService } from '../decorations/decoration-service';
 import { Disposable, FullNodeAttributes } from '../utils/view-types';
 import { createGroupVscodeContext } from '../utils/vscode-contexts';
-import { characterWidthInContainer, elementInnerWidth } from '../utils/window';
+import { characterWidthInContainer, elementInnerWidth, hasCtrlCmdMask } from '../utils/window';
 import { messenger } from '../view-messenger';
 import { AddressColumn } from './address-column';
 import { ColumnContribution, ColumnRenderProps } from './column-contribution-service';
@@ -262,7 +262,7 @@ export class EditableDataColumnRow extends React.Component<EditableDataColumnRow
                 break;
             }
             case 'v': {
-                if (event.ctrlKey) {
+                if (hasCtrlCmdMask(event)) {
                     // paste clipboard text and submit as change
                     const range = getAddressRange(event.currentTarget);
                     if (range) {

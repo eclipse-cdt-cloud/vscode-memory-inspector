@@ -17,6 +17,7 @@
 
 import { DOMAttributes, HTMLAttributes } from 'react';
 import { MemoryRowData, MemoryTableSelection } from '../components/memory-table';
+import { hasCtrlCmdMask } from '../utils/window';
 
 export interface GroupPosition {
     columnIndex: number;
@@ -117,13 +118,13 @@ export function handleGroupNavigation<T extends HTMLElement>(event: React.Keyboa
             targetGroup = getGroupInPreviousRow(currentGroup);
             break;
         case 'c': {
-            if (event.ctrlKey) {
+            if (hasCtrlCmdMask(event)) {
                 handleCopy(event);
             }
             break;
         }
         case 'x': {
-            if (event.ctrlKey) {
+            if (hasCtrlCmdMask(event)) {
                 handleCut(event);
             }
             break;
@@ -237,7 +238,7 @@ export function toggleSelection<T extends HTMLElement>(event: React.MouseEvent<T
     const currentSelection = props.getSelection();
     if (isGroupSelected(position, currentSelection)) {
         // group is already selected
-        if (event.ctrlKey) {
+        if (hasCtrlCmdMask(event)) {
             // deselect
             props.setSelection();
         }

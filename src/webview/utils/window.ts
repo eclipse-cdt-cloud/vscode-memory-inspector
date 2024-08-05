@@ -14,6 +14,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
+import { isOSX } from '../../common/os';
+
 /**
  * Calculates the width of the element without any padding / margin / border
  */
@@ -41,4 +43,31 @@ export function characterWidthInContainer(container: HTMLElement, text: string):
     }
 
     return width;
+}
+
+/**
+ * Bare minimum common interface of the keyboard and the mouse event with respect to the key maskings.
+ * Taken from https://github.com/eclipse-theia/theia/blob/266fa0b2a9cf2649ed9b34c8b71b786806e787b4/packages/core/src/browser/tree/tree-widget.tsx#L141
+ */
+export interface ModifierAwareEvent {
+    /**
+     * Determines if the modifier aware event has the `meta` key masking.
+     */
+    readonly metaKey: boolean;
+    /**
+     * Determines if the modifier aware event has the `ctrl` key masking.
+     */
+    readonly ctrlKey: boolean;
+    /**
+     * Determines if the modifier aware event has the `shift` key masking.
+     */
+    readonly shiftKey: boolean;
+}
+
+/**
+ * Determine if the tree modifier aware event has a `ctrlcmd` mask.
+ * Taken from https://github.com/eclipse-theia/theia/blob/266fa0b2a9cf2649ed9b34c8b71b786806e787b4/packages/core/src/browser/tree/tree-widget.tsx#L1399
+ */
+export function hasCtrlCmdMask(event: ModifierAwareEvent): boolean {
+    return isOSX ? event.metaKey : event.ctrlKey;
 }
