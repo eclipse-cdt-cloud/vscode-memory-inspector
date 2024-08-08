@@ -14,13 +14,22 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
+import { ColumnPassThroughOptions } from 'primereact/column';
 import type * as React from 'react';
 import { Memory } from '../../common/memory';
-import { BigIntMemoryRange } from '../../common/memory-range';
 import { ReadMemoryArguments } from '../../common/messaging';
+import { MemoryRowData, MemoryTableSelection, MemoryTableState } from '../components/memory-table';
 import type { Disposable, MemoryState, SerializedTableRenderOptions, UpdateExecutor } from '../utils/view-types';
 
 export type ColumnFittingType = 'content-width';
+
+export interface ColumnRenderProps {
+    memory: Memory;
+    tableConfig: TableRenderOptions;
+    groupsPerRowToRender: number;
+    selection?: MemoryTableSelection;
+    setSelection: (selection?: MemoryTableSelection) => void;
+}
 
 export interface ColumnContribution {
     readonly id: string;
@@ -30,7 +39,8 @@ export interface ColumnContribution {
     fittingType?: ColumnFittingType;
     /** Sorted low to high. If omitted, sorted alphabetically by ID after all contributions with numbers. */
     priority?: number;
-    render(range: BigIntMemoryRange, memory: Memory, options: TableRenderOptions): React.ReactNode
+    pt?(columnIndex: number, state: MemoryTableState): ColumnPassThroughOptions;
+    render(columnIdx: number, row: MemoryRowData, config: ColumnRenderProps): React.ReactNode
     /** Called when fetching new memory or when activating the column. */
     fetchData?(currentViewParameters: ReadMemoryArguments): Promise<void>;
     /** Called when the user reveals the column */

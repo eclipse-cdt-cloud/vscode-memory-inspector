@@ -73,16 +73,23 @@ class DecorationService {
                 if (index === terminiInOrder.length - 1) { return; }
                 const decoration: Decoration = {
                     range: { startAddress: terminus, endAddress: terminiInOrder[index + 1] },
-                    style: {}
+                    style: {},
+                    classNames: []
                 };
                 decorations.push(decoration);
                 currentSubDecorations.forEach((subDecoration, subDecorationIndex) => {
                     switch (determineRelationship(terminus, subDecoration?.range)) {
-                        case RangeRelationship.Within: Object.assign(decoration.style, subDecoration?.style);
+                        case RangeRelationship.Within: {
+                            Object.assign(decoration.style, subDecoration?.style);
+                            Object.assign(decoration.classNames, subDecoration?.classNames);
+                        }
                             break;
                         case RangeRelationship.Past: {
                             const newSubDecoration = currentSubDecorations[subDecorationIndex] = contributions[subDecorationIndex].next().value;
-                            if (determineRelationship(terminus, newSubDecoration.range) === RangeRelationship.Within) { Object.assign(decoration.style, newSubDecoration.style); }
+                            if (determineRelationship(terminus, newSubDecoration.range) === RangeRelationship.Within) {
+                                Object.assign(decoration.style, newSubDecoration.style);
+                                Object.assign(decoration.classNames, subDecoration?.classNames);
+                            }
                         }
                     }
                 });

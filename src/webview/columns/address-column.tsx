@@ -15,9 +15,10 @@
  ********************************************************************************/
 
 import React, { ReactNode } from 'react';
-import { Memory } from '../../common/memory';
-import { BigIntMemoryRange, getAddressString, getRadixMarker } from '../../common/memory-range';
-import { ColumnContribution, ColumnFittingType, TableRenderOptions } from './column-contribution-service';
+import { getAddressString, getRadixMarker } from '../../common/memory-range';
+import { MemoryRowData } from '../components/memory-table';
+import { ColumnContribution, ColumnFittingType, ColumnRenderProps } from './column-contribution-service';
+import { createDefaultSelection, groupAttributes, SelectionProps } from './table-group';
 
 export class AddressColumn implements ColumnContribution {
     static ID = 'address';
@@ -28,10 +29,16 @@ export class AddressColumn implements ColumnContribution {
 
     fittingType: ColumnFittingType = 'content-width';
 
-    render(range: BigIntMemoryRange, _: Memory, options: TableRenderOptions): ReactNode {
-        return <span className='memory-start-address hoverable' data-column='address'>
-            {options.showRadixPrefix && <span className='radix-prefix'>{getRadixMarker(options.addressRadix)}</span>}
-            <span className='address'>{getAddressString(range.startAddress, options.addressRadix, options.effectiveAddressLength)}</span>
+    render(columnIndex: number, row: MemoryRowData, config: ColumnRenderProps): ReactNode {
+        const selectionProps: SelectionProps = {
+            createSelection: (event, position) => createDefaultSelection(event, position, AddressColumn.ID, row),
+            getSelection: () => config.selection,
+            setSelection: config.setSelection
+        };
+        const groupProps = groupAttributes({ columnIndex, rowIndex: row.rowIndex, groupIndex: 0, maxGroupIndex: 0 }, selectionProps);
+        return <span className='memory-start-address hoverable' data-column='address' {...groupProps}>
+            {config.tableConfig.showRadixPrefix && <span className='radix-prefix'>{getRadixMarker(config.tableConfig.addressRadix)}</span>}
+            <span className='address'>{getAddressString(row.startAddress, config.tableConfig.addressRadix, config.tableConfig.effectiveAddressLength)}</span>
         </span>;
     }
 }

@@ -14,11 +14,12 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
+import deepmerge from 'deepmerge';
 import isDeepEqual from 'fast-deep-equal';
 import { debounce } from 'lodash';
 import memoize from 'memoize-one';
-import { Column } from 'primereact/column';
-import { DataTable, DataTableCellSelection, DataTableProps, DataTableSelectionCellChangeEvent } from 'primereact/datatable';
+import { Column, ColumnPassThroughOptions } from 'primereact/column';
+import { DataTable, DataTableProps } from 'primereact/datatable';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { Tooltip } from 'primereact/tooltip';
 import { TooltipEvent } from 'primereact/tooltip/tooltipoptions';
@@ -28,7 +29,7 @@ import { Memory } from '../../common/memory';
 import { MemoryOptions, ReadMemoryArguments, WebviewSelection } from '../../common/messaging';
 import { tryToNumber } from '../../common/typescript';
 import { MemoryDataDisplaySettings, ScrollingBehavior } from '../../common/webview-configuration';
-import { TableRenderOptions } from '../columns/column-contribution-service';
+import { ColumnRenderProps, TableRenderOptions } from '../columns/column-contribution-service';
 import { DataColumn } from '../columns/data-column';
 import type { HoverService } from '../hovers/hover-service';
 import { Decoration, isTrigger } from '../utils/view-types';
@@ -146,22 +147,31 @@ interface MemoryRowListOptions {
     bigMausPerRow: bigint;
 }
 
-interface MemoryRowData {
+export interface MemoryRowData {
     rowIndex: number;
     startAddress: bigint;
     endAddress: bigint;
 }
 
-export interface MemoryTableCellSelection extends DataTableCellSelection<MemoryRowData[]> {
+export interface MemoryTableSelection {
+    column: {
+        columnIndex: number;
+        id: string;
+    },
+    row: MemoryRowData;
+    group: {
+        groupIndex: number;
+    }
     textContent: string;
 }
-interface MemoryTableState {
+
+export interface MemoryTableState {
     /**
      * The value coming from {@link MemoryTableProps.groupsPerRow} can have non-numeric values such as `Autofit`.
      * For this reason, we need to transform the provided value to a numeric one to render correctly.
      */
     groupsPerRowToRender: number;
-    selection: MemoryTableCellSelection | null;
+    selection?: MemoryTableSelection;
     hoverContent: React.ReactNode;
 }
 
@@ -200,8 +210,6 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
     protected initState(): void {
         this.state = {
             groupsPerRowToRender: 1,
-            // eslint-disable-next-line no-null/no-null
-            selection: null,
             hoverContent: <></>,
         };
     }
@@ -239,8 +247,7 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
         // Reset selection
         const selection = this.state.selection;
         if (selection && (hasMemoryChanged || hasOptionsChanged)) {
-            // eslint-disable-next-line no-null/no-null
-            this.setState(prev => ({ ...prev, selection: null }));
+            this.setState(prev => ({ ...prev, selection: undefined }));
         }
 
         // update the groups per row to render if the display options that impact the available width may have changed or we didn't have a memory before
@@ -293,6 +300,13 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
             this.props.columnOptions.filter(c => c.contribution.fittingType === 'content-width').length;
         const columnWidth = remainingWidth / (this.props.columnOptions.length);
 
+        const columnRenderProps: ColumnRenderProps = {
+            memory: this.props.memory!,
+            tableConfig: this.props,
+            groupsPerRowToRender: this.state.groupsPerRowToRender,
+            selection: this.state.selection,
+            setSelection: selection => this.setSelection(selection)
+        };
         return (
             <div className='flex-1 overflow-auto px-4'>
                 <Tooltip
@@ -309,13 +323,12 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
                     {...this.sectionMenuContext}
                     {...props}
                 >
-                    {this.props.columnOptions.map(({ contribution }) => {
+                    {this.props.columnOptions.map(({ contribution }, idx) => {
                         const isContentWidthFit = contribution.fittingType === 'content-width';
                         const className = classNames(contribution.className, {
                             'content-width-fit': isContentWidthFit
                         });
-                        const pt = { root: createColumnVscodeContext(contribution.id) };
-
+                        const pt: ColumnPassThroughOptions = { root: { ...createColumnVscodeContext(contribution.id), ['data-column']: contribution.id } };
                         return <Column
                             key={contribution.id}
                             field={contribution.id}
@@ -323,8 +336,8 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
                             className={className}
                             headerClassName={className}
                             style={{ width: isContentWidthFit ? undefined : `${columnWidth}%` }}
-                            pt={pt}
-                            body={(row?: MemoryRowData) => row && contribution.render(row, this.props.memory!, this.props)}>
+                            pt={deepmerge(pt, contribution.pt?.(idx, this.state) ?? {})}
+                            body={(row?: MemoryRowData) => row && contribution.render(idx, row, columnRenderProps)}>
                             {contribution.label}
                         </Column>;
                     })}
@@ -336,11 +349,11 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
     protected createDataTableProperties(rows: MemoryRowData[]): DataTableProps<MemoryRowData[]> {
         return {
             cellSelection: true,
+            isDataSelectable: () => false,
             className: classNames(MemoryTable.TABLE_CLASS, 'overflow-hidden'),
             header: this.renderHeader(),
             lazy: true,
             metaKeySelection: false,
-            onSelectionChange: this.onSelectionChanged,
             onColumnResizeEnd: this.onColumnResizeEnd,
             onContextMenuCapture: this.onContextMenu,
             onCopy: this.onCopy,
@@ -349,7 +362,8 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
             scrollable: true,
             scrollHeight: 'flex',
             selectionMode: 'single',
-            selection: this.state.selection,
+            // eslint-disable-next-line no-null/no-null
+            selection: null,
             tableStyle: { minWidth: '30rem' },
             value: rows
         };
@@ -415,14 +429,8 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
         }
     }
 
-    protected onSelectionChanged = (event: DataTableSelectionCellChangeEvent<MemoryRowData[]>) => {
-        // eslint-disable-next-line no-null/no-null
-        const value = event.value ? event.value as MemoryTableCellSelection : null;
-        if (value) {
-            value.textContent = event.originalEvent.currentTarget?.textContent ?? '';
-        }
-
-        this.setState(prev => ({ ...prev, selection: value }));
+    protected setSelection = (selection?: MemoryTableSelection) => {
+        this.setState(prev => ({ ...prev, selection: selection }));
     };
 
     protected onColumnResizeEnd = () => {
@@ -436,7 +444,6 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
             navigator.clipboard.writeText(textSelection);
         } else if (this.state.selection) {
             navigator.clipboard.writeText(this.state.selection.textContent);
-
         }
     };
 
@@ -447,7 +454,7 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
             return;
         }
 
-        const cell = event.target.closest('.p-selectable-cell');
+        const cell = event.target.closest('[role=cell]');
         if (!cell || !(cell instanceof HTMLTableCellElement)) {
             return;
         }
@@ -578,7 +585,7 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
 
     public getWebviewSelection(): WebviewSelection {
         const textSelection = window.getSelection()?.toString() ?? '';
-        return this.state.selection ? { textSelection, selectedCell: { column: this.state.selection.field, value: this.state.selection.textContent } } : { textSelection };
+        return this.state.selection ? { textSelection, selectedCell: { column: this.state.selection.column.id, value: this.state.selection.textContent } } : { textSelection };
     }
 
     protected handleOnBeforeTooltipShow = async (event: TooltipEvent): Promise<void> => {

@@ -21,7 +21,9 @@ import * as manifest from '../../common/manifest';
 import { areVariablesEqual, BigIntMemoryRange, BigIntVariableRange, compareBigInt, doOverlap } from '../../common/memory-range';
 import { getVariablesType, ReadMemoryArguments } from '../../common/messaging';
 import { stringifyWithBigInts } from '../../common/typescript';
-import { ColumnContribution } from '../columns/column-contribution-service';
+import { ColumnContribution, ColumnRenderProps } from '../columns/column-contribution-service';
+import { createDefaultSelection, groupAttributes, SelectionProps } from '../columns/table-group';
+import { MemoryRowData } from '../components/memory-table';
 import { Decorator } from '../decorations/decoration-service';
 import { EventEmitter, IEvent } from '../utils/events';
 import { Decoration, MemoryState } from '../utils/view-types';
@@ -31,13 +33,14 @@ import { messenger } from '../view-messenger';
 const NON_HC_COLORS = [
     'var(--vscode-terminal-ansiBlue)',
     'var(--vscode-terminal-ansiGreen)',
-    'var(--vscode-terminal-ansiRed)',
+    'var(--vscode-terminal-ansiBrightRed)',
     'var(--vscode-terminal-ansiYellow)',
     'var(--vscode-terminal-ansiMagenta)',
 ] as const;
 
 export class VariableDecorator implements ColumnContribution, Decorator {
-    readonly id = manifest.CONFIG_SHOW_VARIABLES_COLUMN;
+    static ID = manifest.CONFIG_SHOW_VARIABLES_COLUMN;
+    readonly id = VariableDecorator.ID;
     readonly label = 'Variables';
     readonly priority = 2;
     protected active = false;
@@ -78,8 +81,14 @@ export class VariableDecorator implements ColumnContribution, Decorator {
         if (currentVariablesPopulated) { this.onDidChangeEmitter.fire(this.currentVariables = []); }
     }
 
-    render(range: BigIntMemoryRange): ReactNode {
-        return this.getVariablesInRange(range)?.reduce<ReactNode[]>((result, current, index) => {
+    render(columnIndex: number, row: MemoryRowData, config: ColumnRenderProps): ReactNode {
+        const selectionProps: SelectionProps = {
+            createSelection: (event, position) => createDefaultSelection(event, position, VariableDecorator.ID, row),
+            getSelection: () => config.selection,
+            setSelection: config.setSelection
+        };
+        const variables = this.getVariablesInRange(row);
+        return variables?.reduce<ReactNode[]>((result, current, index) => {
             if (index > 0) { result.push(', '); }
             result.push(React.createElement('span', {
                 style: { color: current.color },
@@ -87,7 +96,8 @@ export class VariableDecorator implements ColumnContribution, Decorator {
                 className: 'hoverable',
                 'data-column': 'variables',
                 'data-variables': stringifyWithBigInts(current.variable),
-                ...createVariableVscodeContext(current.variable)
+                ...createVariableVscodeContext(current.variable),
+                ...groupAttributes({ columnIndex, rowIndex: row.rowIndex, groupIndex: index, maxGroupIndex: variables.length - 1 }, selectionProps)
             }, current.variable.name));
             return result;
         }, []);
@@ -122,12 +132,14 @@ export class VariableDecorator implements ColumnContribution, Decorator {
         let colorIndex = 0;
         for (const variable of this.currentVariables ?? []) {
             if (variable.endAddress) {
+                const idx = colorIndex++ % 5;
                 decorations.push({
                     range: {
                         startAddress: variable.startAddress,
                         endAddress: variable.endAddress
                     },
-                    style: { color: NON_HC_COLORS[colorIndex++ % 5] }
+                    style: {},
+                    classNames: ['variable-' + idx]
                 });
             }
         }
