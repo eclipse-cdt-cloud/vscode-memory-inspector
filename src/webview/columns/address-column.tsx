@@ -22,8 +22,10 @@ import { createDefaultSelection, groupAttributes, SelectionProps } from './table
 
 export class AddressColumn implements ColumnContribution {
     static ID = 'address';
+    static CLASS_NAME = 'column-address';
 
     readonly id = AddressColumn.ID;
+    readonly className = AddressColumn.CLASS_NAME;
     readonly label = 'Address';
     readonly priority = 0;
 
@@ -35,6 +37,7 @@ export class AddressColumn implements ColumnContribution {
             getSelection: () => config.selection,
             setSelection: config.setSelection
         };
+
         const groupProps = groupAttributes({ columnIndex, rowIndex: row.rowIndex, groupIndex: 0, maxGroupIndex: 0 }, selectionProps);
         return <span className='memory-start-address hoverable' data-column='address' {...groupProps}>
             {config.tableConfig.showRadixPrefix && <span className='radix-prefix'>{getRadixMarker(config.tableConfig.addressRadix)}</span>}
