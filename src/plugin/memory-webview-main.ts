@@ -163,14 +163,14 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
         }
 
         // Set HTML content
-        await this.getWebviewContent(panel);
+        await this.getWebviewContent(panel, initialMemory);
 
         // Sets up an event listener to listen for messages passed from the webview view context
         // and executes code based on the message that is received
         this.setWebviewMessageListener(panel, initialMemory);
     }
 
-    protected async getWebviewContent(panel: vscode.WebviewPanel): Promise<void> {
+    protected async getWebviewContent(panel: vscode.WebviewPanel, initialMemory?: MemoryOptions): Promise<void> {
         const mainUri = panel.webview.asWebviewUri(vscode.Uri.joinPath(
             this.extensionUri,
             'dist',
@@ -194,7 +194,7 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
                     <link href="${memoryInspectorCSS}" rel="stylesheet" />
                 </head>
                 <body>
-                    <div id='root'></div>
+                    <div id='root'></div>${initialMemory ? `<div id='initial-data' data-options='${JSON.stringify(initialMemory)}'></div>` : ''}
                 </body>
             </html>
         `;
@@ -206,7 +206,6 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
             this.messenger.onNotification(readyType, async () => {
                 this.setSessionContext(participant, this.createContext());
                 await this.setMemoryDisplaySettings(participant, panel.title);
-                this.refresh(participant, options);
             }, { sender: participant }),
             this.messenger.onRequest(setOptionsType, newOptions => { options = { ...options, ...newOptions }; }, { sender: participant }),
             this.messenger.onRequest(logMessageType, message => outputChannelLogger.info('[webview]:', message), { sender: participant }),
