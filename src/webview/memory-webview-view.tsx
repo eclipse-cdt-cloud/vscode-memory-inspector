@@ -18,6 +18,7 @@ import 'primeflex/primeflex.css';
 
 import { debounce } from 'lodash';
 import { PrimeReactProvider } from 'primereact/api';
+import { ProgressSpinner } from 'primereact/progressspinner';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { HOST_EXTENSION } from 'vscode-messenger-common';
@@ -64,6 +65,8 @@ export interface MemoryAppState extends MemoryState, MemoryViewSettings {
     hoverService: HoverService;
     columns: ColumnStatus[];
     isFrozen: boolean;
+    /** False until the initial setting of values from the plugin side arrives */
+    initialized: boolean;
 }
 
 export const DEFAULT_SESSION_CONTEXT: SessionContext = {
@@ -101,6 +104,7 @@ class App extends React.Component<{}, MemoryAppState> {
         hoverService.register(new DataHover());
         hoverService.register(new VariableHover());
         this.state = {
+            initialized: false,
             messageParticipant: { type: 'webview', webviewId: '' },
             title: 'Memory',
             sessionContext: DEFAULT_SESSION_CONTEXT,
@@ -215,6 +219,14 @@ class App extends React.Component<{}, MemoryAppState> {
     }
 
     public render(): React.ReactNode {
+        if (!this.state.initialized) {
+            return (
+                <div className='flex align-items-center justify-content-center'>
+                    <ProgressSpinner style={{ width: '16px', height: '16px', margin: '8px 0 0 0', }} className='mr-2' />
+                    <span>Loading</span>
+                </div>
+            );
+        }
         return <PrimeReactProvider>
             <MemoryWidget
                 ref={this.memoryWidget}
@@ -265,7 +277,7 @@ class App extends React.Component<{}, MemoryAppState> {
 
     protected async setOptions(options?: MemoryOptions): Promise<void> {
         messenger.sendRequest(logMessageType, HOST_EXTENSION, `Setting options: ${JSON.stringify(options)}`);
-        this.setState({ configuredReadArguments: { ...this.state.configuredReadArguments, ...options } });
+        this.setState({ initialized: true, configuredReadArguments: { ...this.state.configuredReadArguments, ...options } });
         return this.fetchMemory(options);
     }
 
