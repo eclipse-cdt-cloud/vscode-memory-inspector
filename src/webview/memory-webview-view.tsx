@@ -18,7 +18,6 @@ import 'primeflex/primeflex.css';
 
 import { debounce } from 'lodash';
 import { PrimeReactProvider } from 'primereact/api';
-import { ProgressSpinner } from 'primereact/progressspinner';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { HOST_EXTENSION } from 'vscode-messenger-common';
@@ -65,8 +64,6 @@ export interface MemoryAppState extends MemoryState, MemoryViewSettings {
     hoverService: HoverService;
     columns: ColumnStatus[];
     isFrozen: boolean;
-    /** False until the initial setting of values from the plugin side arrives */
-    initialized: boolean;
 }
 
 export const DEFAULT_SESSION_CONTEXT: SessionContext = {
@@ -89,12 +86,18 @@ export const DEFAULT_MEMORY_DISPLAY_CONFIGURATION: MemoryDisplaySettings = {
     visibleColumns: manifest.DEFAULT_VISIBLE_COLUMNS
 };
 
+function getInitialValuesHolder(): HTMLElement | null {
+    return document.getElementById('initial-data');
+}
+
 class App extends React.Component<{}, MemoryAppState> {
     protected memoryWidget = React.createRef<MemoryWidget>();
     protected refreshTimer?: NodeJS.Timeout | number;
 
     public constructor(props: {}) {
         super(props);
+        const initialValuesHolder = getInitialValuesHolder();
+        const initialReadArguments = initialValuesHolder ? { ...DEFAULT_READ_ARGUMENTS, ...JSON.parse(initialValuesHolder.dataset['options']!) } : DEFAULT_READ_ARGUMENTS;
         columnContributionService.register(new AddressColumn(), false);
         columnContributionService.register(new DataColumn(), false);
         columnContributionService.register(variableDecorator);
@@ -104,14 +107,13 @@ class App extends React.Component<{}, MemoryAppState> {
         hoverService.register(new DataHover());
         hoverService.register(new VariableHover());
         this.state = {
-            initialized: false,
             messageParticipant: { type: 'webview', webviewId: '' },
             title: 'Memory',
             sessionContext: DEFAULT_SESSION_CONTEXT,
             memory: undefined,
             effectiveAddressLength: 0,
-            configuredReadArguments: DEFAULT_READ_ARGUMENTS,
-            activeReadArguments: DEFAULT_READ_ARGUMENTS,
+            configuredReadArguments: initialReadArguments,
+            activeReadArguments: initialReadArguments,
             decorations: [],
             hoverService: hoverService,
             columns: columnContributionService.getColumns(),
@@ -122,6 +124,9 @@ class App extends React.Component<{}, MemoryAppState> {
     }
 
     public componentDidMount(): void {
+        if (getInitialValuesHolder()) {
+            this.fetchMemory(this.state.activeReadArguments);
+        }
         messenger.onRequest(setOptionsType, options => this.setOptions(options));
         messenger.onNotification(memoryWrittenType, writtenMemory => this.memoryWritten(writtenMemory));
         messenger.onNotification(sessionContextChangedType, sessionContext => this.sessionContextChanged(sessionContext));
@@ -219,14 +224,6 @@ class App extends React.Component<{}, MemoryAppState> {
     }
 
     public render(): React.ReactNode {
-        if (!this.state.initialized) {
-            return (
-                <div className='flex align-items-center justify-content-center'>
-                    <ProgressSpinner style={{ width: '16px', height: '16px', margin: '8px 0 0 0', }} className='mr-2' />
-                    <span>Loading</span>
-                </div>
-            );
-        }
         return <PrimeReactProvider>
             <MemoryWidget
                 ref={this.memoryWidget}
@@ -277,7 +274,7 @@ class App extends React.Component<{}, MemoryAppState> {
 
     protected async setOptions(options?: MemoryOptions): Promise<void> {
         messenger.sendRequest(logMessageType, HOST_EXTENSION, `Setting options: ${JSON.stringify(options)}`);
-        this.setState({ initialized: true, configuredReadArguments: { ...this.state.configuredReadArguments, ...options } });
+        this.setState({ configuredReadArguments: { ...this.state.configuredReadArguments, ...options } });
         return this.fetchMemory(options);
     }
 
