@@ -18,7 +18,7 @@ import deepequal from 'fast-deep-equal';
 import type * as React from 'react';
 import { Memory } from '../../common/memory';
 import { areRangesEqual, BigIntMemoryRange } from '../../common/memory-range';
-import { ReadMemoryArguments } from '../../common/messaging';
+import { ConnectionContext, ReadMemoryArguments } from '../../common/messaging';
 import { MemoryDataDisplaySettings } from '../../common/webview-configuration';
 
 export interface SerializedTableRenderOptions extends MemoryDataDisplaySettings {
@@ -65,7 +65,7 @@ export const DEFAULT_READ_ARGUMENTS: Required<ReadMemoryArguments> = {
 };
 
 export interface UpdateExecutor {
-    fetchData(currentViewParameters: ReadMemoryArguments): Promise<void>;
+    fetchData(currentViewParameters: ReadMemoryArguments, context?: ConnectionContext): Promise<void>;
 }
 
 export interface StylableNodeAttributes {

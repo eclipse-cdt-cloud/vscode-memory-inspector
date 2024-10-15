@@ -21,7 +21,7 @@ import * as React from 'react';
 import { HOST_EXTENSION } from 'vscode-messenger-common';
 import { Memory } from '../../common/memory';
 import { BigIntMemoryRange, isWithin, toHexStringWithRadixMarker, toOffset } from '../../common/memory-range';
-import { writeMemoryType } from '../../common/messaging';
+import { ConnectionContext, writeMemoryType } from '../../common/messaging';
 import type { MemoryRowData, MemorySizeOptions, MemoryTableSelection, MemoryTableState } from '../components/memory-table';
 import { decorationService } from '../decorations/decoration-service';
 import { Disposable, FullNodeAttributes } from '../utils/view-types';
@@ -100,6 +100,7 @@ export interface EditableDataColumnRowProps {
 
 export interface EditableDataColumnRowState {
     position?: GroupPosition;
+    context?: ConnectionContext;
 }
 
 export class EditableDataColumnRow extends React.Component<EditableDataColumnRowProps, EditableDataColumnRowState> {
@@ -123,6 +124,10 @@ export class EditableDataColumnRow extends React.Component<EditableDataColumnRow
             // we went out of editing mode --> restore focus
             setTimeout(() => findGroup<HTMLElement>(editingPosition)?.focus());
         }
+    }
+
+    setConnectionContext(currentContext?: ConnectionContext): void {
+        this.setState(prev => ({ ...prev, context: currentContext}));
     }
 
     protected renderGroups(): React.ReactNode {
@@ -343,10 +348,10 @@ export class EditableDataColumnRow extends React.Component<EditableDataColumnRow
         if (originalData !== data) {
             const newMemoryValue = this.processData(data, editingRange);
             const converted = Buffer.from(newMemoryValue, 'hex').toString('base64');
-            await messenger.sendRequest(writeMemoryType, HOST_EXTENSION, {
+            await messenger.sendRequest(writeMemoryType, HOST_EXTENSION, [{
                 memoryReference: toHexStringWithRadixMarker(editingRange.startAddress),
                 data: converted
-            }).catch(() => { });
+            }, this.state.context]).catch(() => { });
         }
 
         this.disableEdit();
