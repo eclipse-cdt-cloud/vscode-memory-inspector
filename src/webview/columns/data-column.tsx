@@ -155,9 +155,10 @@ export class EditableDataColumnRow extends React.Component<EditableDataColumnRow
             groupIndex: idx,
             maxGroupIndex: this.props.config.groupsPerRowToRender - 1
         }, this.selectionProps);
+
         return <span
             tabIndex={0}
-            className={['byte-group', 'hoverable'].join(' ')}
+            className={classNames('byte-group', 'hoverable')}
             data-column='data'
             {...groupProps}
             data-range-start={startAddress}

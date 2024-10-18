@@ -14,8 +14,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-import { ReactNode } from 'react';
 import * as React from 'react';
+import { ReactNode } from 'react';
 import { HOST_EXTENSION } from 'vscode-messenger-common';
 import * as manifest from '../../common/manifest';
 import { areVariablesEqual, BigIntMemoryRange, BigIntVariableRange, compareBigInt, doOverlap } from '../../common/memory-range';
