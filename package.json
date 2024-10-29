@@ -444,6 +444,7 @@
     "onStartupFinished"
   ],
   "extensionKind": [
-    "ui"
+    "ui",
+    "workspace"
   ]
 }
