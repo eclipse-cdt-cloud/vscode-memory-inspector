@@ -1,6 +1,9 @@
 # Change Log
 
 ## 1.1.0
+- Switched preferred extension host to `workspace` to enable WSL support
+
+## 1.1.0
 - Fixed variable fetch before variables are available.
 - Fixed variable decoration display if it starts before the loaded memory range.
 - Fixed `Memory: Show Memory Inspector` command to open a new Memory Inspector window instance instead of the `Output` channel.
