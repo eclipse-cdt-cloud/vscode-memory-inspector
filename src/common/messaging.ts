@@ -38,6 +38,11 @@ export type StoreMemoryResult = void;
 export type ApplyMemoryArguments = URI | undefined;
 export type ApplyMemoryResult = MemoryOptions;
 
+export interface ConnectionContext {
+    name: string;
+    id: number;
+}
+
 export interface SessionContext {
     sessionId?: string;
     canRead: boolean;
@@ -51,15 +56,17 @@ export const setMemoryViewSettingsType: NotificationType<Partial<MemoryViewSetti
 export const setTitleType: NotificationType<string> = { method: 'setTitle' };
 export const memoryWrittenType: NotificationType<WrittenMemory> = { method: 'memoryWritten' };
 export const sessionContextChangedType: NotificationType<SessionContext> = { method: 'sessionContextChanged' };
+export const connectionContextChangedType: NotificationType<[ConnectionContext?,
+     ConnectionContext[]?]> = { method: 'connectionContextChanged' };
 
 // Requests
 export const setOptionsType: RequestType<MemoryOptions, void> = { method: 'setOptions' };
 export const logMessageType: RequestType<string, void> = { method: 'logMessage' };
-export const readMemoryType: RequestType<ReadMemoryArguments, ReadMemoryResult> = { method: 'readMemory' };
-export const writeMemoryType: RequestType<WriteMemoryArguments, WriteMemoryResult> = { method: 'writeMemory' };
-export const getVariablesType: RequestType<ReadMemoryArguments, VariableRange[]> = { method: 'getVariables' };
-export const storeMemoryType: RequestType<StoreMemoryArguments, void> = { method: 'storeMemory' };
-export const applyMemoryType: RequestType<ApplyMemoryArguments, ApplyMemoryResult> = { method: 'applyMemory' };
+export const readMemoryType: RequestType<[ReadMemoryArguments, ConnectionContext?], ReadMemoryResult> = { method: 'readMemory' };
+export const writeMemoryType: RequestType<[WriteMemoryArguments, ConnectionContext?], WriteMemoryResult> = { method: 'writeMemory' };
+export const getVariablesType: RequestType<[ReadMemoryArguments, ConnectionContext?], VariableRange[]> = { method: 'getVariables' };
+export const storeMemoryType: RequestType<[StoreMemoryArguments, ConnectionContext?], void> = { method: 'storeMemory' };
+export const applyMemoryType: RequestType<[ApplyMemoryArguments, ConnectionContext?], ApplyMemoryResult> = { method: 'applyMemory' };
 
 export const showAdvancedOptionsType: NotificationType<void> = { method: 'showAdvancedOptions' };
 export const getWebviewSelectionType: RequestType<void, WebviewSelection> = { method: 'getWebviewSelection' };
