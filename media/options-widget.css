@@ -77,19 +77,20 @@
   padding-bottom: 16px;
 }
 
-.form-textfield > input {
+.form-textfield>input {
   width: 150px;
 }
 
-.form-texfield-long > input {
+.form-texfield-long>input {
   width: 200px;
 }
 
 .form-options button[type="submit"] {
   /* Match height of inputs */
   height: calc(var(--input-minHeight) * 1px);
-  margin-top: 1rem;
+  margin-top: 1.1rem;
   align-self: start;
+  margin-right: auto;
 }
 
 .form-options-memory-read-argument-hint {
@@ -106,7 +107,7 @@
   font-size: 11px;
   text-transform: uppercase;
   line-height: 22px;
-  margin:0;
+  margin: 0;
   font-weight: normal;
 }
 
@@ -145,10 +146,14 @@
   padding-bottom: 0.5rem;
 }
 
-.advanced-options-toggle {
-  margin-left: auto;
+.advanced-options-session {
   align-self: start;
-  margin-top: 1.1rem
+  width: 250px;
+}
+
+.advanced-options-toggle {
+  align-self: start;
+  margin-top: 1.3rem
 }
 
 .p-accordion-content .advanced-options-content {
@@ -187,6 +192,7 @@
   margin-top: 0px;
   width: 210px;
 }
+
 .advanced-options-panel::-webkit-scrollbar-track {
   background-color: var(--vscode-dropdown-listBackground);
 }

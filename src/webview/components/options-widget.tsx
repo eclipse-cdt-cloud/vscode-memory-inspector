@@ -26,7 +26,7 @@ import { classNames } from 'primereact/utils';
 import React, { FocusEventHandler, KeyboardEvent, KeyboardEventHandler, ReactNode } from 'react';
 import { CONFIG_BYTES_PER_MAU_CHOICES, CONFIG_GROUPS_PER_ROW_CHOICES, CONFIG_MAUS_PER_GROUP_CHOICES, ENDIANNESS_CHOICES, PERIODIC_REFRESH_CHOICES } from '../../common/manifest';
 import { validateCount, validateMemoryReference, validateOffset } from '../../common/memory';
-import { MemoryOptions, ReadMemoryArguments, SessionContext } from '../../common/messaging';
+import { MemoryOptions, ReadMemoryArguments, Session, SessionContext } from '../../common/messaging';
 import { tryToNumber } from '../../common/typescript';
 import { TableRenderOptions } from '../columns/column-contribution-service';
 import { DEFAULT_MEMORY_DISPLAY_CONFIGURATION } from '../memory-webview-view';
@@ -36,6 +36,8 @@ import { MultiSelectBar } from './multi-select';
 
 export interface OptionsWidgetProps
     extends Omit<TableRenderOptions, 'scrollingBehavior' | 'effectiveAddressLength'> {
+    sessions: Session[]
+    updateSession: (sessionId: string) => void;
     sessionContext: SessionContext;
     configuredReadArguments: Required<ReadMemoryArguments>;
     activeReadArguments: Required<ReadMemoryArguments>;
@@ -74,6 +76,7 @@ const enum InputId {
     RefreshOnStop = 'refresh-on-stop',
     PeriodicRefresh = 'periodic-refresh',
     PeriodicRefreshInterval = 'periodic-refresh-interval',
+    Session = 'session'
 }
 
 interface OptionsForm {
@@ -164,6 +167,23 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
             return <small className="form-options-memory-read-argument-hint">Actual: {memoryValue}</small>;
 
         };
+
+        const sessionSelector = this.props.sessions.length <= 1 ? undefined :
+            <span className='pm-top-label form-textfield'>
+                <label htmlFor={InputId.Session} className={`p-inputtext-label ${readDisabled ? 'p-disabled' : ''}`}>
+                    Debug Session
+                </label>
+                <Dropdown
+                    id={InputId.Session}
+                    className='advanced-options-session'
+                    title='Debug Session'
+                    aria-label='Debug Session'
+                    disabled={true}
+                    options={this.props.sessions.map(session => ({ label: session.name, value: session.id }))}
+                    value={this.props.sessionContext.sessionId}
+                    onChange={this.handleSessionDropdownChange}
+                />
+            </span>;
 
         return (
             <div className='memory-options-widget px-4' {...this.optionsMenuContext}>
@@ -289,6 +309,7 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
                                 <Button type='submit' disabled={!formik.isValid || readDisabled}>
                                     Go
                                 </Button>
+                                {sessionSelector}
                                 <Button
                                     className='advanced-options-toggle'
                                     icon='codicon codicon-gear'
@@ -552,6 +573,8 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
             }
         }
     }
+
+    protected handleSessionDropdownChange = (event: DropdownChangeEvent) => this.props.updateSession(event.target.value);
 
     protected handleAdvancedOptionsDropdownChange: (event: DropdownChangeEvent) => void = e => this.doHandleAdvancedOptionsDropdownChange(e);
     protected doHandleAdvancedOptionsDropdownChange(event: DropdownChangeEvent): void {

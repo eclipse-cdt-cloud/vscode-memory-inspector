@@ -38,6 +38,11 @@ export type StoreMemoryResult = void;
 export type ApplyMemoryArguments = URI | undefined;
 export type ApplyMemoryResult = MemoryOptions;
 
+export interface Session {
+    id: string
+    name: string;
+}
+
 export interface SessionContext {
     sessionId?: string;
     canRead: boolean;
@@ -50,6 +55,8 @@ export const readyType: NotificationType<void> = { method: 'ready' };
 export const setMemoryViewSettingsType: NotificationType<Partial<MemoryViewSettings>> = { method: 'setMemoryViewSettings' };
 export const setTitleType: NotificationType<string> = { method: 'setTitle' };
 export const memoryWrittenType: NotificationType<WrittenMemory> = { method: 'memoryWritten' };
+export const sessionsChangedType: NotificationType<Session[]> = { method: 'sessionsChanged' };
+export const setSessionType: NotificationType<string> = { method: 'setSession' };
 export const sessionContextChangedType: NotificationType<SessionContext> = { method: 'sessionContextChanged' };
 
 // Requests

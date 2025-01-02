@@ -17,6 +17,7 @@ import { DebugProtocol } from '@vscode/debugprotocol';
 import * as vscode from 'vscode';
 import { isDebugEvent, isDebugRequest, isDebugResponse } from '../common/debug-requests';
 import { WrittenMemory } from '../common/memory-range';
+import type { Session } from '../common/messaging';
 
 export interface SessionInfo {
     raw: vscode.DebugSession;
@@ -52,11 +53,16 @@ export interface SessionContinuedEvent extends SessionEvent {
     session: SessionInfo;
 }
 
+export interface SessionsChangedEvent extends SessionEvent {
+    event: 'changed';
+}
+
 export interface SessionEvents {
     'active': ActiveSessionChangedEvent,
     'memory-written': SessionMemoryWrittenEvent,
     'continued': SessionContinuedEvent,
     'stopped': SessionStoppedEvent
+    'changed': SessionsChangedEvent
 }
 
 export type DebugCapability = keyof DebugProtocol.Capabilities;
@@ -95,7 +101,10 @@ export class SessionTracker implements vscode.DebugAdapterTrackerFactory {
         let info = this._sessionInfo.get(session.id);
         if (!info) {
             info = { raw: session };
-            this._sessionInfo.set(session.id, info);
+            if (this._sessionInfo.has(session.id)) {
+                // Only update session if it is active
+                this._sessionInfo.set(session.id, info);
+            }
         }
         return info;
     }
@@ -113,10 +122,12 @@ export class SessionTracker implements vscode.DebugAdapterTrackerFactory {
 
     protected async sessionWillStart(session: vscode.DebugSession): Promise<void> {
         this._sessionInfo.set(session.id, { raw: session });
+        this.fireSessionEvent(session, 'changed', undefined);
     }
 
     protected sessionWillStop(session: vscode.DebugSession): void {
         this._sessionInfo.delete(session.id);
+        this.fireSessionEvent(session, 'changed', undefined);
     }
 
     protected willSendClientMessage(session: vscode.DebugSession, message: unknown): void {
@@ -137,6 +148,11 @@ export class SessionTracker implements vscode.DebugAdapterTrackerFactory {
         } else if (isDebugEvent('memory', message)) {
             this.fireSessionEvent(session, 'memory-written', message.body);
         }
+    }
+
+    public getSessions(): Session[] {
+        return Array.from(this._sessionInfo.values())
+            .map(info => ({ id: info.raw.id, name: info.raw.name }));
     }
 
     assertSession(sessionId: string | undefined, action: string = 'get session'): vscode.DebugSession {

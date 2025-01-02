@@ -31,6 +31,9 @@ import {
     ReadMemoryResult,
     readMemoryType,
     readyType,
+    Session,
+    sessionsChangedType,
+    setSessionType,
     SessionContext,
     sessionContextChangedType,
     setMemoryViewSettingsType,
@@ -146,6 +149,8 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
     }
 
     public async show(initialMemory?: MemoryOptions, panel?: vscode.WebviewPanel): Promise<void> {
+        this.memoryProvider.setSessionId(vscode.debug.activeDebugSession?.id);
+
         const distPathUri = vscode.Uri.joinPath(this.extensionUri, 'dist', 'views');
         const mediaPathUri = vscode.Uri.joinPath(this.extensionUri, 'media');
         const codiconPathUri = vscode.Uri.joinPath(this.extensionUri, 'node_modules', '@vscode', 'codicons', 'dist');
@@ -168,7 +173,6 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
         // Sets up an event listener to listen for messages passed from the webview view context
         // and executes code based on the message that is received
         this.setWebviewMessageListener(panel, initialMemory);
-        this.memoryProvider.setSessionId(vscode.debug.activeDebugSession?.id);
     }
 
     protected async getWebviewContent(panel: vscode.WebviewPanel): Promise<void> {
@@ -205,6 +209,7 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
         const participant = this.messenger.registerWebviewPanel(panel);
         const disposables = [
             this.messenger.onNotification(readyType, async () => {
+                this.setSessions(participant, this.sessionTracker.getSessions());
                 this.setSessionContext(participant, this.createContext(this.sessionTracker.assertSession(this.memoryProvider.sessionId)));
                 await this.setMemoryDisplaySettings(participant, panel.title);
                 this.refresh(participant, options);
@@ -215,6 +220,7 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
             this.messenger.onRequest(writeMemoryType, request => this.writeMemory(request), { sender: participant }),
             this.messenger.onRequest(getVariablesType, request => this.getVariables(request), { sender: participant }),
             this.messenger.onNotification(setTitleType, title => { panel.title = title; }, { sender: participant }),
+            this.messenger.onNotification(setSessionType, sessionId => this.memoryProvider.setSessionId(sessionId), { sender: participant }),
             this.messenger.onRequest(storeMemoryType, args => this.storeMemory(args), { sender: participant }),
             this.messenger.onRequest(applyMemoryType, () => this.applyMemory(), { sender: participant }),
             this.sessionTracker.onSessionEvent(event => this.handleSessionEvent(participant, event))
@@ -241,6 +247,10 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
 
     protected setMemoryViewSettings(webviewParticipant: WebviewIdMessageParticipant, settings: Partial<MemoryViewSettings>): void {
         this.messenger.sendNotification(setMemoryViewSettingsType, webviewParticipant, settings);
+    }
+
+    protected setSessions(webviewParticipant: WebviewIdMessageParticipant, sessions: Session[]): void {
+        this.messenger.sendNotification(sessionsChangedType, webviewParticipant, sessions);
     }
 
     protected setSessionContext(webviewParticipant: WebviewIdMessageParticipant, context: SessionContext): void {
@@ -284,8 +294,13 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
             this.setSessionContext(participant, this.createContext(session));
             return;
         }
-        // we are only interested in the events of the active session
-        if (!event.session?.active) {
+        if (isSessionEvent('changed', event)) {
+            this.setSessions(participant, this.sessionTracker.getSessions());
+            return;
+        }
+
+        // we are only interested in the events of the current session
+        if (!event.session || event.session.raw.id !== this.memoryProvider.sessionId) {
             return;
         }
         if (isSessionEvent('memory-written', event)) {
