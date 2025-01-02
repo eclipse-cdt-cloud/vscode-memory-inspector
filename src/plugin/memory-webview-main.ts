@@ -168,6 +168,7 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
         // Sets up an event listener to listen for messages passed from the webview view context
         // and executes code based on the message that is received
         this.setWebviewMessageListener(panel, initialMemory);
+        this.memoryProvider.setSessionId(vscode.debug.activeDebugSession?.id);
     }
 
     protected async getWebviewContent(panel: vscode.WebviewPanel): Promise<void> {
@@ -204,7 +205,7 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
         const participant = this.messenger.registerWebviewPanel(panel);
         const disposables = [
             this.messenger.onNotification(readyType, async () => {
-                this.setSessionContext(participant, this.createContext());
+                this.setSessionContext(participant, this.createContext(this.sessionTracker.assertSession(this.memoryProvider.sessionId)));
                 await this.setMemoryDisplaySettings(participant, panel.title);
                 this.refresh(participant, options);
             }, { sender: participant }),
@@ -278,7 +279,9 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
 
     protected handleSessionEvent(participant: WebviewIdMessageParticipant, event: SessionEvent): void {
         if (isSessionEvent('active', event)) {
-            this.setSessionContext(participant, this.createContext(event.session?.raw));
+            const session = this.sessionTracker.assertSession(event.session?.raw.id);
+            this.memoryProvider.setSessionId(session.id);
+            this.setSessionContext(participant, this.createContext(session));
             return;
         }
         // we are only interested in the events of the active session
@@ -292,7 +295,7 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
         }
     }
 
-    protected createContext(session = this.sessionTracker.activeSession): SessionContext {
+    protected createContext(session: vscode.DebugSession): SessionContext {
         const sessionId = session?.id;
         return {
             sessionId,
@@ -346,14 +349,14 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
     protected async storeMemory(storeArguments: StoreMemoryArguments): Promise<void> {
         // Even if we disable the command in VS Code through enablement or when condition, programmatic execution is still possible.
         // However, we want to fail early in case the user tries to execute a disabled command
-        this.sessionTracker.assertDebugCapability(this.sessionTracker.activeSession, 'supportsReadMemoryRequest', 'store memory');
+        this.sessionTracker.assertDebugCapability(this.sessionTracker.assertSession(this.memoryProvider.sessionId), 'supportsReadMemoryRequest', 'store memory');
         return vscode.commands.executeCommand(StoreCommandType, storeArguments);
     }
 
     protected async applyMemory(): Promise<MemoryOptions> {
         // Even if we disable the command in VS Code through enablement or when condition, programmatic execution is still possible.
         // However, we want to fail early in case the user tries to execute a disabled command
-        this.sessionTracker.assertDebugCapability(this.sessionTracker.activeSession, 'supportsWriteMemoryRequest', 'apply memory');
+        this.sessionTracker.assertDebugCapability(this.sessionTracker.assertSession(this.memoryProvider.sessionId), 'supportsWriteMemoryRequest', 'apply memory');
         return vscode.commands.executeCommand(ApplyCommandType);
     }
 

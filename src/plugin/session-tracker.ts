@@ -139,30 +139,26 @@ export class SessionTracker implements vscode.DebugAdapterTrackerFactory {
         }
     }
 
-    get activeSession(): vscode.DebugSession | undefined {
-        return vscode.debug.activeDebugSession;
-    }
-
-    assertActiveSession(action: string = 'get session'): vscode.DebugSession {
-        if (!this.activeSession) {
+    assertSession(sessionId: string | undefined, action: string = 'get session'): vscode.DebugSession {
+        if (!sessionId || !this._sessionInfo.has(sessionId)) {
             throw new Error(`Cannot ${action}. No active debug session.`);
         }
-        return this.activeSession;
+        return this._sessionInfo.get(sessionId)!.raw;
     }
 
-    isActive(session = this.activeSession): boolean {
+    isActive(session: vscode.DebugSession): boolean {
         return !!session && vscode.debug.activeDebugSession?.id === session?.id;
     }
 
-    isStopped(session = this.activeSession): boolean {
+    isStopped(session: vscode.DebugSession): boolean {
         return !!session && !!this.sessionInfo(session).stopped;
     }
 
-    hasDebugCapability(session = this.activeSession, capability: DebugCapability): boolean {
+    hasDebugCapability(session: vscode.DebugSession, capability: DebugCapability): boolean {
         return !!session && !!this.sessionInfo(session).debugCapabilities?.[capability];
     }
 
-    assertDebugCapability(session = this.assertActiveSession(), capability: DebugCapability, action: string = 'execute action'): vscode.DebugSession {
+    assertDebugCapability(session: vscode.DebugSession, capability: DebugCapability, action: string = 'execute action'): vscode.DebugSession {
         if (!this.hasDebugCapability(session, capability)) {
             throw new Error(`Cannot ${action}. Session does not have capability '${capability}'.`);
         }
@@ -173,7 +169,7 @@ export class SessionTracker implements vscode.DebugAdapterTrackerFactory {
         return !!session && !!this.sessionInfo(session).clientCapabilities?.[capability];
     }
 
-    assertClientCapability(session = this.assertActiveSession(), capability: ClientCapability, action: string = 'execute action'): vscode.DebugSession {
+    assertClientCapability(session: vscode.DebugSession, capability: ClientCapability, action: string = 'execute action'): vscode.DebugSession {
         if (!this.hasClientCapability(session, capability)) {
             throw new Error(`Cannot ${action}. Client does not have capability '${capability}'.`);
         }

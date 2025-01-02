@@ -31,6 +31,9 @@ export interface LabeledUint8Array extends Uint8Array {
 export class MemoryProvider {
     protected scheduledOnDidMemoryWriteEvents: { [sessionidmemoryReference: string]: ((response: WriteMemoryResult) => void) | undefined } = {};
 
+    protected _sessionId: string | undefined;
+    public get sessionId(): string | undefined { return this._sessionId; }
+
     constructor(protected adapterRegistry: AdapterRegistry, protected sessionTracker: SessionTracker) {
         this.sessionTracker.onSessionEvent(event => {
             if (isSessionEvent('memory-written', event)) {
@@ -48,12 +51,17 @@ export class MemoryProvider {
         context.subscriptions.push(vscode.debug.registerDebugAdapterTrackerFactory('*', { createDebugAdapterTracker }));
     }
 
+    public setSessionId(value: string | undefined): void {
+        this._sessionId = value;
+    }
+
     public async readMemory(args: DebugProtocol.ReadMemoryArguments): Promise<ReadMemoryResult> {
-        return sendRequest(this.sessionTracker.assertDebugCapability(this.sessionTracker.activeSession, 'supportsReadMemoryRequest', 'read memory'), 'readMemory', args);
+        const session = this.sessionTracker.assertSession(this.sessionId);
+        return sendRequest(this.sessionTracker.assertDebugCapability(session, 'supportsReadMemoryRequest', 'read memory'), 'readMemory', args);
     }
 
     public async writeMemory(args: DebugProtocol.WriteMemoryArguments): Promise<WriteMemoryResult> {
-        const session = this.sessionTracker.assertDebugCapability(this.sessionTracker.activeSession, 'supportsWriteMemoryRequest', 'write memory');
+        const session = this.sessionTracker.assertDebugCapability(this.sessionTracker.assertSession(this.sessionId), 'supportsWriteMemoryRequest', 'write memory');
         // Schedule a emit in case we don't retrieve a memory event
         this.scheduledOnDidMemoryWriteEvents[session.id + '_' + args.memoryReference] = response => {
             // We only send out a custom event if we don't expect the client to handle the memory event
@@ -72,26 +80,26 @@ export class MemoryProvider {
     }
 
     public async getVariables(variableArguments: DebugProtocol.ReadMemoryArguments): Promise<VariableRange[]> {
-        const session = this.sessionTracker.assertActiveSession('get variables');
+        const session = this.sessionTracker.assertSession(this.sessionId, 'get variables');
         const handler = this.adapterRegistry?.getHandlerForSession(session.type);
         if (handler?.getResidents) { return handler.getResidents(session, variableArguments); }
         return handler?.getVariables?.(session) ?? [];
     }
 
     public async getAddressOfVariable(variableName: string): Promise<string | undefined> {
-        const session = this.sessionTracker.assertActiveSession('get address of variable');
+        const session = this.sessionTracker.assertSession(this.sessionId, 'get address of variable');
         const handler = this.adapterRegistry?.getHandlerForSession(session.type);
         return handler?.getAddressOfVariable?.(session, variableName);
     }
 
     public async getSizeOfVariable(variableName: string): Promise<bigint | undefined> {
-        const session = this.sessionTracker.assertActiveSession('get size of variable');
+        const session = this.sessionTracker.assertSession(this.sessionId, 'get size of variable');
         const handler = this.adapterRegistry?.getHandlerForSession(session.type);
         return handler?.getSizeOfVariable?.(session, variableName);
     }
 
     public async getMemoryDisplaySettingsContribution(): Promise<MemoryDisplaySettingsContribution> {
-        const session = this.sessionTracker.assertActiveSession('get memory display settings contribution');
+        const session = this.sessionTracker.assertSession(this.sessionId, 'get memory display settings contribution');
         const handler = this.adapterRegistry?.getHandlerForSession(session.type);
         return handler?.getMemoryDisplaySettings?.(session) ?? {};
     }
