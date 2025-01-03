@@ -15,7 +15,6 @@
  ********************************************************************************/
 
 import { DebugProtocol } from '@vscode/debugprotocol';
-import * as vscode from 'vscode';
 import { sendRequest } from '../common/debug-requests';
 import { stringToBytesMemory } from '../common/memory';
 import { VariableRange } from '../common/memory-range';
@@ -24,35 +23,15 @@ import { MemoryDisplaySettingsContribution } from '../common/webview-configurati
 import { AdapterRegistry } from './adapter-registry/adapter-registry';
 import { isSessionEvent, SessionTracker } from './session-tracker';
 
-export interface LabeledUint8Array extends Uint8Array {
-    label?: string;
-}
-
 export class MemoryProvider {
     protected scheduledOnDidMemoryWriteEvents: { [sessionidmemoryReference: string]: ((response: WriteMemoryResult) => void) | undefined } = {};
 
-    protected _sessionId: string | undefined;
-    public get sessionId(): string | undefined { return this._sessionId; }
-
-    constructor(protected adapterRegistry: AdapterRegistry, protected sessionTracker: SessionTracker) {
+    constructor(protected sessionId: string, protected adapterRegistry: AdapterRegistry, protected sessionTracker: SessionTracker) {
         this.sessionTracker.onSessionEvent(event => {
-            if (isSessionEvent('memory-written', event)) {
+            if (isSessionEvent('memory-written', event) && event.session.raw.id === this.sessionId) {
                 delete this.scheduledOnDidMemoryWriteEvents[event.session.raw.id + '_' + event.data.memoryReference];
             }
         });
-    }
-
-    public activate(context: vscode.ExtensionContext): void {
-        const createDebugAdapterTracker = (session: vscode.DebugSession): vscode.ProviderResult<vscode.DebugAdapterTracker> => {
-            const handlerForSession = this.adapterRegistry.getHandlerForSession(session.type);
-            const contributedTracker = handlerForSession?.initializeAdapterTracker?.(session);
-            return contributedTracker;
-        };
-        context.subscriptions.push(vscode.debug.registerDebugAdapterTrackerFactory('*', { createDebugAdapterTracker }));
-    }
-
-    public setSessionId(value: string | undefined): void {
-        this._sessionId = value;
     }
 
     public async readMemory(args: DebugProtocol.ReadMemoryArguments): Promise<ReadMemoryResult> {

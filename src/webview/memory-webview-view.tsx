@@ -33,12 +33,12 @@ import {
     readMemoryType,
     readyType,
     Session,
-    sessionsChangedType,
-    setSessionType,
     SessionContext,
     sessionContextChangedType,
+    sessionsChangedType,
     setMemoryViewSettingsType,
     setOptionsType,
+    setSessionType,
     setTitleType,
     showAdvancedOptionsType,
     storeMemoryType,
@@ -281,7 +281,7 @@ class App extends React.Component<{}, MemoryAppState> {
             sessionId
         });
         messenger.sendNotification(setSessionType, HOST_EXTENSION, sessionId);
-    }
+    };
 
     protected async setOptions(options?: MemoryOptions): Promise<void> {
         messenger.sendRequest(logMessageType, HOST_EXTENSION, `Setting options: ${JSON.stringify(options)}`);

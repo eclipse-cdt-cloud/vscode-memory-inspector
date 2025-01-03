@@ -18,7 +18,7 @@ import * as vscode from 'vscode';
 import { AdapterRegistry } from '../../plugin/adapter-registry/adapter-registry';
 import { CAdapter } from '../../plugin/adapter-registry/c-adapter';
 import { ContextTracker } from '../../plugin/context-tracker';
-import { MemoryProvider } from '../../plugin/memory-provider';
+import { MemoryProviderManager } from '../../plugin/memory-provider-manager';
 import { MemoryStorage } from '../../plugin/memory-storage';
 import { MemoryWebview } from '../../plugin/memory-webview-main';
 import { SessionTracker } from '../../plugin/session-tracker';
@@ -27,14 +27,14 @@ export const activate = async (context: vscode.ExtensionContext): Promise<Adapte
     const registry = new AdapterRegistry();
     const sessionTracker = new SessionTracker();
     new ContextTracker(sessionTracker);
-    const memoryProvider = new MemoryProvider(registry, sessionTracker);
-    const memoryView = new MemoryWebview(context.extensionUri, memoryProvider, sessionTracker);
-    const memoryStorage = new MemoryStorage(memoryProvider);
+    const memoryProviderManager = new MemoryProviderManager(registry, sessionTracker);
+    const memoryStorage = new MemoryStorage(sessionTracker, memoryProviderManager);
+    const memoryView = new MemoryWebview(context.extensionUri, memoryProviderManager, sessionTracker, memoryStorage);
     const cAdapter = new CAdapter(registry);
 
     registry.activate(context);
     sessionTracker.activate(context);
-    memoryProvider.activate(context);
+    memoryProviderManager.activate(context);
     memoryView.activate(context);
     memoryStorage.activate(context);
     cAdapter.activate(context);

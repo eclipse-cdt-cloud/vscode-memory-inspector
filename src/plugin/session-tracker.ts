@@ -54,7 +54,7 @@ export interface SessionContinuedEvent extends SessionEvent {
 }
 
 export interface SessionsChangedEvent extends SessionEvent {
-    event: 'changed';
+    event: 'sessions-changed';
 }
 
 export interface SessionEvents {
@@ -62,7 +62,7 @@ export interface SessionEvents {
     'memory-written': SessionMemoryWrittenEvent,
     'continued': SessionContinuedEvent,
     'stopped': SessionStoppedEvent
-    'changed': SessionsChangedEvent
+    'sessions-changed': SessionsChangedEvent
 }
 
 export type DebugCapability = keyof DebugProtocol.Capabilities;
@@ -122,12 +122,12 @@ export class SessionTracker implements vscode.DebugAdapterTrackerFactory {
 
     protected async sessionWillStart(session: vscode.DebugSession): Promise<void> {
         this._sessionInfo.set(session.id, { raw: session });
-        this.fireSessionEvent(session, 'changed', undefined);
+        this.fireSessionEvent(session, 'sessions-changed', undefined);
     }
 
     protected sessionWillStop(session: vscode.DebugSession): void {
         this._sessionInfo.delete(session.id);
-        this.fireSessionEvent(session, 'changed', undefined);
+        this.fireSessionEvent(session, 'sessions-changed', undefined);
     }
 
     protected willSendClientMessage(session: vscode.DebugSession, message: unknown): void {
@@ -155,15 +155,15 @@ export class SessionTracker implements vscode.DebugAdapterTrackerFactory {
             .map(info => ({ id: info.raw.id, name: info.raw.name }));
     }
 
-    assertSession(sessionId: string | undefined, action: string = 'get session'): vscode.DebugSession {
-        if (!sessionId || !this._sessionInfo.has(sessionId)) {
-            throw new Error(`Cannot ${action}. No active debug session.`);
-        }
-        return this._sessionInfo.get(sessionId)!.raw;
+    validSession(sessionId: string | undefined): boolean {
+        return !!sessionId && this._sessionInfo.has(sessionId);
     }
 
-    isActive(session: vscode.DebugSession): boolean {
-        return !!session && vscode.debug.activeDebugSession?.id === session?.id;
+    assertSession(sessionId: string | undefined, action: string = 'get session'): vscode.DebugSession {
+        if (!this.validSession) {
+            throw new Error(`Cannot ${action}. No active debug session.`);
+        }
+        return this._sessionInfo.get(sessionId!)!.raw;
     }
 
     isStopped(session: vscode.DebugSession): boolean {

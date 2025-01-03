@@ -28,9 +28,11 @@ import { toHexStringWithRadixMarker } from '../common/memory-range';
 import { ApplyMemoryArguments, ApplyMemoryResult, MemoryOptions, StoreMemoryArguments } from '../common/messaging';
 import { isWebviewContext } from '../common/webview-context';
 import { MemoryProvider } from './memory-provider';
+import { MemoryProviderManager } from './memory-provider-manager';
+import { SessionTracker } from './session-tracker';
 
-export const StoreCommandType = `${manifest.PACKAGE_NAME}.store-file`;
-export const ApplyCommandType = `${manifest.PACKAGE_NAME}.apply-file`;
+const StoreCommandType = `${manifest.PACKAGE_NAME}.store-file`;
+const ApplyCommandType = `${manifest.PACKAGE_NAME}.apply-file`;
 
 const VALID_FILE_NAME_CHARS = /[^a-zA-Z0-9 _-]/g;
 
@@ -49,19 +51,26 @@ interface ApplyMemoryOptions {
     uri: vscode.Uri;
 }
 
+const getActiveSession = () => vscode.debug.activeDebugSession;
+
 export class MemoryStorage {
-    constructor(protected memoryProvider: MemoryProvider) {
+    constructor(protected sessionTracker: SessionTracker, protected memoryProviderManager: MemoryProviderManager) {
     }
 
     public activate(context: vscode.ExtensionContext): void {
         context.subscriptions.push(
-            vscode.commands.registerCommand(StoreCommandType, args => this.storeMemory(args)),
-            vscode.commands.registerCommand(ApplyCommandType, args => this.applyMemory(args))
+            vscode.commands.registerCommand(StoreCommandType, args => this.storeMemory(getActiveSession()?.id, args)),
+            vscode.commands.registerCommand(ApplyCommandType, args => this.applyMemory(getActiveSession()?.id, args))
         );
     }
 
-    public async storeMemory(args?: StoreMemoryArguments): Promise<void> {
-        const providedDefaultOptions = await this.storeArgsToOptions(args);
+    public async storeMemory(sessionId: string | undefined, args?: StoreMemoryArguments): Promise<void> {
+        // Even if we disable the command in VS Code through enablement or when condition, programmatic execution is still possible.
+        // However, we want to fail early in case the user tries to execute a disabled command
+        this.sessionTracker.assertDebugCapability(this.sessionTracker.assertSession(sessionId), 'supportsReadMemoryRequest', 'store memory');
+
+        const memoryProvider = this.memoryProviderManager.getProvider(sessionId);
+        const providedDefaultOptions = await this.storeArgsToOptions(memoryProvider, args);
         const options = await this.getStoreMemoryOptions(providedDefaultOptions);
         if (!options) {
             // user aborted process
@@ -70,7 +79,7 @@ export class MemoryStorage {
 
         const { outputFile, ...readArgs } = options;
         try {
-            const memoryResponse = await this.memoryProvider.readMemory(readArgs);
+            const memoryResponse = await memoryProvider.readMemory(readArgs);
             const memory = createMemoryFromRead(memoryResponse);
             const memoryMap = new MemoryMap({ [Number(memory.address)]: memory.bytes });
             await vscode.workspace.fs.writeFile(outputFile, new TextEncoder().encode(memoryMap.asHexString()));
@@ -89,7 +98,7 @@ export class MemoryStorage {
         }
     }
 
-    protected async storeArgsToOptions(args?: StoreMemoryArguments): Promise<Partial<StoreMemoryOptions>> {
+    protected async storeArgsToOptions(memoryProvider: MemoryProvider, args?: StoreMemoryArguments): Promise<Partial<StoreMemoryOptions>> {
         if (!args) {
             return {};
         }
@@ -99,8 +108,8 @@ export class MemoryStorage {
         if (isVariablesContext(args)) {
             try {
                 const variableName = args.variable.evaluateName ?? args.variable.name;
-                const count = await this.memoryProvider.getSizeOfVariable(variableName);
-                const memoryReference = args.variable.memoryReference ?? await this.memoryProvider.getAddressOfVariable(variableName);
+                const count = await memoryProvider.getSizeOfVariable(variableName);
+                const memoryReference = args.variable.memoryReference ?? await memoryProvider.getAddressOfVariable(variableName);
                 return { count: Number(count), memoryReference, offset: 0, proposedOutputName: variableName };
             } catch (error) {
                 // ignore, we are just using them as default values
@@ -153,7 +162,12 @@ export class MemoryStorage {
         return { memoryReference, offset: Number(offset), count: Number(count), outputFile };
     }
 
-    public async applyMemory(args?: ApplyMemoryArguments): Promise<ApplyMemoryResult> {
+    public async applyMemory(sessionId: string | undefined, args?: ApplyMemoryArguments): Promise<ApplyMemoryResult> {
+        // Even if we disable the command in VS Code through enablement or when condition, programmatic execution is still possible.
+        // However, we want to fail early in case the user tries to execute a disabled command
+        this.sessionTracker.assertDebugCapability(this.sessionTracker.assertSession(sessionId), 'supportsWriteMemoryRequest', 'apply memory');
+
+        const memoryProvider = this.memoryProviderManager.getProvider(sessionId);
         const providedDefaultOptions = await this.applyArgsToOptions(args);
         const options = await this.getApplyMemoryOptions(providedDefaultOptions);
         if (!options) {
@@ -169,7 +183,7 @@ export class MemoryStorage {
                 memoryReference = toHexStringWithRadixMarker(address);
                 count = memory.length;
                 const data = bytesToStringMemory(memory);
-                await this.memoryProvider.writeMemory({ memoryReference, data });
+                await memoryProvider.writeMemory({ memoryReference, data });
             }
             await vscode.window.showInformationMessage(`Memory from '${vscode.workspace.asRelativePath(options.uri)}' applied.`);
             return { memoryReference, count, offset: 0 };

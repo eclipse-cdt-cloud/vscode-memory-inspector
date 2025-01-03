@@ -76,7 +76,7 @@ const enum InputId {
     RefreshOnStop = 'refresh-on-stop',
     PeriodicRefresh = 'periodic-refresh',
     PeriodicRefreshInterval = 'periodic-refresh-interval',
-    Session = 'session'
+    SessionSelect = 'session-select'
 }
 
 interface OptionsForm {
@@ -170,15 +170,15 @@ export class OptionsWidget extends React.Component<OptionsWidgetProps, OptionsWi
 
         const sessionSelector = this.props.sessions.length <= 1 ? undefined :
             <span className='pm-top-label form-textfield'>
-                <label htmlFor={InputId.Session} className={`p-inputtext-label ${readDisabled ? 'p-disabled' : ''}`}>
+                <label htmlFor={InputId.SessionSelect} className={`p-inputtext-label ${readDisabled ? 'p-disabled' : ''}`}>
                     Debug Session
                 </label>
                 <Dropdown
-                    id={InputId.Session}
+                    id={InputId.SessionSelect}
                     className='advanced-options-session'
                     title='Debug Session'
                     aria-label='Debug Session'
-                    disabled={true}
+                    disabled={readDisabled}
                     options={this.props.sessions.map(session => ({ label: session.name, value: session.id }))}
                     value={this.props.sessionContext.sessionId}
                     onChange={this.handleSessionDropdownChange}
