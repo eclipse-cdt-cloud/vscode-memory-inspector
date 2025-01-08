@@ -86,12 +86,18 @@ export const DEFAULT_MEMORY_DISPLAY_CONFIGURATION: MemoryDisplaySettings = {
     visibleColumns: manifest.DEFAULT_VISIBLE_COLUMNS
 };
 
+function getInitialValuesHolder(): HTMLElement | null {
+    return document.getElementById('initial-data');
+}
+
 class App extends React.Component<{}, MemoryAppState> {
     protected memoryWidget = React.createRef<MemoryWidget>();
     protected refreshTimer?: NodeJS.Timeout | number;
 
     public constructor(props: {}) {
         super(props);
+        const initialValuesHolder = getInitialValuesHolder();
+        const initialReadArguments = initialValuesHolder ? { ...DEFAULT_READ_ARGUMENTS, ...JSON.parse(initialValuesHolder.dataset['options']!) } : DEFAULT_READ_ARGUMENTS;
         columnContributionService.register(new AddressColumn(), false);
         columnContributionService.register(new DataColumn(), false);
         columnContributionService.register(variableDecorator);
@@ -106,8 +112,8 @@ class App extends React.Component<{}, MemoryAppState> {
             sessionContext: DEFAULT_SESSION_CONTEXT,
             memory: undefined,
             effectiveAddressLength: 0,
-            configuredReadArguments: DEFAULT_READ_ARGUMENTS,
-            activeReadArguments: DEFAULT_READ_ARGUMENTS,
+            configuredReadArguments: initialReadArguments,
+            activeReadArguments: initialReadArguments,
             decorations: [],
             hoverService: hoverService,
             columns: columnContributionService.getColumns(),
@@ -118,6 +124,9 @@ class App extends React.Component<{}, MemoryAppState> {
     }
 
     public componentDidMount(): void {
+        if (getInitialValuesHolder()) {
+            this.fetchMemory(this.state.activeReadArguments);
+        }
         messenger.onRequest(setOptionsType, options => this.setOptions(options));
         messenger.onNotification(memoryWrittenType, writtenMemory => this.memoryWritten(writtenMemory));
         messenger.onNotification(sessionContextChangedType, sessionContext => this.sessionContextChanged(sessionContext));
