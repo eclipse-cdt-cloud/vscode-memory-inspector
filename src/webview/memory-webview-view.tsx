@@ -290,9 +290,6 @@ class App extends React.Component<{}, MemoryAppState> {
     }
 
     protected fetchMemory = async (partialOptions?: MemoryOptions): Promise<void> => {
-        // Ensure view has completed rendering
-        await new Promise(p => setTimeout(p, 0));
-
         if (this.state.isFrozen || !this.state.sessionContext.canRead) {
             return;
         }
