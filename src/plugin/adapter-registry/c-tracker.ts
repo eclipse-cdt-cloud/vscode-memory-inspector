@@ -18,7 +18,7 @@ import { DebugProtocol } from '@vscode/debugprotocol';
 import * as vscode from 'vscode';
 import { sendRequest } from '../../common/debug-requests';
 import { toHexStringWithRadixMarker, VariableRange } from '../../common/memory-range';
-import { AdapterVariableTracker, decimalAddress, extractAddress, hexAddress, notADigit } from './adapter-capabilities';
+import { AdapterVariableTracker, decimalAddress, extractAddress, hexAddress, notADigit, WithChildren } from './adapter-capabilities';
 
 export namespace CEvaluateExpression {
     export function sizeOf(expression: string): string {
@@ -35,7 +35,10 @@ export class CTracker extends AdapterVariableTracker {
      * Resolves memory location and size using evaluate requests for `$(variable.name)` and `sizeof(variable.name)`
      * Ignores the presence or absence of variable.memoryReference.
      */
-    protected override async variableToVariableRange(variable: DebugProtocol.Variable, session: vscode.DebugSession): Promise<VariableRange | undefined> {
+    protected override async variableToVariableRange(
+        variable: DebugProtocol.Variable,
+        session: vscode.DebugSession,
+        parent: WithChildren<DebugProtocol.Scope | DebugProtocol.Variable>): Promise<VariableRange | undefined> {
         if (this.currentFrame === undefined || !variable.name) {
             this.logger.debug('Unable to resolve', variable.name,
                 { noName: !variable.name, noFrame: this.currentFrame === undefined });
@@ -66,6 +69,7 @@ export class CTracker extends AdapterVariableTracker {
             endAddress: variableSize === undefined ? undefined : toHexStringWithRadixMarker(address + variableSize),
             value: variable.value,
             type: variable.type,
+            parentVariablesReference: parent.variablesReference,
             isPointer,
         };
         return variableRange;

@@ -25,6 +25,8 @@ export interface DebugRequestTypes {
     'scopes': [DebugProtocol.ScopesArguments, DebugProtocol.ScopesResponse['body']]
     'variables': [DebugProtocol.VariablesArguments, DebugProtocol.VariablesResponse['body']]
     'writeMemory': [DebugProtocol.WriteMemoryArguments, DebugProtocol.WriteMemoryResponse['body']]
+    'dataBreakpointInfo': [DebugProtocol.DataBreakpointInfoArguments, DebugProtocol.DataBreakpointInfoResponse['body']]
+    'setDataBreakpoints': [DebugProtocol.SetDataBreakpointsArguments, DebugProtocol.SetDataBreakpointsResponse['body']]
 }
 
 export interface DebugEvents {
@@ -59,16 +61,28 @@ export function isDebugEvaluateArguments(args: DebugProtocol.EvaluateArguments |
 }
 
 export function isDebugRequest<K extends keyof DebugRequestTypes>(command: K, message: unknown): message is DebugRequest<K, DebugRequestTypes[K][0]> {
-    const assumed = message ? message as DebugProtocol.Request : undefined;
-    return !!assumed && assumed.type === 'request' && assumed.command === command;
+    return isDebugRequestType(message) && message.command === command;
 }
 
 export function isDebugResponse<K extends keyof DebugRequestTypes>(command: K, message: unknown): message is DebugResponse<K, DebugRequestTypes[K][1]> {
-    const assumed = message ? message as DebugProtocol.Response : undefined;
-    return !!assumed && assumed.type === 'response' && assumed.command === command;
+    return isDebugResponseType(message) && message.command === command;
 }
 
 export function isDebugEvent<K extends keyof DebugEvents>(event: K, message: unknown): message is DebugEvents[K] {
+    return isDebugEventType(message) && message.event === event;
+}
+
+export function isDebugRequestType(message: unknown): message is DebugProtocol.Request {
+    const assumed = message ? message as DebugProtocol.Request : undefined;
+    return !!assumed && assumed.type === 'request';
+}
+
+export function isDebugResponseType(message: unknown): message is DebugProtocol.Response {
+    const assumed = message ? message as DebugProtocol.Response : undefined;
+    return !!assumed && assumed.type === 'response';
+}
+
+export function isDebugEventType(message: unknown): message is DebugProtocol.Event {
     const assumed = message ? message as DebugProtocol.Event : undefined;
-    return !!assumed && assumed.type === 'event' && assumed.event === event;
+    return !!assumed && assumed.type === 'event';
 }
