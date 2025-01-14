@@ -32,10 +32,13 @@ import {
     memoryWrittenType,
     readMemoryType,
     readyType,
+    Session,
     SessionContext,
     sessionContextChangedType,
+    sessionsChangedType,
     setMemoryViewSettingsType,
     setOptionsType,
+    setSessionType,
     setTitleType,
     showAdvancedOptionsType,
     storeMemoryType,
@@ -58,6 +61,7 @@ import { variableDecorator } from './variables/variable-decorations';
 import { messenger } from './view-messenger';
 
 export interface MemoryAppState extends MemoryState, MemoryViewSettings {
+    sessions: Session[];
     sessionContext: SessionContext;
     effectiveAddressLength: number;
     decorations: Decoration[];
@@ -109,6 +113,7 @@ class App extends React.Component<{}, MemoryAppState> {
         this.state = {
             messageParticipant: { type: 'webview', webviewId: '' },
             title: 'Memory',
+            sessions: [],
             sessionContext: DEFAULT_SESSION_CONTEXT,
             memory: undefined,
             effectiveAddressLength: 0,
@@ -129,6 +134,7 @@ class App extends React.Component<{}, MemoryAppState> {
         }
         messenger.onRequest(setOptionsType, options => this.setOptions(options));
         messenger.onNotification(memoryWrittenType, writtenMemory => this.memoryWritten(writtenMemory));
+        messenger.onNotification(sessionsChangedType, sessions => this.sessionsChanged(sessions));
         messenger.onNotification(sessionContextChangedType, sessionContext => this.sessionContextChanged(sessionContext));
         messenger.onNotification(setMemoryViewSettingsType, config => {
             if (config.visibleColumns) {
@@ -219,6 +225,10 @@ class App extends React.Component<{}, MemoryAppState> {
         this.fetchMemory();
     }, 100);
 
+    protected sessionsChanged(sessions: Session[]): void {
+        this.setState({ sessions });
+    }
+
     protected sessionContextChanged(sessionContext: SessionContext): void {
         this.setState({ sessionContext });
     }
@@ -228,6 +238,8 @@ class App extends React.Component<{}, MemoryAppState> {
             <MemoryWidget
                 ref={this.memoryWidget}
                 messageParticipant={this.state.messageParticipant}
+                sessions={this.state.sessions}
+                updateSession={this.updateSession}
                 sessionContext={this.state.sessionContext}
                 configuredReadArguments={this.state.configuredReadArguments}
                 activeReadArguments={this.state.activeReadArguments}
@@ -270,6 +282,14 @@ class App extends React.Component<{}, MemoryAppState> {
     protected updateTitle = (title: string) => {
         this.setState({ title });
         messenger.sendNotification(setTitleType, HOST_EXTENSION, title);
+    };
+
+    protected updateSession = (sessionId: string) => {
+        this.sessionContextChanged({
+            ...this.state.sessionContext,
+            sessionId
+        });
+        messenger.sendNotification(setSessionType, HOST_EXTENSION, sessionId);
     };
 
     protected async setOptions(options?: MemoryOptions): Promise<void> {

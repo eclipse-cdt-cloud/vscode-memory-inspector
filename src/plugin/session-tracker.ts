@@ -17,6 +17,7 @@ import { DebugProtocol } from '@vscode/debugprotocol';
 import * as vscode from 'vscode';
 import { isDebugEvent, isDebugRequest, isDebugResponse } from '../common/debug-requests';
 import { WrittenMemory } from '../common/memory-range';
+import type { Session } from '../common/messaging';
 
 export interface SessionInfo {
     raw: vscode.DebugSession;
@@ -52,11 +53,16 @@ export interface SessionContinuedEvent extends SessionEvent {
     session: SessionInfo;
 }
 
+export interface SessionsChangedEvent extends SessionEvent {
+    event: 'sessions-changed';
+}
+
 export interface SessionEvents {
     'active': ActiveSessionChangedEvent,
     'memory-written': SessionMemoryWrittenEvent,
     'continued': SessionContinuedEvent,
     'stopped': SessionStoppedEvent
+    'sessions-changed': SessionsChangedEvent
 }
 
 export type DebugCapability = keyof DebugProtocol.Capabilities;
@@ -95,7 +101,10 @@ export class SessionTracker implements vscode.DebugAdapterTrackerFactory {
         let info = this._sessionInfo.get(session.id);
         if (!info) {
             info = { raw: session };
-            this._sessionInfo.set(session.id, info);
+            if (this._sessionInfo.has(session.id)) {
+                // Only update session if it is active
+                this._sessionInfo.set(session.id, info);
+            }
         }
         return info;
     }
@@ -113,10 +122,12 @@ export class SessionTracker implements vscode.DebugAdapterTrackerFactory {
 
     protected async sessionWillStart(session: vscode.DebugSession): Promise<void> {
         this._sessionInfo.set(session.id, { raw: session });
+        this.fireSessionEvent(session, 'sessions-changed', undefined);
     }
 
     protected sessionWillStop(session: vscode.DebugSession): void {
         this._sessionInfo.delete(session.id);
+        this.fireSessionEvent(session, 'sessions-changed', undefined);
     }
 
     protected willSendClientMessage(session: vscode.DebugSession, message: unknown): void {
@@ -139,30 +150,31 @@ export class SessionTracker implements vscode.DebugAdapterTrackerFactory {
         }
     }
 
-    get activeSession(): vscode.DebugSession | undefined {
-        return vscode.debug.activeDebugSession;
+    public getSessions(): Session[] {
+        return Array.from(this._sessionInfo.values())
+            .map(info => ({ id: info.raw.id, name: info.raw.name }));
     }
 
-    assertActiveSession(action: string = 'get session'): vscode.DebugSession {
-        if (!this.activeSession) {
+    validSession(sessionId: string | undefined): boolean {
+        return !!sessionId && this._sessionInfo.has(sessionId);
+    }
+
+    assertSession(sessionId: string | undefined, action: string = 'get session'): vscode.DebugSession {
+        if (!this.validSession) {
             throw new Error(`Cannot ${action}. No active debug session.`);
         }
-        return this.activeSession;
+        return this._sessionInfo.get(sessionId!)!.raw;
     }
 
-    isActive(session = this.activeSession): boolean {
-        return !!session && vscode.debug.activeDebugSession?.id === session?.id;
-    }
-
-    isStopped(session = this.activeSession): boolean {
+    isStopped(session: vscode.DebugSession): boolean {
         return !!session && !!this.sessionInfo(session).stopped;
     }
 
-    hasDebugCapability(session = this.activeSession, capability: DebugCapability): boolean {
+    hasDebugCapability(session: vscode.DebugSession, capability: DebugCapability): boolean {
         return !!session && !!this.sessionInfo(session).debugCapabilities?.[capability];
     }
 
-    assertDebugCapability(session = this.assertActiveSession(), capability: DebugCapability, action: string = 'execute action'): vscode.DebugSession {
+    assertDebugCapability(session: vscode.DebugSession, capability: DebugCapability, action: string = 'execute action'): vscode.DebugSession {
         if (!this.hasDebugCapability(session, capability)) {
             throw new Error(`Cannot ${action}. Session does not have capability '${capability}'.`);
         }
@@ -173,7 +185,7 @@ export class SessionTracker implements vscode.DebugAdapterTrackerFactory {
         return !!session && !!this.sessionInfo(session).clientCapabilities?.[capability];
     }
 
-    assertClientCapability(session = this.assertActiveSession(), capability: ClientCapability, action: string = 'execute action'): vscode.DebugSession {
+    assertClientCapability(session: vscode.DebugSession, capability: ClientCapability, action: string = 'execute action'): vscode.DebugSession {
         if (!this.hasClientCapability(session, capability)) {
             throw new Error(`Cannot ${action}. Client does not have capability '${capability}'.`);
         }

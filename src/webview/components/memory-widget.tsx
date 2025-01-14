@@ -18,7 +18,7 @@ import React from 'react';
 import { WebviewIdMessageParticipant } from 'vscode-messenger-common';
 import * as manifest from '../../common/manifest';
 import { Memory } from '../../common/memory';
-import { WebviewSelection } from '../../common/messaging';
+import { Session, WebviewSelection } from '../../common/messaging';
 import { MemoryOptions, ReadMemoryArguments, SessionContext } from '../../common/messaging';
 import { MemoryDataDisplaySettings } from '../../common/webview-configuration';
 import { ColumnStatus } from '../columns/column-contribution-service';
@@ -30,6 +30,8 @@ import { OptionsWidget } from './options-widget';
 
 interface MemoryWidgetProps extends MemoryDataDisplaySettings {
     messageParticipant: WebviewIdMessageParticipant;
+    sessions: Session[];
+    updateSession: (sessionId: string) => void;
     sessionContext: SessionContext;
     configuredReadArguments: Required<ReadMemoryArguments>;
     activeReadArguments: Required<ReadMemoryArguments>;
@@ -87,6 +89,8 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
         return (<div className='flex flex-column h-full' {...this.createVscodeContext()}>
             <OptionsWidget
                 ref={this.optionsWidget}
+                sessions={this.props.sessions}
+                updateSession={this.props.updateSession}
                 sessionContext={this.props.sessionContext}
                 title={this.props.title}
                 updateTitle={this.props.updateTitle}
