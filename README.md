@@ -65,7 +65,7 @@ The Memory Inspector can automatically refresh displayed memory data based on di
 
 ![Screenshot of the Memory Inspector](./media/memory-inspector-periodic-update-screenshot.png)
 
-- **On Stop**: Refreshes memory data when the program papuses.
+- **On Stop**: Refreshes memory data when the program pauses.
 - **Periodic Refresh**: Refreshes memory data after a specified delay.
   - **Always**: Refreshes memory data continuously, regardless of the program execution state.
   - **While Running**: Refreshes memory data only when the program is running.
