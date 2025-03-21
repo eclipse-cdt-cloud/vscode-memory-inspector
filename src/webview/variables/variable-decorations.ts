@@ -15,22 +15,21 @@
  ********************************************************************************/
 
 import { classNames } from 'primereact/utils';
-import { ReactNode } from 'react';
 import * as React from 'react';
+import { ReactNode } from 'react';
 import { HOST_EXTENSION } from 'vscode-messenger-common';
 import * as manifest from '../../common/manifest';
 import { areVariablesEqual, BigIntMemoryRange, BigIntVariableRange, compareBigInt, doOverlap } from '../../common/memory-range';
 import { getVariablesType, ReadMemoryArguments } from '../../common/messaging';
 import { stringifyWithBigInts } from '../../common/typescript';
-import { BreakpointService, breakpointService } from '../breakpoints/breakpoint-service';
 import { ColumnContribution, ColumnRenderProps } from '../columns/column-contribution-service';
 import { createDefaultSelection, groupAttributes, SelectionProps } from '../columns/table-group';
 import { MemoryRowData } from '../components/memory-table';
-import { Decorator } from '../decorations/decoration-service';
+import { decorationService, Decorator } from '../decorations/decoration-service';
 import { EventEmitter, IEvent } from '../utils/events';
 import { Decoration, MemoryState } from '../utils/view-types';
-import { createVariableVscodeContext } from '../utils/vscode-contexts';
 import { messenger } from '../view-messenger';
+import { vsCodeContextContributionService } from '../vscode-context/vscode-context-contribution-service';
 
 const NON_HC_COLORS = [
     'var(--vscode-terminal-ansiBlue)',
@@ -92,14 +91,15 @@ export class VariableDecorator implements ColumnContribution, Decorator {
         const variables = this.getVariablesInRange(row);
         return variables?.reduce<ReactNode[]>((result, current, index) => {
             if (index > 0) { result.push(', '); }
-            const breakpointMetadata = breakpointService.metadata(current.variable.name);
+            const decorations = decorationService.getDecorationFor(VariableDecorator.ID, current.variable);
+
             result.push(React.createElement('span', {
                 style: { color: current.color },
                 key: current.variable.name,
-                className: classNames('hoverable', ...BreakpointService.inlineClasses(breakpointMetadata)),
+                className: classNames('hoverable', ...decorations?.classNames ?? []),
                 'data-column': 'variables',
                 'data-variables': stringifyWithBigInts(current.variable),
-                ...createVariableVscodeContext(current.variable, breakpointMetadata),
+                ...vsCodeContextContributionService.createContext(VariableDecorator.ID, current.variable),
                 ...groupAttributes({ columnIndex, rowIndex: row.rowIndex, groupIndex: index, maxGroupIndex: variables.length - 1 }, selectionProps)
             }, current.variable.name));
             return result;

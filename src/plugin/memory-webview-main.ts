@@ -40,11 +40,11 @@ import {
     SessionContext,
     sessionContextChangedType,
     sessionsChangedType,
+    setExperimentalBreakpointType,
     setMemoryViewSettingsType,
     setOptionsType,
     setSessionType,
     setTitleType,
-    setTrackedBreakpointType,
     showAdvancedOptionsType,
     StoreMemoryArguments,
     storeMemoryType,
@@ -247,7 +247,7 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
             this.messenger.onRequest(storeMemoryType, args => this.storeMemory(participant, args), { sender: participant }),
             this.messenger.onRequest(applyMemoryType, () => this.applyMemory(participant), { sender: participant }),
             this.sessionTracker.onSessionEvent(event => this.handleSessionEvent(participant, event)),
-            this.breakpointTracker.onBreakpointChanged(breakpoints => this.messenger.sendNotification(setTrackedBreakpointType, participant, breakpoints)),
+            this.breakpointTracker.onBreakpointChanged(breakpoints => this.messenger.sendNotification(setExperimentalBreakpointType, participant, breakpoints)),
             this.breakpointTracker.onStopped(event => this.messenger.sendNotification(notifyStoppedType, participant, event.data)),
             this.breakpointTracker.onContinued(event => this.messenger.sendNotification(notifyContinuedType, participant, event.data)),
             panel.onDidChangeViewState(view => {
@@ -289,7 +289,7 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
     }
 
     protected setBreakpoints(webviewParticipant: WebviewIdMessageParticipant): void {
-        this.messenger.sendNotification(setTrackedBreakpointType, webviewParticipant, this.breakpointTracker.dataBreakpoints);
+        this.messenger.sendNotification(setExperimentalBreakpointType, webviewParticipant, this.breakpointTracker.dataBreakpoints);
         if (this.breakpointTracker.stoppedEvent) {
             this.messenger.sendNotification(notifyStoppedType, webviewParticipant, this.breakpointTracker.stoppedEvent.data);
         }
@@ -439,11 +439,13 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
                 variablesReference: ctx.variable.parentVariablesReference
             });
             if (!info.dataId) {
-                throw new Error(`DataBreakpointInfo returned for variable ${ctx.variable} an invalid info.`);
+                vscode.window.showErrorMessage(`DataBreakpointInfo returned for variable ${ctx.variable.name} an invalid info: ${info.description}`);
+                return;
             }
             dataId = info.dataId;
         } else {
-            throw new Error(`WebviewContext needs to be a Group or Variable context. It was: ${JSON.stringify(ctx, undefined, 2)}`);
+            vscode.window.showErrorMessage(`WebviewContext needs to be a Group or Variable context. It was: ${JSON.stringify(ctx, undefined, 2)}`);
+            return;
         }
 
         // Don't remove already existing breakpoints

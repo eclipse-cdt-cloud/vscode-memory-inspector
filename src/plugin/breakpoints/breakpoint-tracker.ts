@@ -16,22 +16,23 @@
 
 import { DebugProtocol } from '@vscode/debugprotocol';
 import * as vscode from 'vscode';
-import { SetDataBreakpointsResult, TrackedDataBreakpoint, TrackedDataBreakpoints } from '../../common/breakpoint';
+import { ExperimentalDataBreakpoint, ExperimentalDataBreakpoints, SetDataBreakpointsResult } from '../../common/breakpoint';
 import { isDebugRequest, isDebugResponse } from '../../common/debug-requests';
+import * as manifest from '../../common/manifest';
 import { isSessionEvent, SessionContinuedEvent, SessionEvent, SessionRequest, SessionResponse, SessionStoppedEvent, SessionTracker } from '../session-tracker';
 
 /**
  * Tracks data breakpoints and provides events for changes.
  *
- * Currently the webview part is disabled and does not react to the changes.
- * It will be enabled again after VSCode extends the breakpoint API.
+ * It will still track data breakpoints even if the feature is disabled, but will not notify about changes.
  */
 export class BreakpointTracker {
-    protected _dataBreakpoints: TrackedDataBreakpoints = { external: [], internal: [] };
+    protected _dataBreakpoints: ExperimentalDataBreakpoints = { external: [], internal: [] };
     protected _stoppedEvent?: SessionStoppedEvent;
+    protected _isEnabled = false;
     protected dataBreakpointsRequest: Record<number, DebugProtocol.SetDataBreakpointsRequest> = {};
 
-    protected _onBreakpointsChanged = new vscode.EventEmitter<TrackedDataBreakpoints>();
+    protected _onBreakpointsChanged = new vscode.EventEmitter<ExperimentalDataBreakpoints>();
     readonly onBreakpointChanged = this._onBreakpointsChanged.event;
 
     protected _onSetDataBreakpointResponse = new vscode.EventEmitter<DebugProtocol.SetDataBreakpointsResponse>();
@@ -43,17 +44,15 @@ export class BreakpointTracker {
     protected _onContinued = new vscode.EventEmitter<SessionContinuedEvent>();
     readonly onContinued = this._onContinued.event;
 
-    notifySetDataBreakpointEnabled = true;
-
-    get dataBreakpoints(): TrackedDataBreakpoints {
-        return this._dataBreakpoints;
+    get dataBreakpoints(): ExperimentalDataBreakpoints {
+        return this.isEnabled ? this._dataBreakpoints : { external: [], internal: [] };
     }
 
-    get internalDataBreakpoints(): TrackedDataBreakpoint[] {
+    get internalDataBreakpoints(): ExperimentalDataBreakpoint[] {
         return this._dataBreakpoints.internal;
     }
 
-    get externalDataBreakpoints(): TrackedDataBreakpoint[] {
+    get externalDataBreakpoints(): ExperimentalDataBreakpoint[] {
         return this._dataBreakpoints.external;
     }
 
@@ -61,10 +60,30 @@ export class BreakpointTracker {
         return this._stoppedEvent;
     }
 
+    get isEnabled(): boolean {
+        return this._isEnabled;
+    }
+
+    notifySetDataBreakpointEnabled = true;
+
     constructor(protected sessionTracker: SessionTracker) {
         this.sessionTracker.onSessionEvent(event => this.onSessionEvent(event));
         this.sessionTracker.onSessionRequest(event => this.onSessionRequest(event));
         this.sessionTracker.onSessionResponse(event => this.onSessionResponse(event));
+
+        this.onConfigurationChange();
+        vscode.workspace.onDidChangeConfiguration(event => {
+            if (event.affectsConfiguration(manifest.CONFIG_EXPERIMENTAL_DATA_BREAKPOINTS_PREFERENCE)) {
+                this.onConfigurationChange();
+            }
+        });
+    }
+
+    protected onConfigurationChange(): void {
+        const configuration = vscode.workspace.getConfiguration(manifest.PACKAGE_NAME);
+        const value = configuration.get<boolean>(manifest.CONFIG_EXPERIMENTAL_DATA_BREAKPOINTS);
+        this._isEnabled = !!value;
+        this.fireDataBreakpoints();
     }
 
     setInternal(internalBreakpoints: SetDataBreakpointsResult['breakpoints']): void {
@@ -85,7 +104,7 @@ export class BreakpointTracker {
     }
 
     protected onSessionEvent(event: SessionEvent): void {
-        if (!this.sessionTracker.isActive) {
+        if (!this.sessionTracker.getActiveSession()) {
             return;
         }
 
@@ -99,7 +118,7 @@ export class BreakpointTracker {
     }
 
     protected onSessionRequest(event: SessionRequest): void {
-        if (!this.sessionTracker.isActive) {
+        if (!this.sessionTracker.getActiveSession()) {
             return;
         }
 
@@ -110,7 +129,7 @@ export class BreakpointTracker {
     }
 
     protected onSessionResponse(event: SessionResponse): void {
-        if (!this.sessionTracker.isActive) {
+        if (!this.sessionTracker.getActiveSession()) {
             return;
         }
 
@@ -138,7 +157,7 @@ export class BreakpointTracker {
                 delete this.dataBreakpointsRequest[request.seq];
             }
 
-            if (this.notifySetDataBreakpointEnabled) {
+            if (this.notifySetDataBreakpointEnabled && this.isEnabled) {
                 this._onSetDataBreakpointResponse.fire(response);
                 this.fireDataBreakpoints();
             }

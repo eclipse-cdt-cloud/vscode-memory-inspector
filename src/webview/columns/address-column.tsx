@@ -17,8 +17,8 @@
 import { classNames } from 'primereact/utils';
 import React, { ReactNode } from 'react';
 import { getAddressString, getRadixMarker } from '../../common/memory-range';
-import { BreakpointMetadata, BreakpointService, breakpointService } from '../breakpoints/breakpoint-service';
 import { MemoryRowData } from '../components/memory-table';
+import { decorationService } from '../decorations/decoration-service';
 import { ColumnContribution, ColumnFittingType, ColumnRenderProps } from './column-contribution-service';
 import { createDefaultSelection, groupAttributes, SelectionProps } from './table-group';
 
@@ -40,14 +40,11 @@ export class AddressColumn implements ColumnContribution {
             setSelection: config.setSelection
         };
 
-        const breakpointMetadata = breakpointService.inRange(row)
-            .map(bp => breakpointService.metadata(bp))
-            .filter((bp): bp is BreakpointMetadata => bp !== undefined);
-        const statusClasses = BreakpointService.statusClasses(breakpointMetadata);
+        const decoration = decorationService.getDecorationFor(AddressColumn.ID, row);
 
         const groupProps = groupAttributes({ columnIndex, rowIndex: row.rowIndex, groupIndex: 0, maxGroupIndex: 0 }, selectionProps);
         return <span className='memory-start-address hoverable' data-column='address' {...groupProps}>
-            {statusClasses.length > 0 && <span className={classNames('address-status', statusClasses)}></span>}
+            {decoration && decoration.classNames.length > 0 && <span className={classNames('address-status', decoration?.classNames)}></span>}
             {config.tableConfig.showRadixPrefix && <span className='radix-prefix'>{getRadixMarker(config.tableConfig.addressRadix)}</span>}
             <span className='address'>{getAddressString(row.startAddress, config.tableConfig.addressRadix, config.tableConfig.effectiveAddressLength)}</span>
         </span>;

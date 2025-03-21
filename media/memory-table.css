@@ -224,26 +224,29 @@
 }
 
 .p-datatable .p-datatable-tbody > tr > td[data-column="data"][role="cell"],
-.p-datatable .p-datatable-tbody > tr > td[data-column="variables"][role="cell"] {
+.p-datatable
+  .p-datatable-tbody
+  > tr
+  > td[data-column="variables"][role="cell"] {
   padding: 0 12px;
   vertical-align: middle;
 }
 
 /* Group Styles */
 
-[role='group']:hover {
+[role="group"]:hover {
   border-bottom: 0px;
   outline: 1px solid var(--vscode-list-focusOutline);
 }
 
-[role='group'][data-group-selected='true'] {
+[role="group"][data-group-selected="true"] {
   background: var(--vscode-list-activeSelectionBackground);
   color: var(--vscode-list-activeSelectionForeground);
   outline: 1px solid var(--vscode-list-activeSelectionBackground);
 }
 
-[role='group']:focus-visible,
-[role='group']:focus {
+[role="group"]:focus-visible,
+[role="group"]:focus {
   outline: 1px solid var(--vscode-list-focusOutline);
 }
 
@@ -255,7 +258,7 @@
 }
 
 [data-column="data"][role="group"],
-[data-column="variables"][role="group"] {  
+[data-column="variables"][role="group"] {
   padding: 4px 1px;
   line-height: 23.5px;
   outline-offset: -1px;
@@ -294,7 +297,7 @@
   text-indent: 2px;
 }
 
-.p-datatable .p-datatable-tbody > tr > td.p-highlight:has(>.selected) {
+.p-datatable .p-datatable-tbody > tr > td.p-highlight:has(> .selected) {
   background: transparent;
   outline: none;
 }

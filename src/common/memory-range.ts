@@ -117,6 +117,15 @@ export interface VariableRange extends MemoryRange, VariableMetadata { }
 /** Suitable for arithemetic */
 export interface BigIntVariableRange extends BigIntMemoryRange, VariableMetadata { }
 
+export namespace BigIntVariableRange {
+    export function is(value: unknown): value is BigIntVariableRange {
+        return typeof value === 'object'
+            && typeof (value as BigIntVariableRange).startAddress === 'bigint'
+            && typeof (value as BigIntVariableRange).endAddress === 'bigint'
+            && typeof (value as BigIntVariableRange).name === 'string';
+    }
+}
+
 export function areVariablesEqual(one: BigIntVariableRange, other: BigIntVariableRange): boolean {
     return areRangesEqual(one, other)
         && one.name === other.name

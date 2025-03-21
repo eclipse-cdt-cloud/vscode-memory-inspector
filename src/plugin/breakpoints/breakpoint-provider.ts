@@ -30,7 +30,12 @@ export class BreakpointProvider {
     }
 
     async setMemoryInspectorDataBreakpoint(args: SetDataBreakpointsArguments): Promise<SetDataBreakpointsResult> {
-        const session = this.sessionTracker.assertDebugCapability(this.sessionTracker.activeSession, 'supportsDataBreakpoints', 'set data breakpoint');
+        const activeSession = this.sessionTracker.getActiveSession();
+        if (!activeSession) {
+            throw new Error('No active session');
+        }
+
+        const session = this.sessionTracker.assertDebugCapability(activeSession, 'supportsDataBreakpoints', 'set data breakpoint');
         this.breakpointTracker.notifySetDataBreakpointEnabled = false;
         const breakpoints = [
             ...this.breakpointTracker.externalDataBreakpoints.map(bp => bp.breakpoint),
@@ -46,7 +51,11 @@ export class BreakpointProvider {
     }
 
     async dataBreakpointInfo(args: DataBreakpointInfoArguments): Promise<DataBreakpointInfoResult> {
-        const session = this.sessionTracker.assertDebugCapability(this.sessionTracker.activeSession, 'supportsDataBreakpoints', 'data breakpoint info');
+        const activeSession = this.sessionTracker.getActiveSession();
+        if (!activeSession) {
+            throw new Error('No active session');
+        }
+        const session = this.sessionTracker.assertDebugCapability(activeSession, 'supportsDataBreakpoints', 'data breakpoint info');
         return sendRequest(session, 'dataBreakpointInfo', args);
     }
 }

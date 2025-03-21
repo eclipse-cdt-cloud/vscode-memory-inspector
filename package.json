@@ -271,27 +271,27 @@
         {
           "command": "memory-inspector.data-breakpoint.set.read",
           "group": "breakpoints@1",
-          "when": "webviewId === memory-inspector.memory && memory-inspector.breakpoint.isBreakable"
+          "when": "memory-inspector.dataBreakpoints && webviewId === memory-inspector.memory && memory-inspector.breakpoint.isBreakable"
         },
         {
           "command": "memory-inspector.data-breakpoint.set.write",
           "group": "breakpoints@2",
-          "when": "webviewId === memory-inspector.memory && memory-inspector.breakpoint.isBreakable"
+          "when": "memory-inspector.dataBreakpoints && webviewId === memory-inspector.memory && memory-inspector.breakpoint.isBreakable"
         },
         {
           "command": "memory-inspector.data-breakpoint.set.readWrite",
           "group": "breakpoints@3",
-          "when": "webviewId === memory-inspector.memory && memory-inspector.breakpoint.isBreakable"
+          "when": "memory-inspector.dataBreakpoints && webviewId === memory-inspector.memory && memory-inspector.breakpoint.isBreakable"
         },
         {
           "command": "memory-inspector.data-breakpoint.remove",
           "group": "breakpoints@4",
-          "when": "webviewId === memory-inspector.memory && memory-inspector.breakpoint.type === 'internal'"
+          "when": "memory-inspector.dataBreakpoints && webviewId === memory-inspector.memory && memory-inspector.breakpoint.type === 'internal'"
         },
         {
           "command": "memory-inspector.data-breakpoint.remove-all",
           "group": "breakpoints@5",
-          "when": "webviewId === memory-inspector.memory && memory-inspector.breakpoint.type === 'internal'"
+          "when": "memory-inspector.dataBreakpoints && webviewId === memory-inspector.memory && memory-inspector.breakpoint.type === 'internal'"
         }
       ]
     },
@@ -334,18 +334,13 @@
           ],
           "description": "C-based debuggers to activate (requires debug session restart)"
         },
-        "memory-inspector.refreshOnStop": {
-          "type": "string",
-          "enum": [
-            "on",
-            "off"
-          ],
-          "enumDescriptions": [
-            "Refresh Memory Inspector when the debugger stops (e.g. a breakpoint is hit)",
-            "Do not automatically refresh when the debugger stops"
-          ],
-          "default": "on",
-          "description": "Refresh Memory Inspector windows when the debugger stops"
+        "memory-inspector.dataBreakpoints": {
+          "type": "boolean",
+          "default:": false,
+          "description": "Enable data breakpoint support.",
+          "tags": [
+            "experimental"
+          ]
         },
         "memory-inspector.periodicRefresh": {
           "type": "string",

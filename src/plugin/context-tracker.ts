@@ -24,6 +24,13 @@ export class ContextTracker {
 
     constructor(protected sessionTracker: SessionTracker) {
         this.sessionTracker.onSessionEvent(event => this.onSessionEvent(event));
+
+        this.onConfigurationChange();
+        vscode.workspace.onDidChangeConfiguration(event => {
+            if (event.affectsConfiguration(manifest.CONFIG_EXPERIMENTAL_DATA_BREAKPOINTS_PREFERENCE)) {
+                this.onConfigurationChange();
+            }
+        });
     }
 
     onSessionEvent(event: SessionEvent): void {
@@ -31,5 +38,11 @@ export class ContextTracker {
             vscode.commands.executeCommand('setContext', ContextTracker.ReadKey, !!event.session?.debugCapabilities?.supportsReadMemoryRequest);
             vscode.commands.executeCommand('setContext', ContextTracker.WriteKey, !!event.session?.debugCapabilities?.supportsWriteMemoryRequest);
         }
+    }
+
+    onConfigurationChange(): void {
+        const configuration = vscode.workspace.getConfiguration(manifest.PACKAGE_NAME);
+        const value = configuration.get<boolean>(manifest.CONFIG_EXPERIMENTAL_DATA_BREAKPOINTS);
+        vscode.commands.executeCommand('setContext', manifest.CONFIG_EXPERIMENTAL_DATA_BREAKPOINTS_PREFERENCE, value);
     }
 }

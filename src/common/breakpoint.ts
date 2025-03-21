@@ -17,7 +17,12 @@
 import { DebugProtocol } from '@vscode/debugprotocol';
 import { DebugRequestTypes } from './debug-requests';
 
-export interface TrackedDataBreakpoint {
+/**
+ * Temp. workaround till we have a proper API for this within VSCode.
+ *
+ * @see {@link https://github.com/microsoft/vscode/pull/226735}
+ */
+export interface ExperimentalDataBreakpoint {
     type: TrackedBreakpointType;
     breakpoint: DebugProtocol.DataBreakpoint;
     /**
@@ -28,16 +33,18 @@ export interface TrackedDataBreakpoint {
 
 /**
  * Temp. workaround till we have a proper API for this within VSCode.
+ *
+ * @see {@link https://github.com/microsoft/vscode/pull/226735}
  */
-export interface TrackedDataBreakpoints {
+export interface ExperimentalDataBreakpoints {
     /**
      * Breakpoints set from external contributors.
      */
-    external: TrackedDataBreakpoint[],
+    external: ExperimentalDataBreakpoint[],
     /**
      * Breakpoints set from us.
      */
-    internal: TrackedDataBreakpoint[]
+    internal: ExperimentalDataBreakpoint[]
 }
 
 /**

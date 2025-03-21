@@ -22,13 +22,12 @@ import { HOST_EXTENSION } from 'vscode-messenger-common';
 import { Memory } from '../../common/memory';
 import { BigIntMemoryRange, isWithin, toHexStringWithRadixMarker, toOffset } from '../../common/memory-range';
 import { writeMemoryType } from '../../common/messaging';
-import { BreakpointService, breakpointService } from '../breakpoints/breakpoint-service';
 import type { MemoryRowData, MemorySizeOptions, MemoryTableSelection, MemoryTableState } from '../components/memory-table';
 import { decorationService } from '../decorations/decoration-service';
 import { Disposable, FullNodeAttributes } from '../utils/view-types';
-import { createGroupVscodeContext } from '../utils/vscode-contexts';
 import { characterWidthInContainer, elementInnerWidth, hasCtrlCmdMask } from '../utils/window';
 import { messenger } from '../view-messenger';
+import { vsCodeContextContributionService } from '../vscode-context/vscode-context-contribution-service';
 import { AddressColumn } from './address-column';
 import { ColumnContribution, ColumnRenderProps } from './column-contribution-service';
 import {
@@ -44,6 +43,19 @@ import {
 export interface DataColumnSelection extends MemoryTableSelection {
     selectedRange: BigIntMemoryRange;
     editingRange?: BigIntMemoryRange;
+}
+
+export interface DataColumnRenderGroup {
+    startAddress: bigint;
+    length: number;
+}
+
+export namespace DataColumnRenderGroup {
+    export function is(value: unknown): value is DataColumnRenderGroup {
+        return !!value
+            && typeof (value as DataColumnRenderGroup).startAddress === 'bigint'
+            && typeof (value as DataColumnRenderGroup).length === 'number';
+    }
 }
 
 export namespace DataColumnSelection {
@@ -156,11 +168,14 @@ export class EditableDataColumnRow extends React.Component<EditableDataColumnRow
             groupIndex: idx,
             maxGroupIndex: this.props.config.groupsPerRowToRender - 1
         }, this.selectionProps);
-        const breakpointMetadata = breakpointService.metadata(toHexStringWithRadixMarker(startAddress));
+        const renderGroup: DataColumnRenderGroup = {
+            startAddress, length: toOffset(startAddress, endAddress, config.tableConfig.bytesPerMau * 8)
+        };
+        const decorations = decorationService.getDecorationFor(DataColumn.ID, renderGroup);
 
         return <span
             tabIndex={0}
-            className={classNames('byte-group', 'hoverable', ...BreakpointService.inlineClasses(breakpointMetadata))}
+            className={classNames('byte-group', 'hoverable', ...decorations?.classNames ?? [])}
             data-column='data'
             {...groupProps}
             data-range-start={startAddress}
@@ -168,7 +183,7 @@ export class EditableDataColumnRow extends React.Component<EditableDataColumnRow
             key={startAddress.toString(16)}
             onKeyDown={this.onKeyDown}
             onDoubleClick={this.setGroupEdit}
-            {...createGroupVscodeContext(startAddress, toOffset(startAddress, endAddress, config.tableConfig.bytesPerMau * 8), breakpointMetadata)}
+            {...vsCodeContextContributionService.createContext(DataColumn.ID, renderGroup)}
         >
             {maus}
         </span>;
