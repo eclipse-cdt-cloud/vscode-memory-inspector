@@ -14,6 +14,8 @@ A Visual Studio Code extension that provides a powerful and configurable memory 
 - **Memory Management**: Enables saving and restoring memory data for specific address ranges (Intel Hex format).
 - **Customized Views**: Create and customize as many memory views as you need.
 - **Lock Views**: Keep views static, unaffected by updates from the debug session.
+- **Periodic Refresh**: Automatically refresh the memory data.
+- **Multiple Debug Sessions**: Switch between multiple debug sessions using a dropdown in the memory view.
 - And much more
 
 ## Getting Started
@@ -22,12 +24,12 @@ A Visual Studio Code extension that provides a powerful and configurable memory 
 
 1. **Install**: Add the extension to VS Code.
 2. **Verify Debugger Capability**: Ensure the debug adapter supports [`ReadMemory` requests](https://microsoft.github.io/debug-adapter-protocol/specification#Requests_ReadMemory).
-3. **Enable Debug Type**: Enable the Memory Inspector for the debug configuration type (VS Code setting *Debug Types*: `memory-inspector.debugTypes`).
+3. **Enable Debug Type**: Enable the Memory Inspector for the debug configuration type (VS Code setting _Debug Types_: `memory-inspector.debugTypes`).
 
 ### Use Memory Inspector
 
 1. **Debug Session**: Start a debug session.
-2. **Open Memory Inspector**: Either run the *Memory: Show Memory Inspector* command or right-click a variable in the Variables view and select *Show in Memory Inspector*.
+2. **Open Memory Inspector**: Either run the _Memory: Show Memory Inspector_ command or right-click a variable in the Variables view and select _Show in Memory Inspector_.
 3. **Adjust View**: Modify the memory range you're interested in, as needed.
 
 ## Configuration
@@ -42,20 +44,40 @@ Use the following to adjust the view to your needs and the inspected memory arch
 
 ![Screenshot of the Memory Inspector](https://raw.githubusercontent.com/eclipse-cdt-cloud/vscode-memory-inspector/main/media/memory-inspector-options-screenshot.png)
 
-1. **Bytes per MAU**: The number of *Bytes* that form the Minimum Addressable Unit. It commonly is a fixed number for a specific target hardware. Use for example a value of `1` for byte-addressable architectures.
-2. **MAUs per Group**: The number of *MAUs* that form a *Group* considering the selected *Endianess*. Use for example a value of `2` to form a 4-byte value consisting of `2` 2-byte MAUs.
-3. **Groups per Row**: Number of *Groups* to display in a row. This can be a fixed number of *Groups*. Or the value `Autofit` to let the Memory Inspector calculate the best utilization of space in the `Data` column.
-4. **Group Endianess**: The order of *MAUs* within a *Group*. The value can be `Little Endian` or `Big Endian`.
+1. **Bytes per MAU**: The number of _Bytes_ that form the Minimum Addressable Unit. It commonly is a fixed number for a specific target hardware. Use for example a value of `1` for byte-addressable architectures.
+2. **MAUs per Group**: The number of _MAUs_ that form a _Group_ considering the selected _Endianess_. Use for example a value of `2` to form a 4-byte value consisting of `2` 2-byte MAUs.
+3. **Groups per Row**: Number of _Groups_ to display in a row. This can be a fixed number of _Groups_. Or the value `Autofit` to let the Memory Inspector calculate the best utilization of space in the `Data` column.
+4. **Group Endianess**: The order of _MAUs_ within a _Group_. The value can be `Little Endian` or `Big Endian`.
 
 ![Screenshot of the Memory Inspector](https://raw.githubusercontent.com/eclipse-cdt-cloud/vscode-memory-inspector/main/media/memory-inspector-options-endian-screenshot.png)
 
 The following terminology is used:
 
 - **Byte**: A data unit of 8 Bits.
-- **MAU (Minimum Addressable Unit)**: A Minimum Addressable Unit of memory. It consists of one or more *Bytes* represented by a single address.
-- **Group**: A group of *MAUs* that forms a data value. *Groups* are the Memory Inspector's default granularity to edit memory contents.
-- **Row**: A row in the Memory Inspector display containing multiple *Groups*.
-- **Endianess**: The order of displaying *MAUs* within a *Group*.
+- **MAU (Minimum Addressable Unit)**: A Minimum Addressable Unit of memory. It consists of one or more _Bytes_ represented by a single address.
+- **Group**: A group of _MAUs_ that forms a data value. _Groups_ are the Memory Inspector's default granularity to edit memory contents.
+- **Row**: A row in the Memory Inspector display containing multiple _Groups_.
+- **Endianess**: The order of displaying _MAUs_ within a _Group_.
+
+### Periodic Updates
+
+The Memory Inspector can automatically refresh displayed memory data based on different triggers. You can configure the auto-refresh behavior using the following options:
+
+![Screenshot of the Memory Inspector](./media/memory-inspector-periodic-update-screenshot.png)
+
+- **On Stop**: Refreshes memory data when the program papuses.
+- **Periodic Refresh**: Refreshes memory data after a specified delay.
+  - **Always**: Refreshes memory data continuously, regardless of the program execution state.
+  - **While Running**: Refreshes memory data only when the program is running.
+  - **Off**: Disables automatic refresh of memory data.
+
+These settings can be adjusted individually for each Memory Inspector view or globally in the preferences.
+
+### Multiple Debug Sessions
+
+![Screenshot of the Memory Inspector](./media/memory-inspector-debug-sessions-screenshot.png)
+
+The Memory Inspector supports multiple debug sessions. If multiple debug sessions are active, a dropdown appears in the memory view which allows you to switch between them. This enables you to target different debug sessions in multiple windows, simultaneously.
 
 ## Contributing
 
