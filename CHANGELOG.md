@@ -1,7 +1,23 @@
 # Change Log
 
-## 1.1.0
-- Switched preferred extension host to `workspace` to enable WSL support
+## 1.2.0
+- Fixed [#112](https://github.com/eclipse-cdt-cloud/vscode-memory-inspector/issues/112): Edit memory value can cause "line break" in row for "autofit" groups per row. ([Martin Fleck](https://github.com/martin-fleck-at))
+- Fixed [#120](https://github.com/eclipse-cdt-cloud/vscode-memory-inspector/issues/120): Variable tracker evaluates variables using `evaluateName` if present. ([Hampus Adolfsson](https://github.com/HampusAdolfsson))
+- Fixed [#126](https://github.com/eclipse-cdt-cloud/vscode-memory-inspector/issues/126): Memory Inspector issues memory request if address field is empty. ([Tobias Ortmayr](https://github.com/tortmayr))
+- Fixed [#134](https://github.com/eclipse-cdt-cloud/vscode-memory-inspector/issues/134): "Load \<n\> more bytes above/below" button should be only sensitive to mouse hovering over the text. ([Colin Grant](https://github.com/colin-grant-work))
+- Fixed [#145](https://github.com/eclipse-cdt-cloud/vscode-memory-inspector/issues/145): Form validated before initial values loaded. This caused undesired, temporary error messages below `Address` and `Count` fields of the Memory Inspector. ([Colin Grant](https://github.com/colin-grant-work))
+- Fixed [#150](https://github.com/eclipse-cdt-cloud/vscode-memory-inspector/issues/150): Switched preferred extension host to `workspace` to enable WSL support. ([Rob Moran](https://github.com/thegecko)).
+- Fixed a number of error messages to the Developer Tools console. ([Colin Grant](https://github.com/colin-grant-work))
+- Added functionality to follow pointer variables. ([Gabriel Bodeen](https://github.com/gbodeen))
+- Added functionality to automatically refresh the Memory Inspector window on specific triggers and/or periodically. ([Martin Fleck](https://github.com/martin-fleck-at))
+- Added more details to the context data for the Memory Inspector context menu. ([Philip Langer](https://github.com/planger))
+- Added support for switching Memory Inspector contents between active debug sessions. ([Rob Moran](https://github.com/thegecko))
+- Improved keyboard navigation in Memory Inspector window. ([Martin Fleck](https://github.com/martin-fleck-at))
+- Improved `AdapterCapabilities` to allow provision of customized default settings through the extension API. ([Philip Langer](https://github.com/planger))
+- Improved gap between memory value groups for better readability and interaction. ([Colin Grant](https://github.com/colin-grant-work))
+- Improved styling and context menu entry appearance. ([Philip Langer](https://github.com/planger))
+- Improved some descriptions and display strings. ([Philip Langer](https://github.com/planger))
+- Removed preview status of extension. ([Philip Langer](https://github.com/planger))
 
 ## 1.1.0
 - Fixed variable fetch before variables are available.
