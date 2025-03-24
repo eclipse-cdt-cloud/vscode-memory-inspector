@@ -117,8 +117,14 @@
         "category": "Memory"
       },
       {
+        "command": "memory-inspector.data-breakpoint.inspect-breakpoints",
+        "title": "Inspect Breakpoints",
+        "enablement": "memory-inspector.canWrite",
+        "category": "Memory"
+      },
+      {
         "command": "memory-inspector.data-breakpoint.remove-all",
-        "title": "Remove All Breakpoints",
+        "title": "Remove All Internal Breakpoints",
         "enablement": "memory-inspector.canWrite",
         "category": "Memory"
       },
@@ -186,6 +192,22 @@
         },
         {
           "command": "memory-inspector.apply-file"
+        },
+        {
+          "command": "memory-inspector.data-breakpoint.set.read",
+          "when": "false"
+        },
+        {
+          "command": "memory-inspector.data-breakpoint.set.readWrite",
+          "when": "false"
+        },
+        {
+          "command": "memory-inspector.data-breakpoint.set.write",
+          "when": "false"
+        },
+        {
+          "command": "memory-inspector.data-breakpoint.remove",
+          "when": "false"
         }
       ],
       "debug/variables/context": [

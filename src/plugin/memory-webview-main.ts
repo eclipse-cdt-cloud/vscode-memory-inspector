@@ -85,6 +85,7 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
     public static SetDataBreakpointReadWriteCommandType = `${manifest.PACKAGE_NAME}.data-breakpoint.set.readWrite`;
     public static SetDataBreakpointWriteCommandType = `${manifest.PACKAGE_NAME}.data-breakpoint.set.write`;
     public static RemoveDataBreakpointCommandType = `${manifest.PACKAGE_NAME}.data-breakpoint.remove`;
+    public static InspectDataBreakpointCommandType = `${manifest.PACKAGE_NAME}.data-breakpoint.inspect-breakpoints`;
     public static RemoveAllDataBreakpointCommandType = `${manifest.PACKAGE_NAME}.data-breakpoint.remove-all`;
 
     protected messenger: Messenger;
@@ -147,6 +148,10 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
             vscode.commands.registerCommand(MemoryWebview.SetDataBreakpointReadWriteCommandType, (ctx: WebviewContext) =>
                 this.onSetDataBreakpointCommand(ctx, 'readWrite')),
             vscode.commands.registerCommand(MemoryWebview.RemoveDataBreakpointCommandType, (ctx: WebviewContext) => this.onRemoveDataBreakpointCommand(ctx)),
+            vscode.commands.registerCommand(MemoryWebview.InspectDataBreakpointCommandType, () => {
+                // Same approach is also used for "Inspect Context Keys"
+                console.log('[Breakpoints]:', 'Logging all data breakpoints', this.breakpointTracker.dataBreakpoints);
+            }),
             vscode.commands.registerCommand(MemoryWebview.RemoveAllDataBreakpointCommandType, (ctx: WebviewContext) => this.onRemoveDataBreakpointCommand(ctx, true)),
         );
     };
