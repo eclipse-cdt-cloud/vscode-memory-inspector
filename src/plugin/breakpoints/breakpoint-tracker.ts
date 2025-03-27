@@ -38,6 +38,9 @@ export class BreakpointTracker {
     protected _onSetDataBreakpointResponse = new vscode.EventEmitter<DebugProtocol.SetDataBreakpointsResponse>();
     readonly onSetDataBreakpointResponse = this._onSetDataBreakpointResponse.event;
 
+    protected _onDataBreakpointsPreferenceChanged = new vscode.EventEmitter<boolean>();
+    readonly onDataBreakpointsPreferenceChanged = this._onDataBreakpointsPreferenceChanged.event;
+
     protected _onStopped = new vscode.EventEmitter<SessionStoppedEvent>();
     readonly onStopped = this._onStopped.event;
 
@@ -77,13 +80,17 @@ export class BreakpointTracker {
                 this.onConfigurationChange();
             }
         });
+
+        this.onDataBreakpointsPreferenceChanged(() => {
+            this.fireDataBreakpoints();
+        });
     }
 
     protected onConfigurationChange(): void {
         const configuration = vscode.workspace.getConfiguration(manifest.PACKAGE_NAME);
         const value = configuration.get<boolean>(manifest.CONFIG_EXPERIMENTAL_DATA_BREAKPOINTS);
         this._isEnabled = !!value;
-        this.fireDataBreakpoints();
+        this._onDataBreakpointsPreferenceChanged.fire(this._isEnabled);
     }
 
     setInternal(internalBreakpoints: SetDataBreakpointsResult['breakpoints']): void {
@@ -92,14 +99,14 @@ export class BreakpointTracker {
         const { external, internal } = this._dataBreakpoints;
         const ids = internalBreakpoints.map(bp => bp.id);
         for (let i = 0; i < external.length; i++) {
-            const tbp = external[i];
-            if (ids.includes(tbp.response.id)) {
-                tbp.type = 'internal';
-                internal.push(tbp);
+            const bp = external[i];
+            if (ids.includes(bp.response.id)) {
+                bp.type = 'internal';
+                internal.push(bp);
             }
         }
 
-        this._dataBreakpoints.external = external.filter(tbp => !ids.includes(tbp.response.id));
+        this._dataBreakpoints.external = external.filter(bp => !ids.includes(bp.response.id));
         this.fireDataBreakpoints();
     }
 

@@ -32,15 +32,6 @@
   outline-offset: -1px;
 }
 
-.memory-inspector-table .data-breakpoint {
-  outline: 1px solid var(--vscode-debugIcon-breakpointForeground);
-  outline-offset: 1px;
-}
-
-.memory-inspector-table .data-breakpoint.data-breakpoint-external {
-  outline-style: dashed;
-}
-
 .memory-inspector-table tbody .column-address {
   position: relative;
 }
@@ -254,6 +245,7 @@
 [data-column="ascii"][role="group"] {
   padding: 4px 12px;
   display: flex;
+  align-items: center;
   outline-offset: -1px;
 }
 
@@ -300,4 +292,14 @@
 .p-datatable .p-datatable-tbody > tr > td.p-highlight:has(> .selected) {
   background: transparent;
   outline: none;
+}
+
+/* == Data Breakpoint == */
+
+.memory-inspector-table .data-breakpoint {
+  outline: 1px solid var(--vscode-debugIcon-breakpointForeground);
+}
+
+.memory-inspector-table .data-breakpoint.data-breakpoint-external {
+  outline-style: dashed;
 }

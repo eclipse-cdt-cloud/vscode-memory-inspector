@@ -27,6 +27,14 @@ export class BreakpointProvider {
                 breakpoints: this.breakpointTracker.internalDataBreakpoints.map(bp => bp.breakpoint)
             });
         });
+        this.breakpointTracker.onDataBreakpointsPreferenceChanged(isEnabled => {
+            if (!isEnabled) {
+                // Use only external breakpoints
+                this.setMemoryInspectorDataBreakpoint({
+                    breakpoints: this.breakpointTracker.externalDataBreakpoints.map(bp => bp.breakpoint)
+                });
+            }
+        });
     }
 
     async setMemoryInspectorDataBreakpoint(args: SetDataBreakpointsArguments): Promise<SetDataBreakpointsResult> {
