@@ -25,10 +25,15 @@ export class ContextTracker {
     constructor(protected sessionTracker: SessionTracker) {
         this.sessionTracker.onSessionEvent(event => this.onSessionEvent(event));
 
-        this.onConfigurationChange();
+        this.onDataBreakpointPreferenceChange();
+        this.onLoggingVerbosityPreferenceChange();
+
         vscode.workspace.onDidChangeConfiguration(event => {
             if (event.affectsConfiguration(manifest.CONFIG_EXPERIMENTAL_DATA_BREAKPOINTS_PREFERENCE)) {
-                this.onConfigurationChange();
+                this.onDataBreakpointPreferenceChange();
+            }
+            if (event.affectsConfiguration(manifest.CONFIG_LOGGING_VERBOSITY_PREFERENCE)) {
+                this.onLoggingVerbosityPreferenceChange();
             }
         });
     }
@@ -40,9 +45,17 @@ export class ContextTracker {
         }
     }
 
-    onConfigurationChange(): void {
+    private onDataBreakpointPreferenceChange(): void {
+        this.onPreferenceChange(manifest.CONFIG_EXPERIMENTAL_DATA_BREAKPOINTS, manifest.CONFIG_EXPERIMENTAL_DATA_BREAKPOINTS_PREFERENCE);
+    }
+
+    private onLoggingVerbosityPreferenceChange(): void {
+        this.onPreferenceChange(manifest.CONFIG_LOGGING_VERBOSITY, manifest.CONFIG_LOGGING_VERBOSITY_PREFERENCE);
+    }
+
+    private onPreferenceChange(preferenceKey: string, contextKey: string): void {
         const configuration = vscode.workspace.getConfiguration(manifest.PACKAGE_NAME);
-        const value = configuration.get<boolean>(manifest.CONFIG_EXPERIMENTAL_DATA_BREAKPOINTS);
-        vscode.commands.executeCommand('setContext', manifest.CONFIG_EXPERIMENTAL_DATA_BREAKPOINTS_PREFERENCE, value);
+        const value = configuration.get<boolean>(preferenceKey);
+        vscode.commands.executeCommand('setContext', contextKey, value);
     }
 }

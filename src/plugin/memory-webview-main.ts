@@ -150,7 +150,7 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
             vscode.commands.registerCommand(MemoryWebview.RemoveDataBreakpointCommandType, (ctx: WebviewContext) => this.onRemoveDataBreakpointCommand(ctx)),
             vscode.commands.registerCommand(MemoryWebview.InspectDataBreakpointCommandType, () => {
                 // Same approach is also used for "Inspect Context Keys"
-                console.log('[Breakpoints]:', 'Logging all data breakpoints', this.breakpointTracker.dataBreakpoints);
+                outputChannelLogger.info('[Breakpoints]:', 'Logging all data breakpoints', this.breakpointTracker.dataBreakpoints);
             }),
             vscode.commands.registerCommand(MemoryWebview.RemoveAllDataBreakpointCommandType, (ctx: WebviewContext) => this.onRemoveDataBreakpointCommand(ctx, true)),
         );
