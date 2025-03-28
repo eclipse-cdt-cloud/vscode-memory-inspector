@@ -32,6 +32,44 @@
   outline-offset: -1px;
 }
 
+.memory-inspector-table tbody .column-address {
+  position: relative;
+}
+
+.memory-inspector-table tbody .address-status {
+  position: absolute;
+  left: -1px;
+  align-items: center;
+  display: flex;
+  justify-content: center;
+}
+
+.memory-inspector-table tbody .address-status.codicon {
+  font-size: 12px;
+}
+
+.memory-inspector-table tbody .address-status.codicon-debug-breakpoint {
+  color: var(--vscode-debugIcon-breakpointForeground);
+}
+
+.memory-inspector-table tbody .address-status.codicon-debug-stackframe {
+  color: var(--vscode-debugIcon-breakpointCurrentStackframeForeground);
+}
+
+.memory-inspector-table
+  tbody
+  .address-status.codicon-debug-breakpoint.codicon-debug-stackframe:after {
+  content: "\ea71";
+  position: absolute;
+  left: 3px;
+  font-size: 6px;
+  color: var(--vscode-debugIcon-breakpointForeground);
+}
+
+.memory-inspector-table tbody .debug-hit {
+  outline-color: var(--vscode-debugIcon-breakpointCurrentStackframeForeground);
+}
+
 /* == MoreMemorySelect == */
 
 .bytes-select {
@@ -92,7 +130,7 @@
 
 .memory-inspector-table span.p-column-resizer {
   border-right: 2px solid var(--vscode-editor-lineHighlightBorder);
-  transition: border-right .1s ease-out;
+  transition: border-right 0.1s ease-out;
 }
 
 .memory-inspector-table span.p-column-resizer:hover {
@@ -113,7 +151,7 @@
 /* Basic hover formatting (copied from Monaco hovers) */
 .memory-hover {
   min-width: fit-content;
-  max-width: var(--vscode-hover-maxWidth,500px);
+  max-width: var(--vscode-hover-maxWidth, 500px);
   border: 1px solid var(--vscode-editorHoverWidget-border);
   border-radius: 3px;
 
@@ -129,24 +167,28 @@
   border-collapse: collapse;
   border-style: hidden;
 }
+
 .memory-hover table caption {
   padding: 4px;
   border-bottom: 1px solid var(--vscode-editorHoverWidget-border);
 }
+
 .memory-hover td {
   border: 1px solid var(--vscode-editorHoverWidget-border);
   padding: 2px 8px;
 }
+
 .memory-hover td:first-child {
   text-align: right;
 }
 
 /* Colors for the hover fields */
-.memory-hover .label-value-pair>.label {
-    color: var(--vscode-debugTokenExpression-string);
-    white-space: nowrap;
+.memory-hover .label-value-pair > .label {
+  color: var(--vscode-debugTokenExpression-string);
+  white-space: nowrap;
 }
-.memory-hover .label-value-pair>.value {
+
+.memory-hover .label-value-pair > .value {
   color: var(--vscode-debugTokenExpression-number);
 }
 
@@ -154,9 +196,11 @@
 .memory-hover .address-hover .primary {
   background-color: var(--vscode-list-hoverBackground);
 }
+
 .memory-hover table caption {
   color: var(--vscode-symbolIcon-variableForeground);
 }
+
 .memory-hover .address-hover .value.utf8,
 .memory-hover .data-hover .value.utf8,
 .memory-hover .variable-hover .value.type {
@@ -171,26 +215,29 @@
 }
 
 .p-datatable .p-datatable-tbody > tr > td[data-column="data"][role="cell"],
-.p-datatable .p-datatable-tbody > tr > td[data-column="variables"][role="cell"] {
+.p-datatable
+  .p-datatable-tbody
+  > tr
+  > td[data-column="variables"][role="cell"] {
   padding: 0 12px;
   vertical-align: middle;
 }
 
 /* Group Styles */
 
-[role='group']:hover {
+[role="group"]:hover {
   border-bottom: 0px;
   outline: 1px solid var(--vscode-list-focusOutline);
 }
 
-[role='group'][data-group-selected='true'] {
+[role="group"][data-group-selected="true"] {
   background: var(--vscode-list-activeSelectionBackground);
   color: var(--vscode-list-activeSelectionForeground);
   outline: 1px solid var(--vscode-list-activeSelectionBackground);
 }
 
-[role='group']:focus-visible,
-[role='group']:focus {
+[role="group"]:focus-visible,
+[role="group"]:focus {
   outline: 1px solid var(--vscode-list-focusOutline);
 }
 
@@ -198,11 +245,12 @@
 [data-column="ascii"][role="group"] {
   padding: 4px 12px;
   display: flex;
+  align-items: center;
   outline-offset: -1px;
 }
 
 [data-column="data"][role="group"],
-[data-column="variables"][role="group"] {  
+[data-column="variables"][role="group"] {
   padding: 4px 1px;
   line-height: 23.5px;
   outline-offset: -1px;
@@ -241,7 +289,17 @@
   text-indent: 2px;
 }
 
-.p-datatable .p-datatable-tbody > tr > td.p-highlight:has(>.selected) {
+.p-datatable .p-datatable-tbody > tr > td.p-highlight:has(> .selected) {
   background: transparent;
   outline: none;
+}
+
+/* == Data Breakpoint == */
+
+.memory-inspector-table .data-breakpoint {
+  outline: 1px solid var(--vscode-debugIcon-breakpointForeground);
+}
+
+.memory-inspector-table .data-breakpoint.data-breakpoint-external {
+  outline-style: dashed;
 }

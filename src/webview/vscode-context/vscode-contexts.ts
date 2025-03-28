@@ -14,7 +14,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-import { BigIntVariableRange } from '../../common/memory-range';
 import { WebviewContext } from '../../common/webview-context';
 /**
  * Custom data property used by VSCode to provide additional context info when opening a webview context menu
@@ -62,15 +61,6 @@ export function createColumnVscodeContext(column: string): VscodeContext {
 
 export function createAppVscodeContext(context: Omit<WebviewContext, 'webviewSection'>): VscodeContext {
     return createVscodeContext({ ...context, webviewSection: 'app', preventDefaultContextMenuItems: true });
-}
-
-export function createGroupVscodeContext(startAddress: BigInt, length: number): VscodeContext {
-    return createVscodeContext({ memoryData: { group: { startAddress, length } } });
-}
-
-export function createVariableVscodeContext(variable: BigIntVariableRange): VscodeContext {
-    const { name, type, value, isPointer } = variable;
-    return createVscodeContext({ variable: { name, type, value, isPointer } });
 }
 
 function replacerForBigInt(_: string, value: unknown): unknown {

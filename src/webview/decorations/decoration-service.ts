@@ -16,11 +16,13 @@
 
 import { compareBigInt, determineRelationship, isWithin, RangeRelationship } from '../../common/memory-range';
 import { EventEmitter, IEvent } from '../utils/events';
-import { areDecorationsEqual, Decoration, Disposable, UpdateExecutor } from '../utils/view-types';
+import { areDecorationsEqual, Decoration, Disposable, LocatedDecoration, UpdateExecutor } from '../utils/view-types';
 
 export interface Decorator extends Partial<UpdateExecutor> {
     readonly id: string;
     readonly onDidChange: IEvent<Decoration[]>;
+
+    decorateFor?(location: string, context: unknown): LocatedDecoration | undefined;
 }
 
 class DecorationService {
@@ -101,6 +103,7 @@ class DecorationService {
 
     protected currentDecorationIndex = 0;
     protected lastCall?: bigint;
+
     getDecoration(address: bigint): Decoration | undefined {
         if (this.currentDecorations.length === 0) { return undefined; }
         if (this.lastCall === undefined || address < this.lastCall) { this.currentDecorationIndex = 0; }
@@ -110,6 +113,20 @@ class DecorationService {
             && address >= this.currentDecorations[this.currentDecorationIndex].range.endAddress) { this.currentDecorationIndex++; }
         this.currentDecorationIndex = Math.min(this.currentDecorationIndex, this.currentDecorations.length - 1);
         return isWithin(address, this.currentDecorations[this.currentDecorationIndex].range) ? this.currentDecorations[this.currentDecorationIndex] : undefined;
+    }
+
+    getDecorationFor(location: string, context: unknown): LocatedDecoration | undefined {
+        return Array.from(this.decorators.values())
+            .map(contribution => contribution.decorateFor?.(location, context))
+            .reduce((previous, current) => {
+                if (previous && current) {
+                    previous.classNames.push(...current.classNames);
+                }
+
+                return previous;
+            }, {
+                classNames: []
+            } as LocatedDecoration);
     }
 
     getUpdateExecutors(): UpdateExecutor[] {

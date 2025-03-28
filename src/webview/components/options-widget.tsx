@@ -31,7 +31,7 @@ import { tryToNumber } from '../../common/typescript';
 import { TableRenderOptions } from '../columns/column-contribution-service';
 import { DEFAULT_MEMORY_DISPLAY_CONFIGURATION } from '../memory-webview-view';
 import { AddressPaddingOptions, DEFAULT_READ_ARGUMENTS, MemoryState, SerializedTableRenderOptions } from '../utils/view-types';
-import { createOverlayMoreActionsVscodeContext, createSectionVscodeContext } from '../utils/vscode-contexts';
+import { createOverlayMoreActionsVscodeContext, createSectionVscodeContext } from '../vscode-context/vscode-contexts';
 import { MultiSelectBar } from './multi-select';
 
 export interface OptionsWidgetProps

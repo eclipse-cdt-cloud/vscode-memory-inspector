@@ -46,10 +46,14 @@ import {
 } from '../common/messaging';
 import { Change, hasChanged, hasChangedTo } from '../common/typescript';
 import { MemoryDisplaySettings, MemoryViewSettings } from '../common/webview-configuration';
+import { BreakpointDecorator } from './breakpoints/breakpoint-decorator';
+import { breakpointService } from './breakpoints/breakpoint-service';
+import { BreakpointColumnVscodeContextContribution } from './breakpoints/breakpoint-vscode-context';
 import { AddressColumn } from './columns/address-column';
 import { AsciiColumn } from './columns/ascii-column';
 import { columnContributionService, ColumnStatus } from './columns/column-contribution-service';
 import { DataColumn } from './columns/data-column';
+import { DataColumnVscodeContextContribution } from './columns/data-column-vscode-context';
 import { MemoryWidget } from './components/memory-widget';
 import { decorationService } from './decorations/decoration-service';
 import { AddressHover } from './hovers/address-hover';
@@ -58,7 +62,9 @@ import { HoverService, hoverService } from './hovers/hover-service';
 import { VariableHover } from './hovers/variable-hover';
 import { AddressPaddingOptions, Decoration, DEFAULT_READ_ARGUMENTS, MemoryState } from './utils/view-types';
 import { variableDecorator } from './variables/variable-decorations';
+import { VariableVscodeContextContribution } from './variables/variable-vscode-context';
 import { messenger } from './view-messenger';
+import { vsCodeContextContributionService } from './vscode-context/vscode-context-contribution-service';
 
 export interface MemoryAppState extends MemoryState, MemoryViewSettings {
     sessions: Session[];
@@ -107,9 +113,13 @@ class App extends React.Component<{}, MemoryAppState> {
         columnContributionService.register(variableDecorator);
         columnContributionService.register(new AsciiColumn());
         decorationService.register(variableDecorator);
+        decorationService.register(new BreakpointDecorator());
         hoverService.register(new AddressHover());
         hoverService.register(new DataHover());
         hoverService.register(new VariableHover());
+        vsCodeContextContributionService.register(new VariableVscodeContextContribution());
+        vsCodeContextContributionService.register(new DataColumnVscodeContextContribution());
+        vsCodeContextContributionService.register(new BreakpointColumnVscodeContextContribution());
         this.state = {
             messageParticipant: { type: 'webview', webviewId: '' },
             title: 'Memory',
@@ -149,6 +159,9 @@ class App extends React.Component<{}, MemoryAppState> {
         messenger.onRequest(getWebviewSelectionType, () => this.getWebviewSelection());
         messenger.onNotification(showAdvancedOptionsType, () => this.showAdvancedOptions());
         messenger.sendNotification(readyType, HOST_EXTENSION, undefined);
+
+        breakpointService.activate();
+        breakpointService.onDidChange(() => this.forceUpdate());
         this.updatePeriodicRefresh();
     }
 
@@ -320,7 +333,10 @@ class App extends React.Component<{}, MemoryAppState> {
         try {
             const response = await messenger.sendRequest(readMemoryType, HOST_EXTENSION, memoryOptions);
             await Promise.all(Array.from(
-                new Set(columnContributionService.getUpdateExecutors().concat(decorationService.getUpdateExecutors())),
+                new Set(columnContributionService.getUpdateExecutors()
+                    .concat(decorationService.getUpdateExecutors())
+                    .concat(breakpointService)
+                ),
                 executor => executor.fetchData(memoryOptions)
             ));
 

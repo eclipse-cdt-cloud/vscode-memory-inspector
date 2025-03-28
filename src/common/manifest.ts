@@ -21,6 +21,7 @@ export const EDITOR_NAME = `${PACKAGE_NAME}.inspect`;
 
 // Misc
 export const CONFIG_LOGGING_VERBOSITY = 'loggingVerbosity';
+export const CONFIG_LOGGING_VERBOSITY_PREFERENCE = `${PACKAGE_NAME}.${CONFIG_LOGGING_VERBOSITY}`;
 export const DEFAULT_LOGGING_VERBOSITY = 'warn';
 export const CONFIG_DEBUG_TYPES = 'debugTypes';
 export const DEFAULT_DEBUG_TYPES = ['gdb', 'embedded-debug', 'arm-debugger'];
@@ -80,3 +81,8 @@ export const DEFAULT_VISIBLE_COLUMNS = [CONFIG_SHOW_VARIABLES_COLUMN, CONFIG_SHO
 
 // Extension Settings
 export const CONFIG_ALLOW_DEBUGGER_OVERWRITE_SETTINGS = 'allowDebuggerOverwriteSettings';
+
+// Breakpoints
+export const CONFIG_EXPERIMENTAL_DATA_BREAKPOINTS = 'dataBreakpoints';
+export const CONFIG_EXPERIMENTAL_DATA_BREAKPOINTS_PREFERENCE = `${PACKAGE_NAME}.${CONFIG_EXPERIMENTAL_DATA_BREAKPOINTS}`;
+export const DEFAULT_EXPERIMENTAL_DATA_BREAKPOINTS = false;

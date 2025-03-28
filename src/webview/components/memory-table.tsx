@@ -33,7 +33,7 @@ import { ColumnRenderProps, TableRenderOptions } from '../columns/column-contrib
 import { DataColumn } from '../columns/data-column';
 import type { HoverService } from '../hovers/hover-service';
 import { Decoration, isTrigger } from '../utils/view-types';
-import { createColumnVscodeContext, createSectionVscodeContext } from '../utils/vscode-contexts';
+import { createColumnVscodeContext, createSectionVscodeContext } from '../vscode-context/vscode-contexts';
 
 export interface MoreMemorySelectProps {
     activeReadArguments: Required<ReadMemoryArguments>;
@@ -151,6 +151,14 @@ export interface MemoryRowData {
     rowIndex: number;
     startAddress: bigint;
     endAddress: bigint;
+}
+
+export namespace MemoryRowData {
+    export function is(value: unknown): value is MemoryRowData {
+        return typeof value === 'object' && typeof (value as MemoryRowData).rowIndex === 'number'
+            && typeof (value as MemoryRowData).startAddress === 'bigint'
+            && typeof (value as MemoryRowData).endAddress === 'bigint';
+    }
 }
 
 export interface MemoryTableSelection {

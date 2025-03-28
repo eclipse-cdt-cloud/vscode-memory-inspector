@@ -17,7 +17,8 @@
 import type { DebugProtocol } from '@vscode/debugprotocol';
 import type { NotificationType, RequestType } from 'vscode-messenger-common';
 import { URI } from 'vscode-uri';
-import { DebugRequestTypes } from './debug-requests';
+import type { ExperimentalDataBreakpoints } from './breakpoint';
+import { DebugEvents, DebugRequestTypes } from './debug-requests';
 import { VariablesView } from './external-views';
 import type { VariableRange, WrittenMemory } from './memory-range';
 import { MemoryViewSettings } from './webview-configuration';
@@ -31,6 +32,9 @@ export type ReadMemoryResult = DebugRequestTypes['readMemory'][1];
 
 export type WriteMemoryArguments = DebugRequestTypes['writeMemory'][0];
 export type WriteMemoryResult = DebugRequestTypes['writeMemory'][1];
+
+export type StoppedEvent = DebugEvents['stopped'];
+export type ContinuedEvent = DebugEvents['continued'];
 
 export type StoreMemoryArguments = MemoryOptions & { proposedOutputName?: string } | VariablesView.IVariablesContext | WebviewContext;
 export type StoreMemoryResult = void;
@@ -58,6 +62,9 @@ export const memoryWrittenType: NotificationType<WrittenMemory> = { method: 'mem
 export const sessionsChangedType: NotificationType<Session[]> = { method: 'sessionsChanged' };
 export const setSessionType: NotificationType<string> = { method: 'setSession' };
 export const sessionContextChangedType: NotificationType<SessionContext> = { method: 'sessionContextChanged' };
+export const setExperimentalBreakpointType: NotificationType<ExperimentalDataBreakpoints> = { method: 'setExperimentalBreakpoints' };
+export const notifyStoppedType: NotificationType<StoppedEvent> = { method: 'notifyStoppedType' };
+export const notifyContinuedType: NotificationType<ContinuedEvent> = { method: 'notifyContinuedType' };
 
 // Requests
 export const setOptionsType: RequestType<MemoryOptions, void> = { method: 'setOptions' };

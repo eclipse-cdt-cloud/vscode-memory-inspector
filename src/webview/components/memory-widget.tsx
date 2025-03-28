@@ -24,7 +24,7 @@ import { MemoryDataDisplaySettings } from '../../common/webview-configuration';
 import { ColumnStatus } from '../columns/column-contribution-service';
 import { HoverService } from '../hovers/hover-service';
 import { Decoration, MemoryState } from '../utils/view-types';
-import { createAppVscodeContext, VscodeContext } from '../utils/vscode-contexts';
+import { createAppVscodeContext, VscodeContext } from '../vscode-context/vscode-contexts';
 import { MemoryTable } from './memory-table';
 import { OptionsWidget } from './options-widget';
 

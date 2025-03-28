@@ -17,6 +17,8 @@
 import * as vscode from 'vscode';
 import { AdapterRegistry } from '../../plugin/adapter-registry/adapter-registry';
 import { CAdapter } from '../../plugin/adapter-registry/c-adapter';
+import { BreakpointProvider } from '../../plugin/breakpoints/breakpoint-provider';
+import { BreakpointTracker } from '../../plugin/breakpoints/breakpoint-tracker';
 import { ContextTracker } from '../../plugin/context-tracker';
 import { MemoryProviderManager } from '../../plugin/memory-provider-manager';
 import { MemoryStorage } from '../../plugin/memory-storage';
@@ -27,9 +29,13 @@ export const activate = async (context: vscode.ExtensionContext): Promise<Adapte
     const registry = new AdapterRegistry();
     const sessionTracker = new SessionTracker();
     new ContextTracker(sessionTracker);
+
+    const breakpointTracker = new BreakpointTracker(sessionTracker);
+    const breakpointProvider = new BreakpointProvider(sessionTracker, breakpointTracker);
+
     const memoryProviderManager = new MemoryProviderManager(registry, sessionTracker);
     const memoryStorage = new MemoryStorage(sessionTracker, memoryProviderManager);
-    const memoryView = new MemoryWebview(context.extensionUri, memoryProviderManager, sessionTracker, memoryStorage);
+    const memoryView = new MemoryWebview(context.extensionUri, memoryProviderManager, sessionTracker, memoryStorage, breakpointTracker, breakpointProvider);
     const cAdapter = new CAdapter(registry);
 
     registry.activate(context);
