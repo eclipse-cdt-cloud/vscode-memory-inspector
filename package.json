@@ -93,6 +93,42 @@
         "category": "Memory"
       },
       {
+        "command": "memory-inspector.data-breakpoint.set.read",
+        "title": "Break on Value Read",
+        "enablement": "memory-inspector.canWrite && memory-inspector.dataBreakpoints",
+        "category": "Memory"
+      },
+      {
+        "command": "memory-inspector.data-breakpoint.set.readWrite",
+        "title": "Break on Value Access",
+        "enablement": "memory-inspector.canWrite && memory-inspector.dataBreakpoints",
+        "category": "Memory"
+      },
+      {
+        "command": "memory-inspector.data-breakpoint.set.write",
+        "title": "Break on Value Change",
+        "enablement": "memory-inspector.canWrite && memory-inspector.dataBreakpoints",
+        "category": "Memory"
+      },
+      {
+        "command": "memory-inspector.data-breakpoint.remove",
+        "title": "Remove Breakpoint",
+        "enablement": "memory-inspector.canWrite && memory-inspector.dataBreakpoints",
+        "category": "Memory"
+      },
+      {
+        "command": "memory-inspector.data-breakpoint.remove-all",
+        "title": "Remove All Memory Inspector Breakpoints",
+        "enablement": "memory-inspector.canWrite && memory-inspector.dataBreakpoints",
+        "category": "Memory"
+      },
+      {
+        "command": "memory-inspector.data-breakpoint.inspect-breakpoints",
+        "title": "Inspect Breakpoints",
+        "enablement": "memory-inspector.canWrite && memory-inspector.dataBreakpoints && (memory-inspector.loggingVerbosity == 'debug' || memory-inspector.loggingVerbosity == 'info')",
+        "category": "Memory"
+      },
+      {
         "command": "memory-inspector.toggle-variables-column",
         "title": "Toggle Variables Column",
         "category": "Memory",
@@ -156,6 +192,22 @@
         },
         {
           "command": "memory-inspector.apply-file"
+        },
+        {
+          "command": "memory-inspector.data-breakpoint.set.read",
+          "when": "false"
+        },
+        {
+          "command": "memory-inspector.data-breakpoint.set.readWrite",
+          "when": "false"
+        },
+        {
+          "command": "memory-inspector.data-breakpoint.set.write",
+          "when": "false"
+        },
+        {
+          "command": "memory-inspector.data-breakpoint.remove",
+          "when": "false"
         }
       ],
       "debug/variables/context": [
@@ -237,6 +289,31 @@
           "command": "memory-inspector.reset-display-options",
           "group": "a_reset@2",
           "when": "webviewId === memory-inspector.memory && optionsMenu"
+        },
+        {
+          "command": "memory-inspector.data-breakpoint.set.read",
+          "group": "breakpoints@1",
+          "when": "memory-inspector.dataBreakpoints && webviewId === memory-inspector.memory && memory-inspector.breakpoint.isBreakable"
+        },
+        {
+          "command": "memory-inspector.data-breakpoint.set.write",
+          "group": "breakpoints@2",
+          "when": "memory-inspector.dataBreakpoints && webviewId === memory-inspector.memory && memory-inspector.breakpoint.isBreakable"
+        },
+        {
+          "command": "memory-inspector.data-breakpoint.set.readWrite",
+          "group": "breakpoints@3",
+          "when": "memory-inspector.dataBreakpoints && webviewId === memory-inspector.memory && memory-inspector.breakpoint.isBreakable"
+        },
+        {
+          "command": "memory-inspector.data-breakpoint.remove",
+          "group": "breakpoints@4",
+          "when": "memory-inspector.dataBreakpoints && webviewId === memory-inspector.memory && memory-inspector.breakpoint.type === 'internal'"
+        },
+        {
+          "command": "memory-inspector.data-breakpoint.remove-all",
+          "group": "breakpoints@5",
+          "when": "memory-inspector.dataBreakpoints && webviewId === memory-inspector.memory && memory-inspector.breakpoint.type === 'internal'"
         }
       ]
     },
@@ -278,6 +355,14 @@
             "arm-debugger"
           ],
           "description": "C-based debuggers to activate (requires debug session restart)"
+        },
+        "memory-inspector.dataBreakpoints": {
+          "type": "boolean",
+          "default:": false,
+          "description": "Enable data breakpoint support.",
+          "tags": [
+            "experimental"
+          ]
         },
         "memory-inspector.refreshOnStop": {
           "type": "string",

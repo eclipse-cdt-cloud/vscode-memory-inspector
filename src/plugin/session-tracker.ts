@@ -13,11 +13,11 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
-import { DebugProtocol } from '@vscode/debugprotocol';
+import type { DebugProtocol } from '@vscode/debugprotocol';
 import * as vscode from 'vscode';
-import { isDebugEvent, isDebugRequest, isDebugResponse } from '../common/debug-requests';
+import { isDebugEvent, isDebugRequest, isDebugRequestType, isDebugResponse, isDebugResponseType } from '../common/debug-requests';
 import { WrittenMemory } from '../common/memory-range';
-import type { Session } from '../common/messaging';
+import type { ContinuedEvent, Session, StoppedEvent } from '../common/messaging';
 
 export interface SessionInfo {
     raw: vscode.DebugSession;
@@ -25,6 +25,16 @@ export interface SessionInfo {
     clientCapabilities?: DebugProtocol.InitializeRequestArguments;
     active?: boolean;
     stopped?: boolean;
+}
+
+export interface SessionRequest {
+    session: SessionInfo;
+    request: DebugProtocol.Request
+}
+
+export interface SessionResponse {
+    session: SessionInfo;
+    response: DebugProtocol.Response
 }
 
 export interface SessionEvent {
@@ -46,11 +56,13 @@ export interface SessionMemoryWrittenEvent extends SessionEvent {
 export interface SessionStoppedEvent extends SessionEvent {
     event: 'stopped';
     session: SessionInfo;
+    data: StoppedEvent;
 }
 
 export interface SessionContinuedEvent extends SessionEvent {
     event: 'continued';
     session: SessionInfo;
+    data: ContinuedEvent
 }
 
 export interface SessionsChangedEvent extends SessionEvent {
@@ -80,6 +92,10 @@ export class SessionTracker implements vscode.DebugAdapterTrackerFactory {
 
     private _onSessionEvent = new vscode.EventEmitter<SessionEvent>();
     public readonly onSessionEvent = this._onSessionEvent.event;
+    private _onSessionRequest = new vscode.EventEmitter<SessionRequest>();
+    public readonly onSessionRequest = this._onSessionRequest.event;
+    private _onSessionResponse = new vscode.EventEmitter<SessionResponse>();
+    public readonly onSessionResponse = this._onSessionResponse.event;
 
     activate(context: vscode.ExtensionContext): void {
         context.subscriptions.push(
@@ -120,6 +136,14 @@ export class SessionTracker implements vscode.DebugAdapterTrackerFactory {
         this._onSessionEvent.fire({ event, session: this.sessionInfo(session), data });
     }
 
+    fireSessionRequest(session: vscode.DebugSession, data: DebugProtocol.Request): void {
+        this._onSessionRequest.fire({ session: this.sessionInfo(session), request: data });
+    }
+
+    fireSessionResponse(session: vscode.DebugSession, data: DebugProtocol.Response): void {
+        this._onSessionResponse.fire({ session: this.sessionInfo(session), response: data });
+    }
+
     protected async sessionWillStart(session: vscode.DebugSession): Promise<void> {
         this._sessionInfo.set(session.id, { raw: session });
         this.fireSessionEvent(session, 'sessions-changed', undefined);
@@ -134,6 +158,10 @@ export class SessionTracker implements vscode.DebugAdapterTrackerFactory {
         if (isDebugRequest('initialize', message)) {
             this.sessionInfo(session).clientCapabilities = message.arguments;
         }
+
+        if (isDebugRequestType(message)) {
+            this.fireSessionRequest(session, message);
+        }
     }
 
     protected adapterMessageReceived(session: vscode.DebugSession, message: unknown): void {
@@ -141,18 +169,27 @@ export class SessionTracker implements vscode.DebugAdapterTrackerFactory {
             this.sessionInfo(session).debugCapabilities = message.body;
         } else if (isDebugEvent('stopped', message)) {
             this.sessionInfo(session).stopped = true;
-            this.fireSessionEvent(session, 'stopped', undefined);
+            this.fireSessionEvent(session, 'stopped', message);
         } else if (isDebugEvent('continued', message)) {
             this.sessionInfo(session).stopped = false;
-            this.fireSessionEvent(session, 'continued', undefined);
+            this.fireSessionEvent(session, 'continued', message);
         } else if (isDebugEvent('memory', message)) {
             this.fireSessionEvent(session, 'memory-written', message.body);
+        }
+
+        if (isDebugResponseType(message)) {
+            this.fireSessionResponse(session, message);
         }
     }
 
     public getSessions(): Session[] {
         return Array.from(this._sessionInfo.values())
             .map(info => ({ id: info.raw.id, name: info.raw.name }));
+    }
+
+    getActiveSession(): vscode.DebugSession | undefined {
+        return Array.from(this._sessionInfo.values())
+            .find(info => info.active)?.raw;
     }
 
     validSession(sessionId: string | undefined): boolean {

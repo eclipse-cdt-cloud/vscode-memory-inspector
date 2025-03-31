@@ -41,6 +41,14 @@ export interface Decoration {
     classNames: string[];
 }
 
+/**
+ * A decoration that is located in a specific location in the view
+ * instead of being associated with a specific range.
+ */
+export interface LocatedDecoration {
+    classNames: string[];
+}
+
 export function areDecorationsEqual(one: Decoration, other: Decoration): boolean {
     return areRangesEqual(one.range, other.range) && deepequal(one.style, other.style);
 }
