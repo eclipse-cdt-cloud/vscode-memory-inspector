@@ -32,7 +32,7 @@ import { MemoryDataDisplaySettings, ScrollingBehavior } from '../../common/webvi
 import { ColumnRenderProps, TableRenderOptions } from '../columns/column-contribution-service';
 import { DataColumn } from '../columns/data-column';
 import type { HoverService } from '../hovers/hover-service';
-import { Decoration, isTrigger } from '../utils/view-types';
+import { isTrigger } from '../utils/view-types';
 import { createColumnVscodeContext, createSectionVscodeContext } from '../vscode-context/vscode-contexts';
 
 export interface MoreMemorySelectProps {
@@ -133,7 +133,6 @@ interface MemoryTableProps extends TableRenderOptions, MemoryDataDisplaySettings
     configuredReadArguments: Required<ReadMemoryArguments>;
     activeReadArguments: Required<ReadMemoryArguments>;
     memory?: Memory;
-    decorations: Decoration[];
     effectiveAddressLength: number;
     hoverService: HoverService;
     fetchMemory(partialOptions?: Partial<ReadMemoryArguments>): Promise<void>;

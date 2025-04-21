@@ -31,9 +31,7 @@ class DecorationService {
     protected decorators = new Map<string, Decorator>();
     /** Represents the aggregation of all contributed decorations */
     protected currentDecorations = new Array<Decoration>();
-    get decorations(): Decoration[] {
-        return this.currentDecorations;
-    }
+
     register(contribution: Decorator): Disposable {
         this.decorators.set(contribution.id, contribution);
         const changeListener = contribution.onDidChange(newDecorations => {

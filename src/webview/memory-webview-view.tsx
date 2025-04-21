@@ -60,7 +60,7 @@ import { AddressHover } from './hovers/address-hover';
 import { DataHover } from './hovers/data-hover';
 import { HoverService, hoverService } from './hovers/hover-service';
 import { VariableHover } from './hovers/variable-hover';
-import { AddressPaddingOptions, Decoration, DEFAULT_READ_ARGUMENTS, MemoryState } from './utils/view-types';
+import { AddressPaddingOptions, DEFAULT_READ_ARGUMENTS, MemoryState } from './utils/view-types';
 import { variableDecorator } from './variables/variable-decorations';
 import { VariableVscodeContextContribution } from './variables/variable-vscode-context';
 import { messenger } from './view-messenger';
@@ -70,7 +70,6 @@ export interface MemoryAppState extends MemoryState, MemoryViewSettings {
     sessions: Session[];
     sessionContext: SessionContext;
     effectiveAddressLength: number;
-    decorations: Decoration[];
     hoverService: HoverService;
     columns: ColumnStatus[];
     isFrozen: boolean;
@@ -129,7 +128,6 @@ class App extends React.Component<{}, MemoryAppState> {
             effectiveAddressLength: 0,
             configuredReadArguments: initialReadArguments,
             activeReadArguments: initialReadArguments,
-            decorations: [],
             hoverService: hoverService,
             columns: columnContributionService.getColumns(),
             isMemoryFetching: false,
@@ -257,7 +255,6 @@ class App extends React.Component<{}, MemoryAppState> {
                 configuredReadArguments={this.state.configuredReadArguments}
                 activeReadArguments={this.state.activeReadArguments}
                 memory={this.state.memory}
-                decorations={this.state.decorations}
                 hoverService={this.state.hoverService}
                 columns={this.state.columns}
                 title={this.state.title}
@@ -341,7 +338,7 @@ class App extends React.Component<{}, MemoryAppState> {
             ));
 
             const memory = createMemoryFromRead(response);
-            this.setState({ memory, decorations: decorationService.decorations });
+            this.setState({ memory });
             messenger.sendRequest(setOptionsType, HOST_EXTENSION, memoryOptions);
         } catch (ex) {
             // Do not show old results if the current search provided no memory

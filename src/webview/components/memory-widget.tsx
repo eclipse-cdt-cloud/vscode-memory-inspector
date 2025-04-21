@@ -23,7 +23,7 @@ import { MemoryOptions, ReadMemoryArguments, SessionContext } from '../../common
 import { MemoryDataDisplaySettings } from '../../common/webview-configuration';
 import { ColumnStatus } from '../columns/column-contribution-service';
 import { HoverService } from '../hovers/hover-service';
-import { Decoration, MemoryState } from '../utils/view-types';
+import { MemoryState } from '../utils/view-types';
 import { createAppVscodeContext, VscodeContext } from '../vscode-context/vscode-contexts';
 import { MemoryTable } from './memory-table';
 import { OptionsWidget } from './options-widget';
@@ -37,7 +37,6 @@ interface MemoryWidgetProps extends MemoryDataDisplaySettings {
     activeReadArguments: Required<ReadMemoryArguments>;
     memory?: Memory;
     title: string;
-    decorations: Decoration[];
     hoverService: HoverService;
     columns: ColumnStatus[];
     effectiveAddressLength: number;
@@ -121,7 +120,6 @@ export class MemoryWidget extends React.Component<MemoryWidgetProps, MemoryWidge
                 ref={this.memoryTable}
                 configuredReadArguments={this.props.configuredReadArguments}
                 activeReadArguments={this.props.activeReadArguments}
-                decorations={this.props.decorations}
                 hoverService={this.props.hoverService}
                 columnOptions={this.props.columns.filter(candidate => candidate.active)}
                 memory={this.props.memory}
