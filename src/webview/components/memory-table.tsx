@@ -202,7 +202,7 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
     protected sectionMenuContext = createSectionVscodeContext('memoryTable');
 
     protected get datatableWrapper(): HTMLElement | undefined {
-        return this.datatableRef.current?.getElement().querySelector<HTMLElement>('[data-pc-section="wrapper"]') ?? undefined;
+        return this.datatableRef.current?.getElement()?.querySelector<HTMLElement>('[data-pc-section="wrapper"]') ?? undefined;
     }
 
     protected get isLoading(): boolean {
@@ -581,7 +581,7 @@ export class MemoryTable extends React.PureComponent<MemoryTableProps, MemoryTab
         const options = MemorySizeOptions.create(this.props, this.state);
 
         if (this.props.groupsPerRow === 'Autofit') {
-            const row = this.datatableRef.current?.getElement().querySelector<HTMLElement>('tbody > tr');
+            const row = this.datatableRef.current?.getElement()?.querySelector<HTMLElement>('tbody > tr');
             if (row) {
                 return DataColumn.approximateGroupsPerRow(row, options);
             }
