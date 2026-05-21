@@ -19,7 +19,7 @@ import * as vscode from 'vscode';
 import { Messenger } from 'vscode-messenger';
 import { WebviewIdMessageParticipant } from 'vscode-messenger-common';
 import { SetDataBreakpointsArguments, SetDataBreakpointsResult } from '../common/breakpoint';
-import { isVariablesContext } from '../common/external-views';
+import { isVariablesContext, isWatchItemContext } from '../common/external-views';
 import * as manifest from '../common/manifest';
 import { VariableRange } from '../common/memory-range';
 import {
@@ -112,11 +112,32 @@ export class MemoryWebview implements vscode.CustomReadonlyEditorProvider {
                     const memoryProvider = this.memoryProviderManager.getProvider(sessionId);
                     const memoryReference = args.variable.memoryReference ?? await memoryProvider.getAddressOfVariable(args.variable.name);
                     this.show({ memoryReference });
+                } else if (isWatchItemContext(args)) {
+                    // The Watch view (see VS Code PR microsoft/vscode#237751) passes the expression/variable
+                    // instance directly as the command argument rather than the wrapped IVariablesContext shape
+                    // used by the Variables view.
+                    //
+                    // The `canViewMemory` context key guarding the menu already requires
+                    // `memoryReference !== undefined`, so in practice `args.memoryReference` will be populated.
+                    // We still fall back to resolving an address by name/evaluateName for robustness (e.g. when
+                    // the command is invoked programmatically or from a future VS Code change that relaxes the
+                    // menu guard).
+                    const sessionId = vscode.debug.activeDebugSession?.id;
+                    const memoryProvider = this.memoryProviderManager.getProvider(sessionId);
+                    const memoryReference = args.memoryReference
+                        ?? await memoryProvider.getAddressOfVariable(args.evaluateName ?? args.name);
+                    this.show({ memoryReference });
                 }
             }),
             vscode.commands.registerCommand(MemoryWebview.GoToValueCommandType, async args => {
                 if (isWebviewVariableContext(args) && args.variable.isPointer) {
                     this.show({ memoryReference: args.variable.value });
+                } else if (isWatchItemContext(args) && typeof args.value === 'string' && args.value.length > 0) {
+                    // For watch items we treat the evaluated value as an address, mirroring how the webview
+                    // `go-to-value` command uses the variable's value when the variable is a pointer. The
+                    // `memory-inspector.variable.isPointer` `when` clause on the menu contribution ensures we
+                    // only get here when the value really is a pointer.
+                    this.show({ memoryReference: args.value });
                 }
             }),
             vscode.commands.registerCommand(MemoryWebview.ToggleVariablesColumnCommandType, (ctx: WebviewContext) => {
