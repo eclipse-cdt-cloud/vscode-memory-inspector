@@ -43,9 +43,9 @@
     "primereact": "^10.9.8",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
-    "vscode-messenger": "^0.4.5",
-    "vscode-messenger-common": "^0.4.5",
-    "vscode-messenger-webview": "^0.4.5",
+    "vscode-messenger": "0.6.1",
+    "vscode-messenger-common": "0.6.1",
+    "vscode-messenger-webview": "0.6.1",
     "vscode-uri": "^3.0.8"
   },
   "devDependencies": {
