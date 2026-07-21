@@ -46,7 +46,7 @@
     "vscode-messenger": "0.6.1",
     "vscode-messenger-common": "0.6.1",
     "vscode-messenger-webview": "0.6.1",
-    "vscode-uri": "^3.0.8"
+    "vscode-uri": "3.1.0"
   },
   "devDependencies": {
     "@types/chai": "^5.2.3",
