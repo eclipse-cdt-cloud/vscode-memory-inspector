@@ -14,7 +14,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-import MemoryMap from 'nrf-intel-hex';
 import * as vscode from 'vscode';
 import { URI, Utils } from 'vscode-uri';
 import { isVariablesContext } from '../common/external-views';
@@ -81,8 +80,8 @@ export class MemoryStorage {
         try {
             const memoryResponse = await memoryProvider.readMemory(readArgs);
             const memory = createMemoryFromRead(memoryResponse);
-            const memoryMap = new MemoryMap({ [Number(memory.address)]: memory.bytes });
-            await vscode.workspace.fs.writeFile(outputFile, new TextEncoder().encode(memoryMap.asHexString()));
+            const encodedContent = IntelHEX.encode({ address: memory.address, bytes: memory.bytes });
+            await vscode.workspace.fs.writeFile(outputFile, new TextEncoder().encode(encodedContent));
         } catch (error) {
             if (error instanceof Error) {
                 vscode.window.showErrorMessage(`Could not write memory to '${vscode.workspace.asRelativePath(outputFile)}': ${error.message}`);
@@ -176,13 +175,13 @@ export class MemoryStorage {
         }
         try {
             const byteContent = await vscode.workspace.fs.readFile(options.uri);
-            const memoryMap = MemoryMap.fromHex(new TextDecoder().decode(byteContent));
             let memoryReference: string | undefined;
             let count: number | undefined;
-            for (const [address, memory] of memoryMap) {
-                memoryReference = toHexStringWithRadixMarker(address);
-                count = memory.length;
-                const data = bytesToStringMemory(memory);
+            const memoryBlocks = IntelHEX.decode(new TextDecoder().decode(byteContent));
+            for (const memory of memoryBlocks) {
+                memoryReference = toHexStringWithRadixMarker(memory.address);
+                count = memory.bytes.length;
+                const data = bytesToStringMemory(memory.bytes);
                 await memoryProvider.writeMemory({ memoryReference, data });
             }
             await vscode.window.showInformationMessage(`Memory from '${vscode.workspace.asRelativePath(options.uri)}' applied.`);
