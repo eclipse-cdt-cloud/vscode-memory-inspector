@@ -59,7 +59,7 @@
     "@types/vscode-webview": "^1.57.0",
     "@typescript-eslint/eslint-plugin": "^5.45.0",
     "@typescript-eslint/eslint-plugin-tslint": "^5.45.0",
-    "@typescript-eslint/parser": "^5.45.0",
+    "@typescript-eslint/parser": "^8.67.0",
     "@vscode/debugprotocol": "^1.55.0",
     "@vscode/vsce": "^3.2.2",
     "chai": "^5.2.3",
