@@ -86,7 +86,7 @@ The Memory Inspector allows to set data breakpoints from a memory view. The feat
 
 ![Screenshot of the Memory Inspector](./media/memory-inspector-data-breakpoints-screenshot.png)
 
-1. Data Breakpoints are managed through the context menu of a memory cell. You can select between data breakpoints that halt execution on memory read (`Read`), write (`Change`), or both (`Access`).
+1. Data Breakpoints are managed through the context menu of a memory cell. You can select between data breakpoints that halt program execution on memory read (`Read`), write (`Change`), or both (`Access`).
 2. Memory rows with one or more data breakpoints are marked with a red circle.
 3. Memory cells with a data breakpoint are marked with a red frame.
 
