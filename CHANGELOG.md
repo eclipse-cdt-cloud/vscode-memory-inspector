@@ -1,10 +1,11 @@
 # Change Log
 
 ## 1.3.0
-- Fixed [#165](https://github.com/eclipse-cdt-cloud/vscode-memory-inspector/issues/165): "Show in Memory Inspector" context menu entry for Watch window. ([Morten Engelhardt Olsen](https://github.com/xoriath))
-- Fixed [#102](https://github.com/eclipse-cdt-cloud/vscode-memory-inspector/issues/102): Allow to set data breakpoints in memory view via context menu. ([Haydar Metin](https://github.com/haydar-metin))
+- Implemented [#102](https://github.com/eclipse-cdt-cloud/vscode-memory-inspector/issues/102): Allow to set data breakpoints in memory view via context menu. ([Haydar Metin](https://github.com/haydar-metin))
   - Note: This feature currently has experimental status and needs to be enabled through the extension setting `memory-inspector.dataBreakpoints`.
-- Fixed [#184](https://github.com/eclipse-cdt-cloud/vscode-memory-inspector/issues/102): Cell updates + rendering not properly working ([Jens Reinecke](https://github.com/jreineckearm))
+- Fixed [#165](https://github.com/eclipse-cdt-cloud/vscode-memory-inspector/issues/165): "Show in Memory Inspector" context menu entry for Watch window. ([Morten Engelhardt Olsen](https://github.com/xoriath))
+- Fixed [#172](https://github.com/eclipse-cdt-cloud/vscode-memory-inspector/issues/172): Cell updates + rendering not properly working ([Jens Reinecke](https://github.com/jreineckearm))
+- Fixed [#184](https://github.com/eclipse-cdt-cloud/vscode-memory-inspector/issues/184): Cell updates + rendering not properly working ([Stavros Kollias](https://github.com/StavrosKolliasArm))
 
 ## 1.2.0
 - Fixed [#112](https://github.com/eclipse-cdt-cloud/vscode-memory-inspector/issues/112): Edit memory value can cause "line break" in row for "autofit" groups per row. ([Martin Fleck](https://github.com/martin-fleck-at))
