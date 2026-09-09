@@ -82,9 +82,16 @@ The Memory Inspector supports multiple debug sessions. If multiple debug session
 
 ## Set Data Breakpoints
 
-The Memory Inspector allows to set data breakpoints from a memory view. The feature is experimental and must be enabled through the extension setting `memory-inspector.dataBreakpoints`.
+The Memory Inspector allows to set data breakpoints from a memory view. The feature is experimental and must be enabled through the extension setting `memory-inspector.dataBreakpoints`. Also, the debug adapter must support the `DataBreakpointInfo` and `SetDataBreakpoints` requests.
 
-TODO: Fill in user docs.
+![Screenshot of the Memory Inspector](./media/memory-inspector-data-breakpoints-screenshot.png)
+
+1. Data Breakpoints are managed through the context menu of a memory cell. You can select between data breakpoints that halt execution on memory read (`Read`), write (`Change`), or both (`Access`).
+2. Memory rows with one or more data breakpoints are marked with a red circle.
+3. Memory cells with a data breakpoint are marked with a red frame.
+
+**Important**:
+The Memory Inspector installs data breakpoints via the debug adapter like other built-in IDE views. However, technical limitations of the IDE prohibit adding them to the `BREAKPOINTS` view. Hence, such breakpoints must be removed again via the Memory Inspector context menu.
 
 ## Contributing
 
