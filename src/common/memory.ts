@@ -46,12 +46,49 @@ export function createMemoryFromRead(result: ReadMemoryResult, request?: ReadMem
     return { bytes, address };
 }
 
+// `Buffer` is a Node.js global. It is not available in the browser extension host (web worker), and the bundle for
+// that host does not polyfill it. Use it when it exists (this keeps old VS Code versions, whose Node.js has no
+// `atob` and `btoa`, working) and fall back to `atob` and `btoa`, which exist in web workers and webviews.
+const BASE64_CHUNK_SIZE = 0x8000;
+
 export function stringToBytesMemory(data: string): Uint8Array {
-    return Uint8Array.from(Buffer.from(data, 'base64'));
+    if (typeof Buffer !== 'undefined') {
+        return Uint8Array.from(Buffer.from(data, 'base64'));
+    }
+    const binary = atob(data);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes;
 }
 
 export function bytesToStringMemory(data: Uint8Array): string {
-    return Buffer.from(data).toString('base64');
+    if (typeof Buffer !== 'undefined') {
+        return Buffer.from(data).toString('base64');
+    }
+    // Convert in chunks: spreading a large array into String.fromCharCode can exceed the maximum number of arguments.
+    let binary = '';
+    for (let i = 0; i < data.length; i += BASE64_CHUNK_SIZE) {
+        binary += String.fromCharCode(...data.subarray(i, i + BASE64_CHUNK_SIZE));
+    }
+    return btoa(binary);
+}
+
+/**
+ * Converts a string of hexadecimal digits, two per byte, to bytes. Like the Node.js `Buffer.from(hex, 'hex')` it
+ * replaces, it stops at the first pair that is not a hexadecimal byte and ignores a trailing single digit.
+ */
+export function hexStringToBytes(hex: string): Uint8Array {
+    const bytes: number[] = [];
+    for (let i = 0; i + 1 < hex.length; i += 2) {
+        const pair = hex.substring(i, i + 2);
+        if (!/^[0-9a-fA-F]{2}$/.test(pair)) {
+            break;
+        }
+        bytes.push(parseInt(pair, 16));
+    }
+    return Uint8Array.from(bytes);
 }
 
 export function validateMemoryReference(reference: string): string | undefined {

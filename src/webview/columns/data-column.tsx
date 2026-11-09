@@ -19,7 +19,7 @@ import { InputText } from 'primereact/inputtext';
 import { classNames } from 'primereact/utils';
 import * as React from 'react';
 import { HOST_EXTENSION } from 'vscode-messenger-common';
-import { Memory } from '../../common/memory';
+import { bytesToStringMemory, hexStringToBytes, Memory } from '../../common/memory';
 import { BigIntMemoryRange, isWithin, toHexStringWithRadixMarker, toOffset } from '../../common/memory-range';
 import { writeMemoryType } from '../../common/messaging';
 import type { MemoryRowData, MemorySizeOptions, MemoryTableSelection, MemoryTableState } from '../components/memory-table';
@@ -360,7 +360,7 @@ export class EditableDataColumnRow extends React.Component<EditableDataColumnRow
         const originalData = this.createEditingGroupDefaultValue(editingRange);
         if (originalData !== data) {
             const newMemoryValue = this.processData(data, editingRange);
-            const converted = Buffer.from(newMemoryValue, 'hex').toString('base64');
+            const converted = bytesToStringMemory(hexStringToBytes(newMemoryValue));
             await messenger.sendRequest(writeMemoryType, HOST_EXTENSION, {
                 memoryReference: toHexStringWithRadixMarker(editingRange.startAddress),
                 data: converted
