@@ -17,6 +17,13 @@
 
 import { ReadMemoryArguments, ReadMemoryResult } from './messaging';
 
+/**
+ * Number of bytes passed to one `String.fromCharCode` call when converting to base64 without `Buffer`.
+ * Spreading a whole memory range into one call can exceed the engine's limit on the number of arguments
+ * and throw a `RangeError`. 32 KiB stays well below the limits of current JavaScript engines.
+ */
+const BASE64_CHUNK_SIZE = 0x8000;
+
 export interface Memory {
     address: bigint;
     bytes: Uint8Array;
@@ -46,15 +53,23 @@ export function createMemoryFromRead(result: ReadMemoryResult, request?: ReadMem
     return { bytes, address };
 }
 
-// `Buffer` is a Node.js global. It is not available in the browser extension host (web worker), and the bundle for
-// that host does not polyfill it. Use it when it exists (this keeps old VS Code versions, whose Node.js has no
-// `atob` and `btoa`, working) and fall back to `atob` and `btoa`, which exist in web workers and webviews.
-const BASE64_CHUNK_SIZE = 0x8000;
-
+/*
+ * The base64 helpers below use the Node.js global `Buffer` when it exists, and `atob`/`btoa` otherwise.
+ *
+ * `Buffer` does not exist in the browser extension host (web worker), for example in VS Code for the Web, and the
+ * `webworker` bundle does not polyfill it. `atob` and `btoa` exist there and in webviews. `Buffer` stays the
+ * first choice, so desktop behaves as before, including VS Code versions whose Node.js (older than 16) has no
+ * global `atob`/`btoa`.
+ *
+ * Adding a `buffer` polyfill to the `webworker` target in `webpack.config.js` (`ProvidePlugin` and
+ * `resolve.fallback`, as for the webview bundle) would also work, but adds to the bundle size. It remains an
+ * alternative if this approach shows problems.
+ */
 export function stringToBytesMemory(data: string): Uint8Array {
     if (typeof Buffer !== 'undefined') {
         return Uint8Array.from(Buffer.from(data, 'base64'));
     }
+    // Fallback for the browser extension host (for example VS Code for the Web), which has no `Buffer`
     const binary = atob(data);
     const bytes = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i++) {
@@ -67,7 +82,8 @@ export function bytesToStringMemory(data: Uint8Array): string {
     if (typeof Buffer !== 'undefined') {
         return Buffer.from(data).toString('base64');
     }
-    // Convert in chunks: spreading a large array into String.fromCharCode can exceed the maximum number of arguments.
+    // Fallback for the browser extension host (for example VS Code for the Web), which has no `Buffer`.
+    // Convert in chunks of BASE64_CHUNK_SIZE bytes to stay within the argument limit of String.fromCharCode.
     let binary = '';
     for (let i = 0; i < data.length; i += BASE64_CHUNK_SIZE) {
         binary += String.fromCharCode(...data.subarray(i, i + BASE64_CHUNK_SIZE));
